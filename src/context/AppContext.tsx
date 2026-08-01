@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
+import { Platform, useColorScheme } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { 
   ColorTheme, 
   ThemeType, 
@@ -13,7 +14,6 @@ import {
   Budget,
   RecurringTransaction,
   Goal,
-  CloudBackup, 
   AppData,
 
   loadTransactions,
@@ -28,12 +28,10 @@ import {
   saveRecurring,
   loadGoals,
   saveGoals,
-  loadCloudBackups,
-  saveCloudBackups,
-  createCloudBackup,
-  deleteCloudBackup,
   loadTermsAcceptance,
   saveTermsAcceptance,
+  loadAppPreferences,
+  saveAppPreferences,
 
 } from '../utils/storage';
 
@@ -61,6 +59,41 @@ export interface GoogleUser {
   name: string;
   picture: string;
 }
+
+const GOOGLE_TOKEN_KEY = 'spendnova_google_auth_token';
+const LEGACY_GOOGLE_TOKEN_KEY = 'google_auth_token';
+const GOOGLE_USER_KEY = 'google_auth_user';
+
+const getGoogleToken = async (): Promise<string | null> => {
+  if (Platform.OS === 'web') return AsyncStorage.getItem(GOOGLE_TOKEN_KEY);
+
+  const secureToken = await SecureStore.getItemAsync(GOOGLE_TOKEN_KEY);
+  if (secureToken) return secureToken;
+
+  const legacyToken = await AsyncStorage.getItem(LEGACY_GOOGLE_TOKEN_KEY);
+  if (legacyToken) {
+    await SecureStore.setItemAsync(GOOGLE_TOKEN_KEY, legacyToken);
+    await AsyncStorage.removeItem(LEGACY_GOOGLE_TOKEN_KEY);
+  }
+  return legacyToken;
+};
+
+const saveGoogleToken = async (token: string): Promise<void> => {
+  if (Platform.OS === 'web') {
+    await AsyncStorage.setItem(GOOGLE_TOKEN_KEY, token);
+  } else {
+    await SecureStore.setItemAsync(GOOGLE_TOKEN_KEY, token);
+  }
+};
+
+const removeGoogleToken = async (): Promise<void> => {
+  if (Platform.OS === 'web') {
+    await AsyncStorage.removeItem(GOOGLE_TOKEN_KEY);
+  } else {
+    await SecureStore.deleteItemAsync(GOOGLE_TOKEN_KEY);
+    await AsyncStorage.removeItem(LEGACY_GOOGLE_TOKEN_KEY);
+  }
+};
 
 interface AppContextProps {
   transactions: Transaction[];
@@ -125,7 +158,7 @@ const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemScheme = useColorScheme();
-  const [themeType, setThemeTypeState] = useState<ThemeType>('light');
+  const [themeType, setThemeTypeState] = useState<ThemeType>(systemScheme === 'dark' ? 'dark' : 'light');
   const [accentTheme, setAccentTheme] = useState<AccentTheme>('slate');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -141,21 +174,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
 
   useEffect(() => {
-    if (systemScheme === 'dark') {
-      setThemeTypeState('dark');
-    } else {
-      setThemeTypeState('light');
-    }
-  }, [systemScheme]);
-
-  useEffect(() => {
     const init = async () => {
-      const txs = await loadTransactions();
-      const accs = await loadAccounts();
-      const cats = await loadCategories();
-      const bgs = await loadBudgets();
-      const recs = await loadRecurring();
-      const gls = await loadGoals();
+      const [txs, accs, cats, bgs, recs, gls, termsAccepted, preferences] = await Promise.all([
+        loadTransactions(),
+        loadAccounts(),
+        loadCategories(),
+        loadBudgets(),
+        loadRecurring(),
+        loadGoals(),
+        loadTermsAcceptance(),
+        loadAppPreferences(),
+      ]);
       setTransactions(txs);
       setAccounts(accs);
       setCategories(cats);
@@ -163,11 +192,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setRecurringTxs(recs);
       setGoals(gls);
 
-      const termsAccepted = await loadTermsAcceptance();
       setHasAcceptedTerms(termsAccepted);
+      if (preferences) {
+        setThemeTypeState(preferences.themeType);
+        setAccentTheme(preferences.accentTheme);
+        setCountryState(preferences.country);
+      }
 
-      const storedToken = await AsyncStorage.getItem('google_auth_token');
-      const storedUser = await AsyncStorage.getItem('google_auth_user');
+      const storedToken = await getGoogleToken();
+      const storedUser = await AsyncStorage.getItem(GOOGLE_USER_KEY);
       
       if (storedToken && storedUser) {
         setGoogleToken(storedToken);
@@ -185,10 +218,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setThemeType = (theme: ThemeType) => {
     setThemeTypeState(theme);
+    void saveAppPreferences({ themeType: theme, accentTheme, country });
   };
 
   const setCountry = (newCountry: CountryType) => {
     setCountryState(newCountry);
+    void saveAppPreferences({ themeType, accentTheme, country: newCountry });
+  };
+
+  const setAccentThemeAndPersist = (accent: AccentTheme) => {
+    setAccentTheme(accent);
+    void saveAppPreferences({ themeType, accentTheme: accent, country });
   };
 
   const acceptTerms = async () => {
@@ -307,35 +347,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTransactions(data.transactions);
     setAccounts(data.accounts);
     setCategories(data.categories);
+    setBudgets(data.budgets || []);
+    setRecurringTxs(data.recurring || []);
+    setGoals(data.goals || []);
     await saveTransactions(data.transactions);
     await saveAccounts(data.accounts);
     await saveCategories(data.categories);
+    await saveBudgets(data.budgets || []);
+    await saveRecurring(data.recurring || []);
+    await saveGoals(data.goals || []);
   };
 
   const mergeBackupData = async (data: AppData) => {
     const mergedTxs = [...transactions, ...data.transactions];
     const mergedAccs = [...accounts, ...data.accounts.filter(a => !accounts.find(existing => existing.id === a.id))];
     const mergedCats = [...categories, ...data.categories.filter(c => !categories.find(existing => existing.id === c.id))];
+    const mergedBudgets = [...budgets, ...(data.budgets || []).filter(b => !budgets.find(existing => existing.id === b.id))];
+    const mergedRecurring = [...recurringTxs, ...(data.recurring || []).filter(r => !recurringTxs.find(existing => existing.id === r.id))];
+    const mergedGoals = [...goals, ...(data.goals || []).filter(g => !goals.find(existing => existing.id === g.id))];
     
     setTransactions(mergedTxs);
     setAccounts(mergedAccs);
     setCategories(mergedCats);
+    setBudgets(mergedBudgets);
+    setRecurringTxs(mergedRecurring);
+    setGoals(mergedGoals);
     await saveTransactions(mergedTxs);
     await saveAccounts(mergedAccs);
     await saveCategories(mergedCats);
+    await saveBudgets(mergedBudgets);
+    await saveRecurring(mergedRecurring);
+    await saveGoals(mergedGoals);
   };
 
   const setGoogleAuth = async (token: string | null, user: GoogleUser | null) => {
     setGoogleToken(token);
     setGoogleUser(user);
     if (token && user) {
-      await AsyncStorage.setItem('google_auth_token', token);
-      await AsyncStorage.setItem('google_auth_user', JSON.stringify(user));
+      await saveGoogleToken(token);
+      await AsyncStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(user));
       const backups = await listDriveBackups(token);
       setCloudBackups(backups);
     } else {
-      await AsyncStorage.removeItem('google_auth_token');
-      await AsyncStorage.removeItem('google_auth_user');
+      await removeGoogleToken();
+      await AsyncStorage.removeItem(GOOGLE_USER_KEY);
       setCloudBackups([]);
     }
   };
@@ -348,7 +403,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const backupToCloud = async () => {
     if (!googleToken) return;
-    const currentData: AppData = { transactions, accounts, categories, budgets };
+    const currentData: AppData = { transactions, accounts, categories, budgets, recurring: recurringTxs, goals };
     const success = await uploadDriveBackup(JSON.stringify(currentData), googleToken);
     if (success) {
       await refreshCloudBackups();
@@ -467,7 +522,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         themeType,
         setThemeType,
         accentTheme,
-        setAccentTheme,
+        setAccentTheme: setAccentThemeAndPersist,
         colors,
         country,
         setCountry,

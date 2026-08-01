@@ -11,7 +11,7 @@ const DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 export const listDriveBackups = async (accessToken: string): Promise<DriveFile[]> => {
   try {
     const response = await fetch(
-      `${DRIVE_API_URL}?q=name='ledgeit_backup.json' and trashed=false&fields=files(id,name,createdTime,modifiedTime)&orderBy=modifiedTime desc`,
+      `${DRIVE_API_URL}?q=(name='spendnova_backup.json' or name='ledgeit_backup.json') and trashed=false&fields=files(id,name,createdTime,modifiedTime)&orderBy=modifiedTime desc`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -53,7 +53,7 @@ export const downloadDriveBackup = async (fileId: string, accessToken: string): 
 export const uploadDriveBackup = async (fileContent: string, accessToken: string, existingFileId?: string): Promise<boolean> => {
   try {
     const metadata = {
-      name: 'ledgeit_backup.json',
+      name: 'spendnova_backup.json',
       mimeType: 'application/json',
     };
 

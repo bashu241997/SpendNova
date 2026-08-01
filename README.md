@@ -38,16 +38,14 @@ Designed with modern glassmorphism aesthetics, dynamic dark/light theme engines,
 - **Built-in Math Engine**: Calculate complex bill splits directly inside the expense entry modal (+, -, ×, ÷).
 - **Instant Category/Account Binding**: Seamlessly select accounts, categories, labels, and transaction notes in a single unified flow.
 
-### 6. 🔒 Data Sovereignty & Encrypted Cloud Backup
+### 6. 🔒 Data Sovereignty & Backup
 - **100% Local Storage**: All transaction history, budget rules, and account balances remain exclusively on your device.
-- **CSV Import / Export**: Instant unencrypted CSV backups for data portability.
-- **Isolated Google Drive Cloud Backup**: Direct device-to-Google LLC OAuth backup isolation. Backup files upload straight to your personal Google Drive folder with zero developer server involvement.
+- **Full JSON Import / Export**: Portable backups preserve transactions, accounts, categories, budgets, recurring payments, and goals. Legacy transaction CSV files can still be imported.
+- **Optional Google Drive Backup**: Once the app is configured with your Google OAuth client IDs, backups upload directly to the connected Drive account without a developer-operated backup server.
 
-### 7. ⚖️ Legal Framework & Statutory Compliance (India)
-- **Digital Personal Data Protection (DPDP) Act, 2023**: Operates under strict local Data Fiduciary and Data Principal rights with zero telemetry or profiling.
-- **Information Technology Act, 2000 (Section 79)**: Safe harbor intermediary protection for offline software utilities.
-- **Indian Contract Act, 1872 & IT Rules 2021**: Formal electronic record contract terms and designated Grievance Redressal framework.
-- **Arbitration & Conciliation Act, 1996**: Binding arbitration with exclusive jurisdiction in Bengaluru, Karnataka, India.
+### 7. ⚖️ Legal Disclosures (India)
+- **In-app terms and privacy notice**: The app includes India-focused draft disclosures and a first-run acceptance screen.
+- **Professional review required**: These drafts are not a substitute for legal advice or a claim of statutory compliance.
 
 ---
 
@@ -72,13 +70,17 @@ Designed with modern glassmorphism aesthetics, dynamic dark/light theme engines,
 - **iOS & Android**: Native mobile experience built with Expo & React Native.
 - **Desktop Web**: Full desktop experience with keyboard shortcuts, custom scrollbars, and split-screen web views.
 
+## Google Drive setup
+
+Google Drive backup is intentionally disabled until OAuth is configured. Copy `.env.example` to `.env`, add the client IDs created for your Expo web, iOS, and Android applications, and configure the matching redirect URIs in Google Cloud. Never commit `.env` or an OAuth client secret.
+
 ---
 
 ## 🛡️ Privacy & Security Architecture
 
 1. **Zero Tracking**: No Google Analytics, Mixpanel, Segment, or telemetry SDKs embedded.
 2. **Offline Resilience**: Fully operational without an internet connection.
-3. **Data Erasure**: Instant, unrecoverable database wipe available under Settings ("WIPE DATA").
+3. **Data Erasure**: The Settings “WIPE DATA” action clears all local financial records. Export a backup first if you may need the data later.
 
 ---
 

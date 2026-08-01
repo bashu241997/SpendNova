@@ -38,6 +38,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
     transactions,
     accounts,
     categories,
+    budgets,
+    recurringTxs,
+    goals,
     importBackupData,
     mergeBackupData,
     cloudBackups,
@@ -56,16 +59,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
     currencySymbol
   } = useApp();
 
-  const [backupNameInput, setBackupNameInput] = useState('My Device');
-
   const [legalModalType, setLegalModalType] = useState<'terms' | 'privacy' | 'about' | 'contact' | null>(null);
 
   const [activeView, setActiveView] = useState<'main' | 'data_sync' | 'legal' | 'danger'>('main');
 
+  const googleClientIds = {
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  };
+  const isGoogleConfigured = Boolean(
+    Platform.OS === 'web' ? googleClientIds.webClientId :
+      Platform.OS === 'ios' ? googleClientIds.iosClientId : googleClientIds.androidClientId
+  );
+
   const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: 'YOUR_WEB_CLIENT_ID', // Replaced by user later
-    iosClientId: 'YOUR_IOS_CLIENT_ID',
-    androidClientId: 'YOUR_ANDROID_CLIENT_ID',
+    ...googleClientIds,
     scopes: ['https://www.googleapis.com/auth/drive.file', 'profile', 'email'],
   });
 
@@ -117,7 +126,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
   };
 
   const handleExport = async () => {
-    const success = await exportDataToFile({ transactions, accounts, categories });
+    const success = await exportDataToFile({ transactions, accounts, categories, budgets, recurring: recurringTxs, goals });
     if (success) {
       showAlert('Data exported successfully!');
     }
@@ -136,7 +145,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
   const handleResetData = () => {
     Alert.alert(
       'Reset Data',
-      'This will permanently delete all transactions, accounts, and categories, resetting the database to defaults. This action is irreversible.',
+      'This will permanently delete every transaction, account, category, budget, recurring payment, and savings goal. This action is irreversible.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -145,27 +154,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
           onPress: async () => {
             await importBackupData({
               transactions: [],
-              accounts: [
-                { id: 'acc_cash', name: 'Main Cash', icon: 'payments', color: '#4CAF50', type: 'cash' },
-                { id: 'acc_savings', name: 'Chase Bank', icon: 'account-balance', color: '#2196F3', type: 'savings' },
-                { id: 'acc_credit', name: 'Barclays Card', icon: 'credit-card', color: '#F44336', type: 'credit' }
-              ],
-              categories: [
-                { id: 'cat_salary', name: 'Salary', type: 'income', icon: 'work', color: '#4CAF50' },
-                { id: 'cat_allowance', name: 'Allowance', type: 'income', icon: 'card-giftcard', color: '#8BC34A' },
-                { id: 'cat_bonus', name: 'Bonus', type: 'income', icon: 'monetization-on', color: '#009688' },
-                { id: 'cat_other_inc', name: 'Other (Income)', type: 'income', icon: 'more-horiz', color: '#9E9E9E' },
-                { id: 'cat_food', name: 'Food', type: 'expense', icon: 'restaurant', color: '#FF9800' },
-                { id: 'cat_social', name: 'Social', type: 'expense', icon: 'groups', color: '#E91E63' },
-                { id: 'cat_transport', name: 'Transport', type: 'expense', icon: 'directions-car', color: '#00BCD4' },
-                { id: 'cat_culture', name: 'Culture', type: 'expense', icon: 'movie', color: '#3F51B5' },
-                { id: 'cat_household', name: 'Household', type: 'expense', icon: 'home', color: '#FFEB3B' },
-                { id: 'cat_apparel', name: 'Apparel', type: 'expense', icon: 'checkroom', color: '#9C27B0' },
-                { id: 'cat_beauty', name: 'Beauty', type: 'expense', icon: 'face', color: '#F48FB1' },
-                { id: 'cat_health', name: 'Health', type: 'expense', icon: 'medical-services', color: '#F44336' },
-                { id: 'cat_education', name: 'Education', type: 'expense', icon: 'school', color: '#03A9F4' },
-                { id: 'cat_other_exp', name: 'Other (Expense)', type: 'expense', icon: 'more-horiz', color: '#607D8B' }
-              ]
+              accounts: [],
+              categories: [],
+              budgets: [],
+              recurring: [],
+              goals: [],
             });
             alert('Database reset successfully!');
           }
@@ -234,11 +227,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
               {"\n\n"}
               <Text style={{ fontWeight: '700' }}>3. Google Drive Cloud Sync Disclosures</Text>
               {"\n"}
-              If you choose to enable Google Drive Cloud Backup, OAuth authentication occurs directly between your personal device and Google LLC's servers. The backup CSV files are uploaded straight into your personal Google Drive account. The Application developers never view, store, or receive your Google tokens, passwords, or cloud data files.
+              If you choose to enable Google Drive Cloud Backup, OAuth authentication occurs between your device and Google. SpendNova uploads a JSON backup directly to your selected Google Drive account; the app does not use a developer-operated backup server.
               {"\n\n"}
               <Text style={{ fontWeight: '700' }}>4. Data Erasure & Export Rights</Text>
               {"\n"}
-              Under the DPDP Act 2023, you retain total rights to access, export, or permanently erase your data. You can instantly export all records to CSV or perform a complete, unrecoverable database wipe using the "Wipe Data" button in Settings.
+              You can export all records as a JSON backup or permanently erase local app data using the "Wipe Data" button in Settings.
               {"\n\n"}
               <Text style={{ fontWeight: '700' }}>5. Children's Data Protection</Text>
               {"\n"}
@@ -287,14 +280,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Google Drive Sync</Text>
 
-        {!request && (
+        {!isGoogleConfigured ? (
+          <View style={styles.loaderBox}>
+            <Text style={[styles.loaderText, { color: colors.outline }]}>Google Drive sync needs OAuth client IDs. Add the EXPO_PUBLIC_GOOGLE_*_CLIENT_ID values before enabling it.</Text>
+          </View>
+        ) : !request && (
           <View style={styles.loaderBox}>
             <ActivityIndicator size="small" color={colors.primary} />
             <Text style={[styles.loaderText, { color: colors.outline }]}>Connecting to Drive...</Text>
           </View>
         )}
 
-        {!!request && !googleUser && (
+        {!!request && isGoogleConfigured && !googleUser && (
           <View style={{ alignItems: 'center', paddingTop: 4 }}>
             <Text style={[styles.googleDesc, { color: colors.outline }]}>
               Backup and sync manual transactions to other devices using your Google Drive space.
@@ -328,19 +325,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
             </View>
 
             <View style={styles.backupInputRow}>
-              <TextInput
-                value={backupNameInput}
-                onChangeText={setBackupNameInput}
-                placeholder="e.g. Device Name"
-                placeholderTextColor={colors.outline}
-                style={[styles.backupNameInput, {
-                  borderColor: colors.outline,
-                  color: colors.onSurface,
-                  backgroundColor: colors.surfaceVariant
-                }]}
-              />
               <TouchableOpacity
-                style={[styles.backupActionBtn, { backgroundColor: colors.primary }]}
+                style={[styles.backupActionBtn, { backgroundColor: colors.primary, flex: 1 }]}
                 onPress={() => backupToCloud()}
               >
                 <MaterialIcons name="cloud-upload" size={18} color={colors.onPrimary} />
@@ -491,7 +477,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Local Storage Ledger</Text>
         <Text style={[styles.googleDesc, { color: colors.outline, marginBottom: 12 }]}>
-          Export database logs as local files, or import an existing data file.
+          Export every SpendNova record as a JSON backup, or restore a JSON backup. Legacy transaction CSV files can still be imported.
         </Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <TouchableOpacity
@@ -534,7 +520,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1, marginRight: 12 }}>
             <Text style={[styles.bentoLabel, { color: colors.error }]}>Dangerous Actions</Text>
-            <Text style={[styles.bentoSubLabel, { color: colors.outline }]}>Wipe database parameters</Text>
+            <Text style={[styles.bentoSubLabel, { color: colors.outline }]}>Permanently erase all local financial data</Text>
           </View>
           <TouchableOpacity
             style={[styles.dangerBtn, { backgroundColor: colors.error }]}

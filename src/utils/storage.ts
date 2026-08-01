@@ -100,6 +100,12 @@ export interface AppData {
   goals?: Goal[];
 }
 
+export interface AppPreferences {
+  themeType: 'light' | 'dark';
+  accentTheme: 'slate' | 'indigo' | 'emerald' | 'violet' | 'teal' | 'amber' | 'rose';
+  country: 'US' | 'IN' | 'EU' | 'UK';
+}
+
 const TRANSACTIONS_KEY = 'ledgeit_transactions';
 const ACCOUNTS_KEY = 'ledgeit_accounts';
 const CATEGORIES_KEY = 'ledgeit_categories';
@@ -108,6 +114,7 @@ const RECURRING_KEY = 'ledgeit_recurring';
 const GOALS_KEY = 'ledgeit_goals';
 const CLOUD_BACKUPS_KEY = 'ledgeit_cloud_backups';
 const TERMS_ACCEPTED_KEY = 'ledgeit_terms_accepted';
+const PREFERENCES_KEY = 'spendnova_preferences';
 
 
 export const DEFAULT_ACCOUNTS: Account[] = [];
@@ -224,61 +231,32 @@ export const saveGoals = async (goals: Goal[]): Promise<void> => {
 
 export const exportDataToFile = async (data: AppData): Promise<boolean> => {
   try {
-    const rows = data.transactions.map(tx => {
-      const acc = data.accounts.find(a => a.id === tx.account);
-      const toAcc = data.accounts.find(a => a.id === tx.toAccount);
-      const cat = data.categories.find(c => c.id === tx.category);
-      let subName = '', subColor = '', subIcon = '';
-      if (tx.subcategory && cat?.subcategories) {
-        const sub = cat.subcategories.find(s => s.id === tx.subcategory || s.name === tx.subcategory);
-        if (sub) {
-          subName = sub.name;
-          subColor = sub.color;
-          subIcon = sub.icon;
-        } else {
-          subName = tx.subcategory; // fallback to string if legacy
-        }
-      }
-
-      return {
-        Date: tx.date,
-        Type: tx.type,
-        Amount: tx.amount,
-        Description: tx.description,
-        CategoryName: cat?.name || '',
-        CategoryColor: cat?.color || '',
-        CategoryIcon: cat?.icon || '',
-        CategoryType: cat?.type || '',
-        SubcategoryName: subName,
-        SubcategoryColor: subColor,
-        SubcategoryIcon: subIcon,
-        AccountName: acc?.name || '',
-        AccountColor: acc?.color || '',
-        AccountIcon: acc?.icon || '',
-        AccountType: acc?.type || '',
-        ToAccountName: toAcc?.name || '',
-        ToAccountColor: toAcc?.color || '',
-        ToAccountIcon: toAcc?.icon || '',
-        ToAccountType: toAcc?.type || '',
-        Notes: tx.notes || ''
-      };
-    });
-
-    const csvString = Papa.unparse(rows);
+    const backup = JSON.stringify({
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data: {
+        transactions: data.transactions,
+        accounts: data.accounts,
+        categories: data.categories,
+        budgets: data.budgets || [],
+        recurring: data.recurring || [],
+        goals: data.goals || [],
+      },
+    }, null, 2);
 
     if (Platform.OS === 'web') {
-      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([backup], { type: 'application/json;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'ledgeit_backup.csv';
+      a.download = 'spendnova_backup.json';
       a.click();
       URL.revokeObjectURL(url);
       return true;
     }
 
-    const fileUri = ((FileSystem as any).documentDirectory || '') + 'ledgeit_backup.csv';
-    await FileSystem.writeAsStringAsync(fileUri, csvString, {
+    const fileUri = ((FileSystem as any).documentDirectory || '') + 'spendnova_backup.json';
+    await FileSystem.writeAsStringAsync(fileUri, backup, {
       encoding: FileSystem.EncodingType.UTF8,
     });
     
@@ -288,9 +266,9 @@ export const exportDataToFile = async (data: AppData): Promise<boolean> => {
     }
 
     await Sharing.shareAsync(fileUri, {
-      mimeType: 'text/csv',
-      dialogTitle: 'Export LedgeIt Data',
-      UTI: 'public.comma-separated-values-text',
+      mimeType: 'application/json',
+      dialogTitle: 'Export SpendNova backup',
+      UTI: 'public.json',
     });
     
     return true;
@@ -309,7 +287,7 @@ export const importDataFromFile = async (): Promise<AppData | null> => {
       contents = await new Promise((resolve, reject) => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.csv,text/csv';
+        input.accept = '.json,application/json,.csv,text/csv';
         input.style.display = 'none';
         document.body.appendChild(input);
         
@@ -331,7 +309,7 @@ export const importDataFromFile = async (): Promise<AppData | null> => {
       if (!contents) return null;
     } else {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['text/csv', 'text/comma-separated-values', 'public.comma-separated-values-text'],
+        type: ['application/json', 'public.json', 'text/csv', 'text/comma-separated-values', 'public.comma-separated-values-text'],
         copyToCacheDirectory: true,
       });
 
@@ -343,6 +321,23 @@ export const importDataFromFile = async (): Promise<AppData | null> => {
       contents = await FileSystem.readAsStringAsync(asset.uri, {
         encoding: FileSystem.EncodingType.UTF8,
       });
+    }
+
+    try {
+      const parsed = JSON.parse(contents);
+      const data = parsed.data || parsed;
+      if (Array.isArray(data.transactions) && Array.isArray(data.accounts) && Array.isArray(data.categories)) {
+        return {
+          transactions: data.transactions,
+          accounts: data.accounts,
+          categories: data.categories,
+          budgets: Array.isArray(data.budgets) ? data.budgets : [],
+          recurring: Array.isArray(data.recurring) ? data.recurring : [],
+          goals: Array.isArray(data.goals) ? data.goals : [],
+        };
+      }
+    } catch {
+      // JSON parsing failed; continue with the legacy CSV importer below.
     }
 
     const parseResult = Papa.parse(contents, { header: true, skipEmptyLines: true });
@@ -457,7 +452,7 @@ export const importDataFromFile = async (): Promise<AppData | null> => {
     };
   } catch (error) {
     console.error('Import failed:', error);
-    alert('Failed to import file. Make sure it is a valid LedgeIt CSV backup.');
+    alert('Failed to import file. Choose a SpendNova JSON backup or a supported legacy CSV file.');
     return null;
   }
 };
@@ -517,6 +512,23 @@ export const saveTermsAcceptance = async (accepted: boolean): Promise<void> => {
   }
 };
 
+export const loadAppPreferences = async (): Promise<AppPreferences | null> => {
+  try {
+    const raw = await AsyncStorage.getItem(PREFERENCES_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    console.error('Failed to load preferences', e);
+    return null;
+  }
+};
+
+export const saveAppPreferences = async (preferences: AppPreferences): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+  } catch (e) {
+    console.error('Failed to save preferences', e);
+  }
+};
 
 
 

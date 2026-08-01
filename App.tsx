@@ -30,7 +30,7 @@ import { Transaction } from './src/utils/storage';
 type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings' | 'categories' | 'more' | 'recurring' | 'goals';
 
 function MainAppContent() {
-  const { colors, themeType, loading } = useApp();
+  const { colors, themeType, loading, hasAcceptedTerms, acceptTerms } = useApp();
   const [activeTab, setActiveTab] = useState<MainTab>('home');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
   const [isAddMode, setIsAddMode] = useState(false);
@@ -82,6 +82,26 @@ function MainAppContent() {
         <ActivityIndicator size="large" color="#4A90E2" />
         <Text style={[styles.loadingText, { color: '#B0B8C8' }]}>Loading database...</Text>
       </View>
+    );
+  }
+
+  if (!hasAcceptedTerms) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background, justifyContent: 'center', padding: 24 }]}>
+        <View style={{ backgroundColor: colors.surface, borderColor: colors.outline, borderWidth: 1, borderRadius: 20, padding: 24, gap: 16 }}>
+          <Text style={{ color: colors.primary, fontSize: 28, fontWeight: '800' }}>SpendNova</Text>
+          <Text style={{ color: colors.onSurface, fontSize: 22, fontWeight: '700' }}>Before you begin</Text>
+          <Text style={{ color: colors.onSurfaceVariant, fontSize: 15, lineHeight: 22 }}>
+            SpendNova stores financial records on this device. It is a personal tracking tool, not financial, tax, or investment advice. Please review the Terms and Privacy Policy in Settings after continuing.
+          </Text>
+          <TouchableOpacity
+            onPress={() => void acceptTerms()}
+            style={{ backgroundColor: colors.primary, alignItems: 'center', borderRadius: 12, paddingVertical: 14 }}
+          >
+            <Text style={{ color: colors.onPrimary, fontWeight: '800' }}>Accept and continue</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
