@@ -1,0 +1,1 @@
+// SpatialBackground component removed

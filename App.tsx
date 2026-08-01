@@ -1,20 +1,595 @@
+import React, { useState } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  SafeAreaView, 
+  TouchableOpacity, 
+  Platform, 
+  StatusBar as RNStatusBar,
+  ActivityIndicator,
+  useWindowDimensions
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { AppProvider, useApp } from './src/context/AppContext';
+import { TransactionsScreen } from './src/screens/TransactionsScreen';
+import { BudgetsScreen } from './src/screens/BudgetsScreen';
+import { StatsScreen } from './src/screens/StatsScreen';
+import { AccountsScreen } from './src/screens/AccountsScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { AddTransactionScreen } from './src/screens/AddTransactionScreen';
+
+import { Transaction } from './src/utils/storage';
+
+type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings';
+
+function MainAppContent() {
+  const { colors, themeType, loading } = useApp();
+  const [activeTab, setActiveTab] = useState<MainTab>('home');
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
+  const [isAddMode, setIsAddMode] = useState(false);
+  const { width } = useWindowDimensions();
+
+  const isDesktop = Platform.OS === 'web' && width >= 768;
+
+  if (loading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: '#0D0E12' }]}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+        <Text style={[styles.loadingText, { color: '#B0B8C8' }]}>Loading database...</Text>
+      </View>
+    );
+  }
+
+  const handleEditTransaction = (tx: Transaction) => {
+    setEditingTransaction(tx);
+    setIsAddMode(true);
+  };
+
+  const handleCloseAddMode = () => {
+    setIsAddMode(false);
+    setEditingTransaction(undefined);
+  };
+
+  const renderActiveScreen = () => {
+    switch (activeTab) {
+      case 'home':
+        return (
+          <HomeScreen 
+            onAddTransaction={() => setIsAddMode(true)}
+            onEditTransaction={handleEditTransaction}
+            onNavigateTab={(tab) => setActiveTab(tab as MainTab)}
+          />
+        );
+      case 'transactions':
+        return (
+          <TransactionsScreen 
+            onAddTransaction={() => setIsAddMode(true)}
+            onEditTransaction={handleEditTransaction}
+          />
+        );
+      case 'budgets':
+        return <BudgetsScreen />;
+      case 'stats':
+        return <StatsScreen onEditTransaction={handleEditTransaction} />;
+      case 'accounts':
+        return <AccountsScreen />;
+      case 'settings':
+        return <SettingsScreen />;
+    }
+  };
+
+  const getHeaderTitle = () => {
+    switch (activeTab) {
+      case 'home': return 'Home';
+      case 'transactions': return 'Transactions';
+      case 'budgets': return 'Budgets';
+      case 'stats': return 'Analytics';
+      case 'accounts': return 'Accounts';
+      case 'settings': return 'Settings';
+    }
+  };
+
+  const safeAreaStyle = [
+    styles.safeArea,
+    { backgroundColor: 'transparent' },
+    Platform.OS === 'web' && { alignItems: 'center', justifyContent: 'center' }
+  ] as any;
+
+  const containerStyle = [
+    styles.rootContainer,
+    { backgroundColor: 'transparent' },
+    Platform.OS === 'web' && { borderColor: colors.surfaceVariant }
+  ] as any;
+
+  const glassSidebarStyle = [
+    styles.sidebar,
+    { 
+      backgroundColor: colors.surface,
+      borderRightColor: colors.outline 
+    }
+  ];
+
+  const glassBottomTabStyle = [
+    styles.bottomTabBar,
+    { 
+      backgroundColor: colors.surface,
+      borderColor: colors.outline
+    }
+  ];
+
+  if (isDesktop) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background, flexDirection: 'row' }]}>
+        <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
+
+        
+        <View style={glassSidebarStyle}>
+          <Text style={[styles.sidebarLogo, { color: colors.primary }]}>LedgeIt</Text>
+          
+          <View style={styles.sidebarMenu}>
+            {(['home', 'transactions', 'budgets', 'stats', 'accounts', 'settings'] as MainTab[]).map(tab => {
+              const active = activeTab === tab;
+              let icon = 'dashboard';
+              let label = 'Home';
+
+              if (tab === 'home') {
+                icon = 'dashboard';
+                label = 'Home';
+              } else if (tab === 'transactions') {
+                icon = 'receipt';
+                label = 'Transactions';
+              } else if (tab === 'budgets') {
+                icon = 'pie-chart';
+                label = 'Budgets';
+              } else if (tab === 'stats') {
+                icon = 'bar-chart';
+                label = 'Analytics';
+              } else if (tab === 'accounts') {
+                icon = 'account-balance-wallet';
+                label = 'Accounts';
+              } else if (tab === 'settings') {
+                icon = 'settings';
+                label = 'Settings';
+              }
+
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  onPress={() => setActiveTab(tab)}
+                  style={[
+                    styles.sidebarMenuItem,
+                    active && { backgroundColor: colors.primaryContainer }
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons 
+                    name={icon as any} 
+                    size={22} 
+                    color={active ? colors.primary : colors.outline} 
+                    style={{ marginRight: 12 }}
+                  />
+                  <Text style={[
+                    styles.sidebarMenuItemText,
+                    { color: active ? colors.primary : colors.onSurface },
+                    active && { fontWeight: '700' }
+                  ]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.sidebarAddBtn, { backgroundColor: colors.primary }]}
+            onPress={() => setIsAddMode(true)}
+          >
+            <MaterialIcons name="add" size={20} color={colors.onPrimary} style={{ marginRight: 8 }} />
+            <Text style={[styles.sidebarAddText, { color: colors.onPrimary }]}>+ Add Entry</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.desktopMain, { backgroundColor: 'transparent' }]}>
+          <View style={[styles.mainHeader, { borderBottomColor: colors.outline, backgroundColor: colors.surface }]}>
+            <Text style={[styles.mainHeaderTitle, { color: colors.onSurface }]}>
+              {getHeaderTitle()}
+            </Text>
+          </View>
+
+          <View style={styles.viewport}>
+            {renderActiveScreen()}
+          </View>
+        </View>
+
+        {isAddMode && (
+          <View style={styles.desktopModalOverlay}>
+            <View style={[styles.desktopModalContainer, { backgroundColor: colors.background, shadowColor: '#000', borderColor: colors.surfaceVariant }]}>
+              <AddTransactionScreen 
+                onBack={handleCloseAddMode} 
+                transactionToEdit={editingTransaction} 
+              />
+            </View>
+          </View>
+        )}
+      </SafeAreaView>
+    );
+  }
+
+  if (isAddMode) {
+    return (
+      <SafeAreaView style={safeAreaStyle}>
+        <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
+
+        <View style={containerStyle}>
+          <AddTransactionScreen 
+            onBack={handleCloseAddMode} 
+            transactionToEdit={editingTransaction} 
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={safeAreaStyle}>
+      <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
+      <View style={containerStyle}>
+        <View style={[styles.mainHeader, { borderBottomColor: colors.outline, backgroundColor: colors.surface }]}>
+          <Text style={[styles.mainHeaderTitle, { color: colors.onSurface }]}>
+            {getHeaderTitle()}
+          </Text>
+        </View>
+
+        <View style={styles.viewport}>
+          {renderActiveScreen()}
+        </View>
+
+        <View style={glassBottomTabStyle}>
+          <TouchableOpacity
+            onPress={() => setActiveTab('home')}
+            style={styles.tabButton}
+            activeOpacity={0.8}
+          >
+            <View style={[
+              styles.tabPill,
+              activeTab === 'home' && { backgroundColor: colors.primaryContainer }
+            ]}>
+              <MaterialIcons 
+                name="dashboard" 
+                size={22} 
+                color={activeTab === 'home' ? colors.primary : colors.outline} 
+              />
+            </View>
+            <Text style={[
+              styles.tabLabelText,
+              { color: activeTab === 'home' ? colors.onBackground : colors.outline },
+              activeTab === 'home' && { fontWeight: '700' }
+            ]}>
+              Home
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setActiveTab('transactions')}
+            style={styles.tabButton}
+            activeOpacity={0.8}
+          >
+            <View style={[
+              styles.tabPill,
+              activeTab === 'transactions' && { backgroundColor: colors.primaryContainer }
+            ]}>
+              <MaterialIcons 
+                name="receipt" 
+                size={22} 
+                color={activeTab === 'transactions' ? colors.primary : colors.outline} 
+              />
+            </View>
+            <Text style={[
+              styles.tabLabelText,
+              { color: activeTab === 'transactions' ? colors.onBackground : colors.outline },
+              activeTab === 'transactions' && { fontWeight: '700' }
+            ]}>
+              Activity
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setActiveTab('budgets')}
+            style={styles.tabButton}
+            activeOpacity={0.8}
+          >
+            <View style={[
+              styles.tabPill,
+              activeTab === 'budgets' && { backgroundColor: colors.primaryContainer }
+            ]}>
+              <MaterialIcons 
+                name="pie-chart" 
+                size={22} 
+                color={activeTab === 'budgets' ? colors.primary : colors.outline} 
+              />
+            </View>
+            <Text style={[
+              styles.tabLabelText,
+              { color: activeTab === 'budgets' ? colors.onBackground : colors.outline },
+              activeTab === 'budgets' && { fontWeight: '700' }
+            ]}>
+              Budgets
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setActiveTab('stats')}
+            style={styles.tabButton}
+            activeOpacity={0.8}
+          >
+            <View style={[
+              styles.tabPill,
+              activeTab === 'stats' && { backgroundColor: colors.primaryContainer }
+            ]}>
+              <MaterialIcons 
+                name="bar-chart" 
+                size={22} 
+                color={activeTab === 'stats' ? colors.primary : colors.outline} 
+              />
+            </View>
+            <Text style={[
+              styles.tabLabelText,
+              { color: activeTab === 'stats' ? colors.onBackground : colors.outline },
+              activeTab === 'stats' && { fontWeight: '700' }
+            ]}>
+              Analytics
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setIsAddMode(true)}
+            style={styles.centerTabButton}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.centerAddPill, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.centerAddText, { color: colors.onPrimary }]}>+ ADD</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setActiveTab('accounts')}
+            style={styles.tabButton}
+            activeOpacity={0.8}
+          >
+            <View style={[
+              styles.tabPill,
+              activeTab === 'accounts' && { backgroundColor: colors.primaryContainer }
+            ]}>
+              <MaterialIcons 
+                name="account-balance-wallet" 
+                size={22} 
+                color={activeTab === 'accounts' ? colors.primary : colors.outline} 
+              />
+            </View>
+            <Text style={[
+              styles.tabLabelText,
+              { color: activeTab === 'accounts' ? colors.onBackground : colors.outline },
+              activeTab === 'accounts' && { fontWeight: '700' }
+            ]}>
+              Accounts
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setActiveTab('settings')}
+            style={styles.tabButton}
+            activeOpacity={0.8}
+          >
+            <View style={[
+              styles.tabPill,
+              activeTab === 'settings' && { backgroundColor: colors.primaryContainer }
+            ]}>
+              <MaterialIcons 
+                name="settings" 
+                size={22} 
+                color={activeTab === 'settings' ? colors.primary : colors.outline} 
+              />
+            </View>
+            <Text style={[
+              styles.tabLabelText,
+              { color: activeTab === 'settings' ? colors.onBackground : colors.outline },
+              activeTab === 'settings' && { fontWeight: '700' }
+            ]}>
+              Settings
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <AppProvider>
+      <MainAppContent />
+    </AppProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    paddingTop: Platform.OS === 'android' ? RNStatusBar.currentHeight : 0,
+    width: '100%',
+  },
+  rootContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 500 : '100%',
+    ...Platform.select({
+      web: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+      },
+      default: {},
+    }),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 14,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  mainHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 0.5,
+  },
+  mainHeaderTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  viewport: {
+    flex: 1,
+  },
+  bottomTabBar: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  tabButton: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  tabPill: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  tabLabelText: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.25,
+  },
+  centerTabButton: {
+    flex: 1.2,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  centerAddPill: {
+    height: 38,
+    paddingHorizontal: 16,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  centerAddText: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+  },
+  sidebar: {
+    width: 260,
+    height: '100%',
+    padding: 24,
+    borderRightWidth: 1,
+    justifyContent: 'space-between',
+  },
+  sidebarLogo: {
+    fontSize: 22,
+    fontWeight: '900',
+    marginBottom: 32,
+    letterSpacing: 0.5,
+  },
+  sidebarMenu: {
+    flex: 1,
+  },
+  sidebarMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  sidebarMenuItemText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  sidebarAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    borderRadius: 24,
+    marginTop: 16,
+  },
+  sidebarAddText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  desktopMain: {
+    flex: 1,
+    height: '100%',
+  },
+  addTabBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  desktopModalOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  desktopModalContainer: {
+    width: 480,
+    height: 700,
+    maxHeight: '90%',
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+  }
 });
