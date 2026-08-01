@@ -183,7 +183,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
             <Text style={[styles.legalText, { color: colors.onBackground }]}>
               <Text style={{ fontWeight: '700' }}>1. Electronic Contract & Acceptance</Text>
               {"\n"}
-              This document is an electronic record generated pursuant to the Information Technology Act, 2000 and rules thereunder as applicable, including the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021. By downloading, accessing, or using LedgeIt ("Application"), you ("User") enter into a legally binding contract under the Indian Contract Act, 1872 with the Developer.
+              This document is an electronic record generated pursuant to the Information Technology Act, 2000 and rules thereunder as applicable, including the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021. By downloading, accessing, or using SpendNova ("Application"), you ("User") enter into a legally binding contract under the Indian Contract Act, 1872 with the Developer.
               {"\n\n"}
               <Text style={{ fontWeight: '700' }}>2. Nature of Software & Non-Financial Status</Text>
               {"\n"}
@@ -226,7 +226,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
             <Text style={[styles.legalText, { color: colors.onBackground }]}>
               <Text style={{ fontWeight: '700' }}>1. Local Data Fiduciary Disclosure</Text>
               {"\n"}
-              Pursuant to the Digital Personal Data Protection (DPDP) Act, 2023 of India, LedgeIt operates as a zero-telemetry, local-first application. You are the Data Principal and the sole controller of your personal data. 100% of your transaction entries, account balances, and budget categories are stored directly on your personal device's local database.
+              Pursuant to the Digital Personal Data Protection (DPDP) Act, 2023 of India, SpendNova operates as a zero-telemetry, local-first application. You are the Data Principal and the sole controller of your personal data. 100% of your transaction entries, account balances, and budget categories are stored directly on your personal device's local database.
               {"\n\n"}
               <Text style={{ fontWeight: '700' }}>2. No Central Server Transmission</Text>
               {"\n"}
@@ -251,7 +251,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
           <View style={styles.legalScroll}>
             <Text style={[styles.legalTitle, { color: colors.onBackground }]}>About App</Text>
             <Text style={[styles.legalText, { color: colors.onBackground, textAlign: 'center' }]}>
-              LedgeIt: Private Net Worth
+              SpendNova : Personal Expense Tracker
               {"\n"}
               Version 1.0.0 (Build 1)
               {"\n\n"}

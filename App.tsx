@@ -50,6 +50,7 @@ function MainAppContent() {
       const thumbHover = themeType === 'dark' ? 'rgba(148, 163, 184, 0.8)' : 'rgba(71, 85, 105, 0.8)';
       const trackColor = 'transparent';
 
+      document.title = 'SpendNova : Personal Expense Tracker';
       styleEl.innerHTML = `
         ::-webkit-scrollbar {
           width: 7px;
@@ -180,7 +181,7 @@ function MainAppContent() {
 
 
         <View style={glassSidebarStyle}>
-          <Text style={[styles.sidebarLogo, { color: colors.primary }]}>LedgeIt</Text>
+          <Text style={[styles.sidebarLogo, { color: colors.primary }]}>SpendNova</Text>
 
           <View style={styles.sidebarMenu}>
             {(['home', 'transactions', 'budgets', 'stats', 'accounts', 'settings'] as MainTab[]).map(tab => {

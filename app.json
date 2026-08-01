@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "LedgeIt: Private Net Worth",
-    "slug": "ledge-it",
+    "name": "SpendNova: Personal Expense Tracker",
+    "slug": "spend-nova",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
