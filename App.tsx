@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -35,6 +35,43 @@ function MainAppContent() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
   const [isAddMode, setIsAddMode] = useState(false);
   const { width } = useWindowDimensions();
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const styleId = 'custom-web-scrollbar';
+      let styleEl = document.getElementById(styleId) as HTMLStyleElement;
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = styleId;
+        document.head.appendChild(styleEl);
+      }
+
+      const thumbColor = themeType === 'dark' ? 'rgba(148, 163, 184, 0.4)' : 'rgba(100, 116, 139, 0.4)';
+      const thumbHover = themeType === 'dark' ? 'rgba(148, 163, 184, 0.8)' : 'rgba(71, 85, 105, 0.8)';
+      const trackColor = 'transparent';
+
+      styleEl.innerHTML = `
+        ::-webkit-scrollbar {
+          width: 7px;
+          height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+          background: ${trackColor};
+        }
+        ::-webkit-scrollbar-thumb {
+          background: ${thumbColor};
+          border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: ${thumbHover};
+        }
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: ${thumbColor} ${trackColor};
+        }
+      `;
+    }
+  }, [themeType, colors]);
 
   const isDesktop = Platform.OS === 'web' && width >= 768;
 
@@ -215,7 +252,7 @@ function MainAppContent() {
             </Text>
           </View>
 
-          <View style={styles.viewport}>
+          <View style={[{ flex: 1 }, Platform.OS === 'web' && { maxWidth: 1350, width: '100%', alignSelf: 'center' }]}>
             {renderActiveScreen()}
           </View>
         </View>

@@ -223,165 +223,167 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </View>
       </View>
 
-      {/* ACCOUNTS CAROUSEL */}
-      <View style={styles.carouselContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
-          {accountStats.map(acc => {
-            const isPos = acc.balance >= 0;
-            const dotColor = isPos ? colors.success : colors.error;
-            return (
-              <TouchableOpacity 
-                key={acc.id} 
-                style={[styles.accountCard, { backgroundColor: colors.surface }]}
-                onPress={() => onNavigateTab('accounts')}
-              >
-                <View style={styles.accCardTop}>
-                  <Text style={[styles.accName, { color: colors.onSurface }]} numberOfLines={1}>{acc.name}</Text>
-                  <View style={[styles.accDot, { backgroundColor: dotColor }]} />
-                </View>
-                <Text style={[styles.accBalance, { color: isPos ? colors.success : colors.error }]}>
-                  {isPos ? '' : '-'}{currencySymbol}{Math.abs(acc.balance).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
-                </Text>
-                <Text style={[styles.accTxCount, { color: colors.outline }]}>{acc.txCount} transactions</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* HORIZONTAL BUDGETS CAROUSEL */}
-      <View style={styles.sectionHeaderRow}>
-        <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Active Budgets</Text>
-        <TouchableOpacity onPress={() => onNavigateTab('budgets')}>
-          <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({userBudgetStats.length})</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.carouselContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
-          {userBudgetStats.map(b => (
-            <TouchableOpacity 
-              key={b.id} 
-              style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1 }]}
-              onPress={() => onNavigateTab('budgets')}
-              activeOpacity={0.85}
-            >
-              <View style={styles.bCardTop}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                  <View style={[styles.bIconWrap, { backgroundColor: `${b.color}20`, marginRight: 10 }]}>
-                    <MaterialIcons name={(b.icon || 'pie-chart') as any} size={20} color={b.color} />
-                  </View>
-                  <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
-                </View>
-                <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
-              </View>
-
-              {b.hasBudget ? (
-                <>
-                  <View style={styles.bAmountRow}>
-                    <Text style={[styles.bLeft, { color: colors.onSurface }]}>
-                      {currencySymbol}{Math.max(b.left, 0).toLocaleString('en-IN')}
+      {/* SPLIT LAYOUT FROM TOP */}
+      <View style={[styles.splitContainer, isLargeScreen ? styles.splitRow : styles.splitCol]}>
+        
+        {/* LEFT COLUMN: ACCOUNTS, BUDGETS, GOALS, UPCOMING/OVERDUE */}
+        <View style={[styles.leftColumn, isLargeScreen && { flex: 1, paddingRight: 24 }]}>
+          
+          {/* ACCOUNTS CAROUSEL */}
+          <View style={styles.carouselContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
+              {accountStats.map(acc => {
+                const isPos = acc.balance >= 0;
+                const dotColor = isPos ? colors.success : colors.error;
+                return (
+                  <TouchableOpacity 
+                    key={acc.id} 
+                    style={[styles.accountCard, { backgroundColor: colors.surface }]}
+                    onPress={() => onNavigateTab('accounts')}
+                  >
+                    <View style={styles.accCardTop}>
+                      <Text style={[styles.accName, { color: colors.onSurface }]} numberOfLines={1}>{acc.name}</Text>
+                      <View style={[styles.accDot, { backgroundColor: dotColor }]} />
+                    </View>
+                    <Text style={[styles.accBalance, { color: isPos ? colors.success : colors.error }]}>
+                      {isPos ? '' : '-'}{currencySymbol}{Math.abs(acc.balance).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
                     </Text>
-                    <Text style={[styles.bTotal, { color: colors.outline }]}>
-                      left of {currencySymbol}{b.budget.toLocaleString('en-IN')}
-                    </Text>
-                  </View>
+                    <Text style={[styles.accTxCount, { color: colors.outline }]}>{acc.txCount} transactions</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
 
-                  <View style={styles.bProgressRow}>
-                    <Text style={[styles.bProgText, { color: colors.onSurface }]}>Spent {currencySymbol}{b.spent.toLocaleString('en-IN')}</Text>
-                    <Text style={[styles.bProgText, { color: colors.onSurface }]}>{Math.round(b.pct)}%</Text>
-                  </View>
-                  <View style={[styles.bProgressBar, { backgroundColor: `${b.color}20` }]}>
-                    <View style={[styles.bProgressFill, { backgroundColor: b.color, width: `${b.pct}%` }]} />
-                  </View>
-                  
-                  <Text style={[styles.bDailyText, { color: colors.outline }]} numberOfLines={1}>
-                    {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 0 })}/day for {daysLeft} days
-                  </Text>
-                </>
-              ) : (
-                <View style={{ marginTop: 12 }}>
-                  <Text style={[styles.bProgText, { color: colors.outline }]}>
-                    Spent: {currencySymbol}{b.spent.toLocaleString('en-IN')} (No limit set)
-                  </Text>
-                </View>
-              )}
+          {/* HORIZONTAL BUDGETS CAROUSEL */}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Active Budgets</Text>
+            <TouchableOpacity onPress={() => onNavigateTab('budgets')}>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({userBudgetStats.length})</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+          </View>
 
-      {/* SAVINGS GOALS CAROUSEL */}
-      <View style={styles.sectionHeaderRow}>
-        <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Savings Goals</Text>
-        <TouchableOpacity onPress={() => onNavigateTab('goals')}>
-          <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({(goals || []).length})</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.carouselContainer}>
-        {(!goals || goals.length === 0) ? (
-          <TouchableOpacity 
-            style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1, marginLeft: 24 }]}
-            onPress={() => onNavigateTab('goals')}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-              <MaterialIcons name="emoji-events" size={24} color={colors.primary} style={{ marginRight: 8 }} />
-              <Text style={[styles.bName, { color: colors.onSurface }]}>Set Savings Target</Text>
-            </View>
-            <Text style={[styles.bTotal, { color: colors.outline }]}>Track emergency funds, car, or vacation goals</Text>
-          </TouchableOpacity>
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
-            {goals.map(g => {
-              const pct = g.targetAmount > 0 ? Math.min((g.currentAmount / g.targetAmount) * 100, 100) : 0;
-              const remaining = Math.max(g.targetAmount - g.currentAmount, 0);
-
-              return (
+          <View style={styles.carouselContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
+              {userBudgetStats.map(b => (
                 <TouchableOpacity 
-                  key={g.id} 
+                  key={b.id} 
                   style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1 }]}
-                  onPress={() => onNavigateTab('goals')}
+                  onPress={() => onNavigateTab('budgets')}
                   activeOpacity={0.85}
                 >
                   <View style={styles.bCardTop}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                      <View style={[styles.bIconWrap, { backgroundColor: `${g.color || colors.primary}20`, marginRight: 10 }]}>
-                        <MaterialIcons name={(g.icon || 'savings') as any} size={20} color={g.color || colors.primary} />
+                      <View style={[styles.bIconWrap, { backgroundColor: `${b.color}20`, marginRight: 10 }]}>
+                        <MaterialIcons name={(b.icon || 'pie-chart') as any} size={20} color={b.color} />
                       </View>
-                      <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{g.name}</Text>
+                      <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
                     </View>
                     <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
                   </View>
 
-                  <View style={styles.bAmountRow}>
-                    <Text style={[styles.bLeft, { color: colors.onSurface }]}>
-                      {currencySymbol}{g.currentAmount.toLocaleString('en-IN')}
-                    </Text>
-                    <Text style={[styles.bTotal, { color: colors.outline }]}>
-                      of {currencySymbol}{g.targetAmount.toLocaleString('en-IN')}
-                    </Text>
-                  </View>
+                  {b.hasBudget ? (
+                    <>
+                      <View style={styles.bAmountRow}>
+                        <Text style={[styles.bLeft, { color: colors.onSurface }]}>
+                          {currencySymbol}{Math.max(b.left, 0).toLocaleString('en-IN')}
+                        </Text>
+                        <Text style={[styles.bTotal, { color: colors.outline }]}>
+                          left of {currencySymbol}{b.budget.toLocaleString('en-IN')}
+                        </Text>
+                      </View>
 
-                  <View style={styles.bProgressRow}>
-                    <Text style={[styles.bProgText, { color: colors.onSurface }]}>{Math.round(pct)}% Saved</Text>
-                    <Text style={[styles.bProgText, { color: colors.outline }]}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
-                  </View>
-                  <View style={[styles.bProgressBar, { backgroundColor: `${g.color || colors.primary}20` }]}>
-                    <View style={[styles.bProgressFill, { backgroundColor: g.color || colors.primary, width: `${pct}%` }]} />
-                  </View>
+                      <View style={styles.bProgressRow}>
+                        <Text style={[styles.bProgText, { color: colors.onSurface }]}>Spent {currencySymbol}{b.spent.toLocaleString('en-IN')}</Text>
+                        <Text style={[styles.bProgText, { color: colors.onSurface }]}>{Math.round(b.pct)}%</Text>
+                      </View>
+                      <View style={[styles.bProgressBar, { backgroundColor: `${b.color}20` }]}>
+                        <View style={[styles.bProgressFill, { backgroundColor: b.color, width: `${b.pct}%` }]} />
+                      </View>
+                      
+                      <Text style={[styles.bDailyText, { color: colors.outline }]} numberOfLines={1}>
+                        {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 0 })}/day for {daysLeft} days
+                      </Text>
+                    </>
+                  ) : (
+                    <View style={{ marginTop: 12 }}>
+                      <Text style={[styles.bProgText, { color: colors.outline }]}>
+                        Spent: {currencySymbol}{b.spent.toLocaleString('en-IN')} (No limit set)
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        )}
-      </View>
+              ))}
+            </ScrollView>
+          </View>
 
-      {/* SPLIT LAYOUT */}
-      <View style={[styles.splitContainer, isLargeScreen ? styles.splitRow : styles.splitCol]}>
-        
-        {/* LEFT COLUMN: UPCOMING & OVERDUE BILLS */}
-        <View style={[styles.leftColumn, isLargeScreen && { flex: 1, paddingRight: 24 }]}>
+          {/* SAVINGS GOALS CAROUSEL */}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Savings Goals</Text>
+            <TouchableOpacity onPress={() => onNavigateTab('goals')}>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({(goals || []).length})</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.carouselContainer}>
+            {(!goals || goals.length === 0) ? (
+              <TouchableOpacity 
+                style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1, marginLeft: 24 }]}
+                onPress={() => onNavigateTab('goals')}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <MaterialIcons name="emoji-events" size={24} color={colors.primary} style={{ marginRight: 8 }} />
+                  <Text style={[styles.bName, { color: colors.onSurface }]}>Set Savings Target</Text>
+                </View>
+                <Text style={[styles.bTotal, { color: colors.outline }]}>Track emergency funds, car, or vacation goals</Text>
+              </TouchableOpacity>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
+                {goals.map(g => {
+                  const pct = g.targetAmount > 0 ? Math.min((g.currentAmount / g.targetAmount) * 100, 100) : 0;
+                  const remaining = Math.max(g.targetAmount - g.currentAmount, 0);
+
+                  return (
+                    <TouchableOpacity 
+                      key={g.id} 
+                      style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1 }]}
+                      onPress={() => onNavigateTab('goals')}
+                      activeOpacity={0.85}
+                    >
+                      <View style={styles.bCardTop}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                          <View style={[styles.bIconWrap, { backgroundColor: `${g.color || colors.primary}20`, marginRight: 10 }]}>
+                            <MaterialIcons name={(g.icon || 'savings') as any} size={20} color={g.color || colors.primary} />
+                          </View>
+                          <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{g.name}</Text>
+                        </View>
+                        <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
+                      </View>
+
+                      <View style={styles.bAmountRow}>
+                        <Text style={[styles.bLeft, { color: colors.onSurface }]}>
+                          {currencySymbol}{g.currentAmount.toLocaleString('en-IN')}
+                        </Text>
+                        <Text style={[styles.bTotal, { color: colors.outline }]}>
+                          of {currencySymbol}{g.targetAmount.toLocaleString('en-IN')}
+                        </Text>
+                      </View>
+
+                      <View style={styles.bProgressRow}>
+                        <Text style={[styles.bProgText, { color: colors.onSurface }]}>{Math.round(pct)}% Saved</Text>
+                        <Text style={[styles.bProgText, { color: colors.outline }]}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
+                      </View>
+                      <View style={[styles.bProgressBar, { backgroundColor: `${g.color || colors.primary}20` }]}>
+                        <View style={[styles.bProgressFill, { backgroundColor: g.color || colors.primary, width: `${pct}%` }]} />
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </View>
+
+          {/* UPCOMING & OVERDUE BILLS */}
           <View style={styles.goalsGrid}>
             <TouchableOpacity 
               style={[styles.goalCard, { backgroundColor: colors.surface }]}
@@ -414,8 +416,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         </View>
 
-        {/* RIGHT COLUMN: RECENT TRANSACTIONS */}
-        <View style={[styles.rightColumn, isLargeScreen && { width: 450 }]}>
+        {/* RIGHT COLUMN: RECENT TRANSACTIONS (Independent scroll on web) */}
+        <View style={[
+          styles.rightColumn, 
+          isLargeScreen && { width: 420 },
+          (isLargeScreen && Platform.OS === 'web') ? ({ 
+            maxHeight: 'calc(100vh - 160px)', 
+            overflowY: 'auto', 
+            paddingRight: 8 
+          } as any) : undefined
+        ]}>
           {groupedTxs.map(group => (
             <View key={group.title} style={styles.txGroup}>
               <Text style={[styles.txGroupTitle, { color: colors.outline }]}>{group.title}</Text>
@@ -516,20 +526,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'ios' ? 60 : 32,
-    paddingBottom: 24,
+    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
+    paddingTop: Platform.OS === 'web' ? 24 : 12,
+    paddingBottom: 16,
   },
   headerLeft: {
     flex: 1,
   },
   timeText: {
-    fontSize: 48,
+    fontSize: Platform.OS === 'web' ? 44 : 32,
     fontWeight: '300',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   dateText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     marginBottom: 2,
   },
@@ -538,33 +548,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   greetingText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   nameText: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    marginBottom: 16,
+    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
+    marginBottom: 10,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
   },
   seeAllText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
   horizontalBudgetCard: {
-    width: 260,
-    borderRadius: 20,
-    padding: 16,
+    width: 240,
+    borderRadius: 18,
+    padding: 14,
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.05,
@@ -572,50 +582,50 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
   },
   carouselContainer: {
-    marginBottom: 32,
+    marginBottom: 18,
   },
   carouselScroll: {
-    paddingHorizontal: 24,
-    gap: 16,
+    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
+    gap: 12,
   },
   accountCard: {
-    width: 150,
+    width: 145,
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
   },
   accCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   accName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     flex: 1,
-    paddingRight: 8,
+    paddingRight: 6,
   },
   accDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   accBalance: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   accTxCount: {
-    fontSize: 12,
+    fontSize: 11,
   },
   splitContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 100,
+    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
+    paddingBottom: 110,
   },
   splitRow: {
     flexDirection: 'row',
