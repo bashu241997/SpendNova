@@ -248,7 +248,7 @@ function MainAppContent() {
                   <MaterialIcons
                     name={icon as any}
                     size={22}
-                    color={active ? colors.primary : colors.outline}
+                    color={active ? colors.primary : colors.onSurfaceVariant}
                     style={{ marginRight: 12 }}
                   />
                   <Text style={[
@@ -334,12 +334,12 @@ function MainAppContent() {
               <MaterialIcons
                 name="dashboard"
                 size={22}
-                color={activeTab === 'home' ? colors.primary : colors.outline}
+                color={activeTab === 'home' ? colors.primary : colors.onSurfaceVariant}
               />
             </View>
             <Text style={[
               styles.tabLabelText,
-              { color: activeTab === 'home' ? colors.onBackground : colors.outline },
+              { color: activeTab === 'home' ? colors.onBackground : colors.onSurfaceVariant },
               activeTab === 'home' && { fontWeight: '700' }
             ]}>
               Home
@@ -358,12 +358,12 @@ function MainAppContent() {
               <MaterialIcons
                 name="receipt"
                 size={22}
-                color={activeTab === 'transactions' ? colors.primary : colors.outline}
+                color={activeTab === 'transactions' ? colors.primary : colors.onSurfaceVariant}
               />
             </View>
             <Text style={[
               styles.tabLabelText,
-              { color: activeTab === 'transactions' ? colors.onBackground : colors.outline },
+              { color: activeTab === 'transactions' ? colors.onBackground : colors.onSurfaceVariant },
               activeTab === 'transactions' && { fontWeight: '700' }
             ]}>
               Transaction
@@ -392,12 +392,12 @@ function MainAppContent() {
               <MaterialIcons
                 name="pie-chart"
                 size={22}
-                color={activeTab === 'budgets' ? colors.primary : colors.outline}
+                color={activeTab === 'budgets' ? colors.primary : colors.onSurfaceVariant}
               />
             </View>
             <Text style={[
               styles.tabLabelText,
-              { color: activeTab === 'budgets' ? colors.onBackground : colors.outline },
+              { color: activeTab === 'budgets' ? colors.onBackground : colors.onSurfaceVariant },
               activeTab === 'budgets' && { fontWeight: '700' }
             ]}>
               Budgets
@@ -416,12 +416,12 @@ function MainAppContent() {
               <MaterialIcons
                 name="menu"
                 size={22}
-                color={['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.primary : colors.outline}
+                color={['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.primary : colors.onSurfaceVariant}
               />
             </View>
             <Text style={[
               styles.tabLabelText,
-              { color: ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.onBackground : colors.outline },
+              { color: ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.onBackground : colors.onSurfaceVariant },
               ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { fontWeight: '700' }
             ]}>
               More
@@ -491,12 +491,12 @@ const styles = StyleSheet.create({
   },
   bottomTabBar: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
+    bottom: 12,
+    left: 12,
+    right: 12,
     flexDirection: 'row',
-    height: 66,
-    borderRadius: 33,
+    height: 72,
+    borderRadius: 36,
     borderWidth: 1,
     paddingHorizontal: 8,
     alignItems: 'center',
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   tabLabelText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.25,
   },

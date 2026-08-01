@@ -2,6 +2,7 @@
   "expo": {
     "name": "SpendNova: Personal Expense Tracker",
     "slug": "spend-nova",
+    "scheme": "spendnova",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

@@ -9,7 +9,8 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  Modal
+  Modal,
+  useWindowDimensions
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
@@ -29,6 +30,8 @@ interface SettingsScreenProps {
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) => {
+  const { width } = useWindowDimensions();
+  const isWideLayout = width >= 768;
   const {
     themeType,
     setThemeType,
@@ -74,7 +77,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
   );
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    ...googleClientIds,
+    // The hook requires a client ID for the active platform even while the
+    // settings UI is disabled. The button remains unavailable until a real
+    // value is supplied through EXPO_PUBLIC_GOOGLE_*_CLIENT_ID.
+    webClientId: googleClientIds.webClientId || 'disabled.apps.googleusercontent.com',
+    iosClientId: googleClientIds.iosClientId || 'disabled.apps.googleusercontent.com',
+    androidClientId: googleClientIds.androidClientId || 'disabled.apps.googleusercontent.com',
     scopes: ['https://www.googleapis.com/auth/drive.file', 'profile', 'email'],
   });
 
@@ -275,25 +283,28 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: 'transparent' }]} contentContainerStyle={styles.contentPadding}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: 'transparent' }]}
+      contentContainerStyle={[styles.contentPadding, isWideLayout && styles.desktopContent]}
+    >
 
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Google Drive Sync</Text>
 
         {!isGoogleConfigured ? (
           <View style={styles.loaderBox}>
-            <Text style={[styles.loaderText, { color: colors.outline }]}>Google Drive sync needs OAuth client IDs. Add the EXPO_PUBLIC_GOOGLE_*_CLIENT_ID values before enabling it.</Text>
+            <Text style={[styles.loaderText, { color: colors.onSurfaceVariant }]}>Google Drive sync is not configured. Add your OAuth client IDs in the local `.env` file to enable it.</Text>
           </View>
         ) : !request && (
           <View style={styles.loaderBox}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={[styles.loaderText, { color: colors.outline }]}>Connecting to Drive...</Text>
+            <Text style={[styles.loaderText, { color: colors.onSurfaceVariant }]}>Connecting to Drive...</Text>
           </View>
         )}
 
         {!!request && isGoogleConfigured && !googleUser && (
           <View style={{ alignItems: 'center', paddingTop: 4 }}>
-            <Text style={[styles.googleDesc, { color: colors.outline }]}>
+            <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant }]}>
               Backup and sync manual transactions to other devices using your Google Drive space.
             </Text>
             <TouchableOpacity
@@ -317,7 +328,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
               </View>
               <View style={styles.userMeta}>
                 <Text style={[styles.userName, { color: colors.onSurface }]}>{googleUser.name}</Text>
-                <Text style={[styles.userEmail, { color: colors.outline }]} numberOfLines={1}>{googleUser.email}</Text>
+                <Text style={[styles.userEmail, { color: colors.onSurfaceVariant }]} numberOfLines={1}>{googleUser.email}</Text>
               </View>
               <TouchableOpacity onPress={handleGoogleSignOut} style={styles.logoutBtn}>
                 <MaterialIcons name="logout" size={18} color={colors.error} />
@@ -341,7 +352,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
                   <View key={backup.id} style={[styles.backupListItem, { borderBottomColor: colors.outline }]}>
                     <View>
                       <Text style={[styles.backupItemDevice, { color: colors.onSurface }]}>{backup.name}</Text>
-                      <Text style={[styles.backupItemDate, { color: colors.outline }]}>
+                      <Text style={[styles.backupItemDate, { color: colors.onSurfaceVariant }]}>
                         {backup.modifiedTime ? new Date(backup.modifiedTime).toLocaleString() : ''}
                       </Text>
                     </View>
@@ -363,8 +374,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
 
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Active Currency / Region</Text>
-        <Text style={[styles.googleDesc, { color: colors.outline, marginBottom: 12 }]}>
-          Choose the cosmetic currency prefix symbol applied to your Vaults, Flow inputs, and Vibe analytics:
+        <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>
+          Select the currency symbol displayed throughout the app.
         </Text>
 
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
@@ -395,7 +406,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
                 </Text>
                 <Text style={[
                   styles.currencyPillLabel,
-                  { color: colors.outline },
+                  { color: colors.onSurfaceVariant },
                   active && { color: colors.onPrimary, fontWeight: '700' }
                 ]}>
                   {cnt}
@@ -408,8 +419,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
 
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Theme Accent Palette</Text>
-        <Text style={[styles.googleDesc, { color: colors.outline, marginBottom: 12 }]}>
-          Select your preferred primary accent color palette:
+        <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>
+          Choose the accent color used for actions and highlights.
         </Text>
 
         <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
@@ -426,15 +437,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
                     paddingHorizontal: 14,
                     paddingVertical: 10,
                     borderRadius: 16,
-                    backgroundColor: active ? colors.primaryContainer : colors.surfaceVariant,
-                    borderWidth: active ? 2 : 0,
-                    borderColor: colors.primary,
+                    backgroundColor: active ? `${opt.color}18` : colors.surfaceVariant,
+                    borderWidth: active ? 1.5 : 1,
+                    borderColor: active ? opt.color : 'transparent',
                   }
                 ]}
                 activeOpacity={0.8}
               >
                 <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: opt.color, marginRight: 8 }} />
-                <Text style={[{ fontSize: 13, fontWeight: active ? '800' : '600', color: active ? colors.onPrimaryContainer : colors.onSurface }]}>
+                <Text style={[{ fontSize: 13, fontWeight: active ? '800' : '600', color: colors.onSurface }]}>
                   {opt.name}
                 </Text>
               </TouchableOpacity>
@@ -450,13 +461,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
             <Switch
               value={themeType === 'dark'}
               onValueChange={(val) => setThemeType(val ? 'dark' : 'light')}
-              thumbColor={themeType === 'dark' ? colors.primary : colors.outline}
+              thumbColor={themeType === 'dark' ? colors.primary : colors.onSurfaceVariant}
               trackColor={{ false: colors.surfaceVariant, true: colors.primaryContainer }}
             />
           </View>
           <View style={{ marginTop: 12 }}>
             <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>Dark Mode</Text>
-            <Text style={[styles.bentoSubLabel, { color: colors.outline }]}>Toggle layout visuals</Text>
+            <Text style={[styles.bentoSubLabel, { color: colors.onSurfaceVariant }]}>Use a darker interface</Text>
           </View>
         </View>
 
@@ -476,7 +487,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
 
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Local Storage Ledger</Text>
-        <Text style={[styles.googleDesc, { color: colors.outline, marginBottom: 12 }]}>
+        <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>
           Export every SpendNova record as a JSON backup, or restore a JSON backup. Legacy transaction CSV files can still be imported.
         </Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -520,7 +531,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1, marginRight: 12 }}>
             <Text style={[styles.bentoLabel, { color: colors.error }]}>Dangerous Actions</Text>
-            <Text style={[styles.bentoSubLabel, { color: colors.outline }]}>Permanently erase all local financial data</Text>
+            <Text style={[styles.bentoSubLabel, { color: colors.onSurfaceVariant }]}>Permanently erase all local financial data</Text>
           </View>
           <TouchableOpacity
             style={[styles.dangerBtn, { backgroundColor: colors.error }]}
@@ -593,49 +604,48 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentPadding: {
-    padding: 16,
+    padding: 20,
     paddingBottom: 110,
+  },
+  desktopContent: {
+    width: '100%',
+    maxWidth: 1120,
+    alignSelf: 'center',
+    paddingTop: 28,
   },
   bentoRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   bentoSquareCard: {
     flex: 1,
-    borderRadius: 24,
-    padding: 18,
-    minHeight: 130,
-    justifyContent: 'space-between',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 3,
+    borderRadius: 18,
+    padding: 20,
+    minHeight: 112,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.16)',
   },
   bentoWideCard: {
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 3,
+    borderRadius: 18,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.16)',
   },
   bentoHeader: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   bentoLabel: {
     fontSize: 15,
     fontWeight: '700',
   },
   bentoSubLabel: {
-    fontSize: 10,
+    fontSize: 12,
     marginTop: 2,
     fontWeight: '500',
   },
@@ -682,8 +692,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   googleDesc: {
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 19,
   },
   googleBtn: {
     flexDirection: 'row',
@@ -700,13 +710,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   loaderBox: {
-    paddingVertical: 16,
-    alignItems: 'center',
+    paddingVertical: 2,
+    alignItems: 'flex-start',
   },
   loaderText: {
-    fontSize: 11,
-    marginTop: 8,
+    fontSize: 13,
+    marginTop: 0,
     fontWeight: '500',
+    lineHeight: 19,
   },
   userInfoRow: {
     flexDirection: 'row',

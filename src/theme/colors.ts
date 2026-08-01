@@ -33,13 +33,13 @@ export interface AccentOption {
 }
 
 export const ACCENT_OPTIONS: AccentOption[] = [
-  { id: 'slate', name: 'Slate Gray', color: '#94A3B8' },
-  { id: 'indigo', name: 'Electric Indigo', color: '#6366F1' },
-  { id: 'emerald', name: 'Mint Emerald', color: '#10B981' },
-  { id: 'violet', name: 'Cyber Violet', color: '#8B5CF6' },
-  { id: 'teal', name: 'Ocean Cyan', color: '#06B6D4' },
-  { id: 'amber', name: 'Gold Sunburst', color: '#F59E0B' },
-  { id: 'rose', name: 'Crimson Rose', color: '#F43F5E' },
+  { id: 'slate', name: 'Core Blue', color: '#2563EB' },
+  { id: 'indigo', name: 'Indigo', color: '#4F46E5' },
+  { id: 'emerald', name: 'Emerald', color: '#059669' },
+  { id: 'violet', name: 'Violet', color: '#7C3AED' },
+  { id: 'teal', name: 'Sky', color: '#0284C7' },
+  { id: 'amber', name: 'Orange', color: '#EA580C' },
+  { id: 'rose', name: 'Rose', color: '#E11D48' },
 ];
 
 const ACCENT_CONFIGS: Record<AccentTheme, {
@@ -51,19 +51,19 @@ const ACCENT_CONFIGS: Record<AccentTheme, {
   onDarkContainer: string;
 }> = {
   slate: {
-    lightPrimary: '#334155',
-    lightContainer: '#E2E8F0',
-    onLightContainer: '#0F172A',
-    darkPrimary: '#94A3B8',
-    darkContainer: '#1E293B',
-    onDarkContainer: '#F8FAFC',
+    lightPrimary: '#2563EB',
+    lightContainer: '#DBEAFE',
+    onLightContainer: '#1E3A8A',
+    darkPrimary: '#60A5FA',
+    darkContainer: '#1E3A8A',
+    onDarkContainer: '#DBEAFE',
   },
   indigo: {
     lightPrimary: '#4F46E5',
     lightContainer: '#EEF2FF',
     onLightContainer: '#312E81',
     darkPrimary: '#818CF8',
-    darkContainer: '#2D2B69',
+    darkContainer: '#312E81',
     onDarkContainer: '#E0E7FF',
   },
   emerald: {
@@ -84,19 +84,19 @@ const ACCENT_CONFIGS: Record<AccentTheme, {
   },
   teal: {
     lightPrimary: '#0284C7',
-    lightContainer: '#F0F9FF',
+    lightContainer: '#E0F2FE',
     onLightContainer: '#0C4A6E',
     darkPrimary: '#38BDF8',
-    darkContainer: '#07486B',
-    onDarkContainer: '#BAE6FD',
+    darkContainer: '#0C4A6E',
+    onDarkContainer: '#E0F2FE',
   },
   amber: {
-    lightPrimary: '#D97706',
-    lightContainer: '#FFFBEB',
-    onLightContainer: '#78350F',
-    darkPrimary: '#FBBF24',
-    darkContainer: '#592906',
-    onDarkContainer: '#FEF08A',
+    lightPrimary: '#EA580C',
+    lightContainer: '#FFF7ED',
+    onLightContainer: '#7C2D12',
+    darkPrimary: '#FB923C',
+    darkContainer: '#7C2D12',
+    onDarkContainer: '#FFEDD5',
   },
   rose: {
     lightPrimary: '#E11D48',

@@ -46,6 +46,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 1024;
+  const carouselCardWidth = isLargeScreen ? 280 : Math.min(Math.max(width - 32, 280), 340);
+  const desktopFeatureCardWidth = isLargeScreen ? 460 : carouselCardWidth;
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -214,12 +216,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={[styles.timeText, { color: colors.onBackground }]}>{timeString}</Text>
-          <Text style={[styles.dateText, { color: colors.outline }]}>{dayName}</Text>
-          <Text style={[styles.dateText, { color: colors.outline }]}>{monthDay}, {currentYear}</Text>
+          <Text style={[styles.dateText, { color: colors.onSurfaceVariant }]}>{dayName}</Text>
+          <Text style={[styles.dateText, { color: colors.onSurfaceVariant }]}>{monthDay}, {currentYear}</Text>
         </View>
         <View style={styles.headerRight}>
-          <Text style={[styles.greetingText, { color: colors.outline }]}>Hello there</Text>
-          <Text style={[styles.nameText, { color: colors.primary }]}>Welcome back</Text>
+          <Text style={[styles.greetingText, { color: colors.onSurfaceVariant }]}>Hello there</Text>
+          <Text style={[styles.nameText, { color: colors.onBackground }]}>Welcome back</Text>
         </View>
       </View>
 
@@ -227,7 +229,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <View style={[styles.splitContainer, isLargeScreen ? styles.splitRow : styles.splitCol]}>
         
         {/* LEFT COLUMN: ACCOUNTS, BUDGETS, GOALS, UPCOMING/OVERDUE */}
-        <View style={[styles.leftColumn, isLargeScreen && { flex: 1, paddingRight: 24 }]}>
+        <View style={[styles.leftColumn, isLargeScreen && { flex: 1, minWidth: 0, paddingRight: 24 }]}>
           
           {/* ACCOUNTS CAROUSEL */}
           <View style={styles.carouselContainer}>
@@ -238,7 +240,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 return (
                   <TouchableOpacity 
                     key={acc.id} 
-                    style={[styles.accountCard, { backgroundColor: colors.surface }]}
+                    style={[styles.accountCard, { width: isLargeScreen ? 172 : 145, backgroundColor: colors.surface }]}
                     onPress={() => onNavigateTab('accounts')}
                   >
                     <View style={styles.accCardTop}>
@@ -248,7 +250,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     <Text style={[styles.accBalance, { color: isPos ? colors.success : colors.error }]}>
                       {isPos ? '' : '-'}{currencySymbol}{Math.abs(acc.balance).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
                     </Text>
-                    <Text style={[styles.accTxCount, { color: colors.outline }]}>{acc.txCount} transactions</Text>
+                    <Text style={[styles.accTxCount, { color: colors.onSurfaceVariant }]}>{acc.txCount} transactions</Text>
                   </TouchableOpacity>
                 );
               })}
@@ -280,7 +282,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <TouchableOpacity 
                     key={b.id} 
                     style={[
-                      styles.horizontalBudgetCard, 
+                      styles.horizontalBudgetCard,
+                      { width: desktopFeatureCardWidth },
                       { 
                         backgroundColor: colors.surface, 
                         borderColor: colors.outline + '30', 
@@ -329,18 +332,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                             </View>
                             
                             <View style={styles.dateRangeRow}>
-                              <Text style={[styles.dateRangeText, { color: colors.outline }]}>{startDateStr}</Text>
-                              <Text style={[styles.dateRangeText, { color: colors.outline }]}>{endDateStr}</Text>
+                              <Text style={[styles.dateRangeText, { color: colors.onSurfaceVariant }]}>{startDateStr}</Text>
+                              <Text style={[styles.dateRangeText, { color: colors.onSurfaceVariant }]}>{endDateStr}</Text>
                             </View>
                           </View>
 
-                          <Text style={[styles.bDailyText, { color: colors.outline }]} numberOfLines={1}>
+                          <Text style={[styles.bDailyText, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
                             You can spend {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 2 })}/day for {daysLeft} more days
                           </Text>
                         </>
                       ) : (
                         <View style={{ marginTop: 8 }}>
-                          <Text style={[styles.bDailyText, { color: colors.outline }]}>
+                          <Text style={[styles.bDailyText, { color: colors.onSurfaceVariant }]}>
                             Spent: {currencySymbol}{b.spent.toLocaleString('en-IN')} (No limit set)
                           </Text>
                         </View>
@@ -362,15 +365,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           <View style={styles.carouselContainer}>
             {(!goals || goals.length === 0) ? (
-              <TouchableOpacity 
-                style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1, marginLeft: 24 }]}
+              <TouchableOpacity
+                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: colors.primaryContainer, borderColor: colors.primary }]}
                 onPress={() => onNavigateTab('goals')}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                  <MaterialIcons name="emoji-events" size={24} color={colors.primary} style={{ marginRight: 8 }} />
-                  <Text style={[styles.bName, { color: colors.onSurface }]}>Set Savings Target</Text>
+                <View style={[styles.emptyGoalIcon, { backgroundColor: colors.surface }]}>
+                  <MaterialIcons name="emoji-events" size={23} color={colors.primary} />
                 </View>
-                <Text style={[styles.bTotal, { color: colors.outline }]}>Track emergency funds, car, or vacation goals</Text>
+                <View style={styles.emptyGoalContent}>
+                  <Text style={[styles.emptyGoalTitle, { color: colors.onPrimaryContainer }]}>Start a savings goal</Text>
+                  <Text style={[styles.emptyGoalDescription, { color: colors.onPrimaryContainer }]}>Plan for an emergency fund, trip, or big purchase.</Text>
+                </View>
+                <View style={[styles.emptyGoalAction, { backgroundColor: colors.primary }]}>
+                  <MaterialIcons name="add" size={18} color={colors.onPrimary} />
+                </View>
               </TouchableOpacity>
             ) : (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
@@ -381,7 +389,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   return (
                     <TouchableOpacity 
                       key={g.id} 
-                      style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1 }]}
+                      style={[styles.horizontalBudgetCard, { width: desktopFeatureCardWidth, backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1 }]}
                       onPress={() => onNavigateTab('goals')}
                       activeOpacity={0.85}
                     >
@@ -392,21 +400,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                           </View>
                           <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{g.name}</Text>
                         </View>
-                        <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
+                        <MaterialIcons name="chevron-right" size={20} color={colors.onSurfaceVariant} />
                       </View>
 
                       <View style={styles.bAmountRow}>
                         <Text style={[styles.bLeft, { color: colors.onSurface }]}>
                           {currencySymbol}{g.currentAmount.toLocaleString('en-IN')}
                         </Text>
-                        <Text style={[styles.bTotal, { color: colors.outline }]}>
+                        <Text style={[styles.bTotal, { color: colors.onSurfaceVariant }]}>
                           of {currencySymbol}{g.targetAmount.toLocaleString('en-IN')}
                         </Text>
                       </View>
 
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: colors.onSurface }}>{Math.round(pct)}% Saved</Text>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: colors.outline }}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: colors.onSurfaceVariant }}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
                       </View>
                       <View style={[styles.bProgressBar, { backgroundColor: `${g.color || colors.primary}20` }]}>
                         <View style={[styles.bProgressFill, { backgroundColor: g.color || colors.primary, width: `${pct}%` }]} />
@@ -429,7 +437,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <Text style={[styles.goalTitle, { color: colors.onSurface }]}>Upcoming Bills</Text>
               </View>
               <View style={styles.goalFooter}>
-                <Text style={[styles.goalTx, { color: colors.outline }]}>{recurringStats.upcomingCount} due in 7d</Text>
+                <Text style={[styles.goalTx, { color: colors.onSurfaceVariant }]}>{recurringStats.upcomingCount} due in 7d</Text>
                 <Text style={[styles.goalAmt, { color: colors.primary }]}>{currencySymbol}{recurringStats.upcomingSum.toLocaleString('en-IN')}</Text>
               </View>
             </TouchableOpacity>
@@ -443,7 +451,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <Text style={[styles.goalTitle, { color: colors.onSurface }]}>Overdue EMIs</Text>
               </View>
               <View style={styles.goalFooter}>
-                <Text style={[styles.goalTx, { color: colors.outline }]}>{recurringStats.overdueCount} overdue</Text>
+                <Text style={[styles.goalTx, { color: colors.onSurfaceVariant }]}>{recurringStats.overdueCount} overdue</Text>
                 <Text style={[styles.goalAmt, { color: colors.error }]}>{currencySymbol}{recurringStats.overdueSum.toLocaleString('en-IN')}</Text>
               </View>
             </TouchableOpacity>
@@ -454,7 +462,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* RIGHT COLUMN: RECENT TRANSACTIONS (Independent scroll on web) */}
         <View style={[
           styles.rightColumn, 
-          isLargeScreen && { width: 420 },
+          isLargeScreen && { width: 440, marginLeft: 24 },
           (isLargeScreen && Platform.OS === 'web') ? ({ 
             maxHeight: 'calc(100vh - 160px)', 
             overflowY: 'auto', 
@@ -463,7 +471,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         ]}>
           {groupedTxs.map(group => (
             <View key={group.title} style={styles.txGroup}>
-              <Text style={[styles.txGroupTitle, { color: colors.outline }]}>{group.title}</Text>
+              <Text style={[styles.txGroupTitle, { color: colors.onSurfaceVariant }]}>{group.title}</Text>
               
               {group.data.map(tx => {
                 const isExpense = tx.type === 'expense' || tx.type === 'transfer';
@@ -520,12 +528,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         {tx.type === 'transfer' ? (
                           <>
-                            <Text style={[styles.txSub, { color: colors.outline }]}>{acc?.name || 'Unknown'}</Text>
-                            <MaterialIcons name="arrow-forward" size={12} color={colors.outline} style={{ marginHorizontal: 4 }} />
-                            <Text style={[styles.txSub, { color: colors.outline }]}>{toAcc?.name || 'Unknown'}</Text>
+                            <Text style={[styles.txSub, { color: colors.onSurfaceVariant }]}>{acc?.name || 'Unknown'}</Text>
+                            <MaterialIcons name="arrow-forward" size={12} color={colors.onSurfaceVariant} style={{ marginHorizontal: 4 }} />
+                            <Text style={[styles.txSub, { color: colors.onSurfaceVariant }]}>{toAcc?.name || 'Unknown'}</Text>
                           </>
                         ) : (
-                          <Text style={[styles.txSub, { color: colors.outline }]}>{acc?.name || 'Unknown'}</Text>
+                          <Text style={[styles.txSub, { color: colors.onSurfaceVariant }]}>{acc?.name || 'Unknown'}</Text>
                         )}
                       </View>
                     </View>
@@ -534,7 +542,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       <Text style={[styles.txAmount, { color: amtColor }]}>
                         {amtPrefix}{currencySymbol}{tx.amount.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
                       </Text>
-                      <Text style={[styles.txTime, { color: colors.outline }]}>{formatTime(tx.date)}</Text>
+                      <Text style={[styles.txTime, { color: colors.onSurfaceVariant }]}>{formatTime(tx.date)}</Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -543,8 +551,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           ))}
           {groupedTxs.length === 0 && (
             <View style={styles.emptyState}>
-              <MaterialIcons name="receipt-long" size={48} color={colors.outline} style={{ marginBottom: 16 }} />
-              <Text style={[styles.emptyText, { color: colors.outline }]}>No recent transactions found.</Text>
+              <MaterialIcons name="receipt-long" size={48} color={colors.onSurfaceVariant} style={{ marginBottom: 16 }} />
+              <Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>No recent transactions found.</Text>
             </View>
           )}
         </View>
@@ -561,9 +569,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
-    paddingTop: Platform.OS === 'web' ? 24 : 12,
-    paddingBottom: 16,
+    paddingHorizontal: Platform.OS === 'web' ? 28 : 20,
+    paddingTop: Platform.OS === 'web' ? 28 : 20,
+    paddingBottom: 22,
   },
   headerLeft: {
     flex: 1,
@@ -574,16 +582,16 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   dateText: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 2,
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 3,
   },
   headerRight: {
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
   greetingText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '500',
     marginBottom: 2,
   },
@@ -595,8 +603,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
-    marginBottom: 10,
+    paddingHorizontal: Platform.OS === 'web' ? 28 : 20,
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 18,
@@ -607,10 +615,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   carouselContainer: {
-    marginBottom: 18,
+    marginBottom: 24,
   },
   carouselScroll: {
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
+    paddingHorizontal: Platform.OS === 'web' ? 28 : 20,
     gap: 12,
   },
   accountCard: {
@@ -649,7 +657,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   splitContainer: {
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
+    paddingHorizontal: Platform.OS === 'web' ? 28 : 20,
     paddingBottom: 110,
   },
   splitRow: {
@@ -659,7 +667,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   leftColumn: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   rightColumn: {
     
@@ -673,6 +681,43 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
+  },
+  emptyGoalCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 94,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+  },
+  emptyGoalIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  emptyGoalContent: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  emptyGoalTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 3,
+  },
+  emptyGoalDescription: {
+    fontSize: 12,
+    lineHeight: 17,
+    opacity: 0.78,
+  },
+  emptyGoalAction: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   bCardHeaderBand: {
     paddingHorizontal: 14,
@@ -769,13 +814,13 @@ const styles = StyleSheet.create({
   goalsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: 12,
   },
   goalCard: {
     flex: 1,
     minWidth: 150,
     borderRadius: 16,
-    padding: 16,
+    padding: 18,
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.05,
@@ -785,7 +830,7 @@ const styles = StyleSheet.create({
   goalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   goalTitle: {
     fontSize: 16,
