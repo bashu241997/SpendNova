@@ -297,12 +297,6 @@ function MainAppContent() {
     <SafeAreaView style={safeAreaStyle}>
       <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
       <View style={containerStyle}>
-        <View style={[styles.mainHeader, { borderBottomColor: colors.outline, backgroundColor: colors.surface }]}>
-          <Text style={[styles.mainHeaderTitle, { color: colors.onSurface }]}>
-            {getHeaderTitle()}
-          </Text>
-        </View>
-
         <View style={styles.viewport}>
           {renderActiveScreen()}
         </View>
