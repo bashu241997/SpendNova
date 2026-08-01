@@ -10,6 +10,9 @@ import {
   Transaction, 
   Account, 
   Category, 
+  Budget,
+  RecurringTransaction,
+  Goal,
   CloudBackup, 
   AppData,
 
@@ -19,6 +22,12 @@ import {
   saveAccounts,
   loadCategories,
   saveCategories,
+  loadBudgets,
+  saveBudgets,
+  loadRecurring,
+  saveRecurring,
+  loadGoals,
+  saveGoals,
   loadCloudBackups,
   saveCloudBackups,
   createCloudBackup,
@@ -27,6 +36,15 @@ import {
   saveTermsAcceptance,
 
 } from '../utils/storage';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  uploadDriveBackup, 
+  downloadDriveBackup, 
+  listDriveBackups, 
+  deleteDriveBackup,
+  DriveFile
+} from '../utils/googleDrive';
 
 export type CountryType = 'US' | 'IN' | 'EU' | 'UK';
 
@@ -37,10 +55,20 @@ export const countryToSymbolMap: Record<CountryType, string> = {
   UK: '£',
 };
 
+export interface GoogleUser {
+  id: string;
+  email: string;
+  name: string;
+  picture: string;
+}
+
 interface AppContextProps {
   transactions: Transaction[];
   accounts: Account[];
   categories: Category[];
+  budgets: Budget[];
+  recurringTxs: RecurringTransaction[];
+  goals: Goal[];
   loading: boolean;
   themeType: ThemeType;
   setThemeType: (theme: ThemeType) => void;
@@ -53,7 +81,6 @@ interface AppContextProps {
   hasAcceptedTerms: boolean;
   acceptTerms: () => Promise<void>;
 
-  
   addTransaction: (tx: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (tx: Transaction) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -67,13 +94,31 @@ interface AppContextProps {
   deleteCategory: (id: string) => Promise<void>;
   setCategoryBudget: (categoryId: string, budget?: number) => Promise<void>;
 
+  addBudget: (b: Omit<Budget, 'id'>) => Promise<void>;
+  updateBudget: (b: Budget) => Promise<void>;
+  deleteBudget: (id: string) => Promise<void>;
+
+  addRecurring: (r: Omit<RecurringTransaction, 'id'>) => Promise<void>;
+  updateRecurring: (r: RecurringTransaction) => Promise<void>;
+  deleteRecurring: (id: string) => Promise<void>;
+
+  addGoal: (g: Omit<Goal, 'id'>) => Promise<void>;
+  updateGoal: (g: Goal) => Promise<void>;
+  deleteGoal: (id: string) => Promise<void>;
+  depositToGoal: (goalId: string, amount: number) => Promise<void>;
+
   importBackupData: (data: AppData) => Promise<void>;
   mergeBackupData: (data: AppData) => Promise<void>;
-  cloudBackups: CloudBackup[];
+
+  googleToken: string | null;
+  googleUser: GoogleUser | null;
+  setGoogleAuth: (token: string | null, user: GoogleUser | null) => Promise<void>;
+  
+  cloudBackups: DriveFile[];
   refreshCloudBackups: () => Promise<void>;
-  backupToCloud: (deviceName: string) => Promise<void>;
-  restoreBackupFromCloud: (backupId: string) => Promise<void>;
-  removeCloudBackup: (backupId: string) => Promise<void>;
+  backupToCloud: () => Promise<void>;
+  restoreBackupFromCloud: (fileId: string) => Promise<void>;
+  removeCloudBackup: (fileId: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -85,11 +130,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [cloudBackups, setCloudBackups] = useState<CloudBackup[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [recurringTxs, setRecurringTxs] = useState<RecurringTransaction[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [cloudBackups, setCloudBackups] = useState<DriveFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [country, setCountryState] = useState<CountryType>('IN');
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
-
+  const [googleToken, setGoogleToken] = useState<string | null>(null);
+  const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
 
   useEffect(() => {
     if (systemScheme === 'dark') {
@@ -104,17 +153,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const txs = await loadTransactions();
       const accs = await loadAccounts();
       const cats = await loadCategories();
+      const bgs = await loadBudgets();
+      const recs = await loadRecurring();
+      const gls = await loadGoals();
       setTransactions(txs);
       setAccounts(accs);
       setCategories(cats);
-      
-      const backups = await loadCloudBackups();
-      setCloudBackups(backups);
+      setBudgets(bgs);
+      setRecurringTxs(recs);
+      setGoals(gls);
 
       const termsAccepted = await loadTermsAcceptance();
       setHasAcceptedTerms(termsAccepted);
 
-
+      const storedToken = await AsyncStorage.getItem('google_auth_token');
+      const storedUser = await AsyncStorage.getItem('google_auth_user');
+      
+      if (storedToken && storedUser) {
+        setGoogleToken(storedToken);
+        setGoogleUser(JSON.parse(storedUser));
+        const backups = await listDriveBackups(storedToken);
+        setCloudBackups(backups);
+      }
       
       setLoading(false);
     };
@@ -265,34 +325,133 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await saveCategories(mergedCats);
   };
 
-  const refreshCloudBackups = async () => {
-    const backups = await loadCloudBackups();
-    setGoogleBackups(backups);
-  };
-
-  const setGoogleBackups = (backups: CloudBackup[]) => {
-    setCloudBackups(backups);
-  };
-
-  const backupToCloud = async (deviceName: string) => {
-    const currentData: AppData = { transactions, accounts, categories };
-    const newBackup = await createCloudBackup(currentData, deviceName);
-    const backups = await loadCloudBackups();
-    setGoogleBackups(backups);
-  };
-
-  const restoreBackupFromCloud = async (backupId: string) => {
-    const backups = await loadCloudBackups();
-    const backup = backups.find(b => b.id === backupId);
-    if (backup) {
-      await importBackupData(backup.data);
+  const setGoogleAuth = async (token: string | null, user: GoogleUser | null) => {
+    setGoogleToken(token);
+    setGoogleUser(user);
+    if (token && user) {
+      await AsyncStorage.setItem('google_auth_token', token);
+      await AsyncStorage.setItem('google_auth_user', JSON.stringify(user));
+      const backups = await listDriveBackups(token);
+      setCloudBackups(backups);
+    } else {
+      await AsyncStorage.removeItem('google_auth_token');
+      await AsyncStorage.removeItem('google_auth_user');
+      setCloudBackups([]);
     }
   };
 
-  const removeCloudBackup = async (backupId: string) => {
-    await deleteCloudBackup(backupId);
-    const backups = await loadCloudBackups();
-    setGoogleBackups(backups);
+  const refreshCloudBackups = async () => {
+    if (!googleToken) return;
+    const backups = await listDriveBackups(googleToken);
+    setCloudBackups(backups);
+  };
+
+  const backupToCloud = async () => {
+    if (!googleToken) return;
+    const currentData: AppData = { transactions, accounts, categories, budgets };
+    const success = await uploadDriveBackup(JSON.stringify(currentData), googleToken);
+    if (success) {
+      await refreshCloudBackups();
+    } else {
+      alert('Failed to upload backup to Google Drive.');
+    }
+  };
+
+  const restoreBackupFromCloud = async (fileId: string) => {
+    if (!googleToken) return;
+    const backupData = await downloadDriveBackup(fileId, googleToken);
+    if (backupData) {
+      await importBackupData(backupData);
+    } else {
+      alert('Failed to restore backup from Google Drive.');
+    }
+  };
+
+  const removeCloudBackup = async (fileId: string) => {
+    if (!googleToken) return;
+    const success = await deleteDriveBackup(fileId, googleToken);
+    if (success) {
+      await refreshCloudBackups();
+    } else {
+      alert('Failed to delete backup from Google Drive.');
+    }
+  };
+
+  const addBudget = async (b: Omit<Budget, 'id'>) => {
+    const newB: Budget = {
+      ...b,
+      id: `bg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+    };
+    const newList = [...budgets, newB];
+    setBudgets(newList);
+    await saveBudgets(newList);
+  };
+
+  const updateBudget = async (b: Budget) => {
+    const newList = budgets.map(item => item.id === b.id ? b : item);
+    setBudgets(newList);
+    await saveBudgets(newList);
+  };
+
+  const deleteBudget = async (id: string) => {
+    const newList = budgets.filter(item => item.id !== id);
+    setBudgets(newList);
+    await saveBudgets(newList);
+  };
+
+  const addRecurring = async (r: Omit<RecurringTransaction, 'id'>) => {
+    const newR: RecurringTransaction = {
+      ...r,
+      id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+    };
+    const newList = [...recurringTxs, newR];
+    setRecurringTxs(newList);
+    await saveRecurring(newList);
+  };
+
+  const updateRecurring = async (r: RecurringTransaction) => {
+    const newList = recurringTxs.map(item => item.id === r.id ? r : item);
+    setRecurringTxs(newList);
+    await saveRecurring(newList);
+  };
+
+  const deleteRecurring = async (id: string) => {
+    const newList = recurringTxs.filter(item => item.id !== id);
+    setRecurringTxs(newList);
+    await saveRecurring(newList);
+  };
+
+  const addGoal = async (g: Omit<Goal, 'id'>) => {
+    const newG: Goal = {
+      ...g,
+      id: `goal_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
+    };
+    const newList = [...goals, newG];
+    setGoals(newList);
+    await saveGoals(newList);
+  };
+
+  const updateGoal = async (g: Goal) => {
+    const newList = goals.map(item => item.id === g.id ? g : item);
+    setGoals(newList);
+    await saveGoals(newList);
+  };
+
+  const deleteGoal = async (id: string) => {
+    const newList = goals.filter(item => item.id !== id);
+    setGoals(newList);
+    await saveGoals(newList);
+  };
+
+  const depositToGoal = async (goalId: string, amount: number) => {
+    const newList = goals.map(item => {
+      if (item.id === goalId) {
+        return { ...item, currentAmount: item.currentAmount + amount };
+      }
+      return item;
+    });
+    setGoals(newList);
+    await saveGoals(newList);
   };
 
   return (
@@ -301,6 +460,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         transactions,
         accounts,
         categories,
+        budgets,
+        recurringTxs,
+        goals,
         loading,
         themeType,
         setThemeType,
@@ -323,8 +485,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateCategory,
         deleteCategory,
         setCategoryBudget,
+        addBudget,
+        updateBudget,
+        deleteBudget,
+        addRecurring,
+        updateRecurring,
+        deleteRecurring,
+        addGoal,
+        updateGoal,
+        deleteGoal,
+        depositToGoal,
         importBackupData,
         mergeBackupData,
+        
+        googleToken,
+        googleUser,
+        setGoogleAuth,
         cloudBackups,
         refreshCloudBackups,
         backupToCloud,

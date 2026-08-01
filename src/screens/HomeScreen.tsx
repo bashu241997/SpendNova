@@ -5,8 +5,8 @@ import {
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
-  FlatList,
-  Platform
+  Platform,
+  useWindowDimensions
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
@@ -15,33 +15,74 @@ import { Transaction } from '../utils/storage';
 interface HomeScreenProps {
   onAddTransaction: (type?: 'income' | 'expense' | 'transfer') => void;
   onEditTransaction: (tx: Transaction) => void;
-  onNavigateTab: (tab: 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings') => void;
+  onNavigateTab: (tab: 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings' | 'recurring' | 'goals') => void;
 }
+
+const formatTime = (isoString: string) => {
+  const d = new Date(isoString);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const formatDateKey = (isoString: string) => {
+  const d = new Date(isoString);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (d.toDateString() === today.toDateString()) {
+    return `Today, ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  } else if (d.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday';
+  }
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+};
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ 
   onAddTransaction, 
   onEditTransaction,
   onNavigateTab 
 }) => {
-  const { 
-    colors, 
-    transactions, 
-    accounts, 
-    categories, 
-    currencySymbol 
-  } = useApp();
+  const { accounts, categories, transactions, budgets, recurringTxs, goals, colors, currencySymbol } = useApp();
 
-  // Current month date calculations
+  const { width } = useWindowDimensions();
+  const isLargeScreen = width > 1024;
+
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
+  const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
+  const daysInMonth = endOfMonth.getDate();
+  const currentDay = now.getDate();
+  const daysLeft = daysInMonth - currentDay + 1;
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  // Recurring EMIs / Subscriptions Stats (Upcoming vs Overdue)
+  const recurringStats = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  // Current Month Transactions
+    let upcomingCount = 0;
+    let upcomingSum = 0;
+    let overdueCount = 0;
+    let overdueSum = 0;
+
+    (recurringTxs || []).forEach(r => {
+      const due = new Date(r.nextDueDate);
+      due.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        overdueCount++;
+        overdueSum += r.amount;
+      } else if (diffDays <= 7) {
+        upcomingCount++;
+        upcomingSum += r.amount;
+      }
+    });
+
+    return { upcomingCount, upcomingSum, overdueCount, overdueSum };
+  }, [recurringTxs]);
+
+  // Monthly Transactions Filter
   const monthlyTxs = useMemo(() => {
     return transactions.filter(t => {
       const d = new Date(t.date);
@@ -49,416 +90,420 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     });
   }, [transactions, currentYear, currentMonth]);
 
-  // Monthly Income, Expense, Saved
-  const { monthlyIncome, monthlyExpense, monthlyNet } = useMemo(() => {
-    let inc = 0;
-    let exp = 0;
-    monthlyTxs.forEach(t => {
-      if (t.type === 'income') inc += t.amount;
-      if (t.type === 'expense') exp += t.amount;
+  // Accounts Calculation
+  const accountStats = useMemo(() => {
+    const stats = accounts.map(acc => {
+      let balance = (acc as any).initialBalance || 0;
+      let txCount = 0;
+      
+      transactions.forEach(t => {
+        if (t.account === acc.id) {
+          txCount++;
+          if (t.type === 'income') balance += t.amount;
+          if (t.type === 'expense') balance -= t.amount;
+          if (t.type === 'transfer') balance -= t.amount;
+        }
+        if (t.type === 'transfer' && t.toAccount === acc.id) {
+          txCount++;
+          balance += t.amount;
+        }
+      });
+      return { ...acc, balance, txCount };
     });
-    return {
-      monthlyIncome: inc,
-      monthlyExpense: exp,
-      monthlyNet: inc - exp
-    };
-  }, [monthlyTxs]);
-
-  // Total Account Balances Calculation
-  const accountBalances = useMemo(() => {
-    const map: Record<string, number> = {};
-    accounts.forEach(acc => {
-      map[acc.id] = 0;
-    });
-
-    transactions.forEach(t => {
-      if (t.type === 'income' && t.account && map[t.account] !== undefined) {
-        map[t.account] += t.amount;
-      } else if (t.type === 'expense' && t.account && map[t.account] !== undefined) {
-        map[t.account] -= t.amount;
-      } else if (t.type === 'transfer') {
-        if (t.account && map[t.account] !== undefined) map[t.account] -= t.amount;
-        if (t.toAccount && map[t.toAccount] !== undefined) map[t.toAccount] += t.amount;
-      }
-    });
-
-    return map;
+    return stats;
   }, [accounts, transactions]);
 
-  const totalNetWorth = useMemo(() => {
-    return Object.values(accountBalances).reduce((sum, b) => sum + b, 0);
-  }, [accountBalances]);
+  // Budget Calculations matching BudgetsScreen
+  const userBudgetStats = useMemo(() => {
+    if (budgets && budgets.length > 0) {
+      return budgets.map(b => {
+        const spent = transactions.filter(t => {
+          if (t.type !== 'expense') return false;
+          const tDate = new Date(t.date);
+          if (tDate.getFullYear() !== currentYear || tDate.getMonth() !== currentMonth) return false;
 
-  // Budget Calculations
-  const budgetStats = useMemo(() => {
-    let totalBudget = 0;
-    let totalSpent = 0;
+          if (b.includedAccounts && b.includedAccounts.length > 0) {
+            if (!b.includedAccounts.includes(t.account)) return false;
+          }
+          if (b.excludedCategories && b.excludedCategories.includes(t.category)) return false;
+          if (b.includedCategories && b.includedCategories.length > 0) {
+            if (!b.includedCategories.includes(t.category)) return false;
+            if (b.includedSubcategories && b.includedSubcategories.length > 0) {
+              if (t.subcategory && !b.includedSubcategories.includes(t.subcategory)) return false;
+            }
+          }
+          return true;
+        }).reduce((sum, t) => sum + t.amount, 0);
 
-    categories.forEach(cat => {
-      if (cat.type === 'expense' && cat.budget && cat.budget > 0) {
-        totalBudget += cat.budget;
-        
-        const spent = monthlyTxs
-          .filter(t => t.type === 'expense' && t.category === cat.id)
-          .reduce((sum, t) => sum + t.amount, 0);
-        
-        totalSpent += spent;
-      }
-    });
+        const left = b.amount - spent;
+        const pct = b.amount > 0 ? Math.min((spent / b.amount) * 100, 100) : 0;
+        const daily = Math.max(left / daysLeft, 0);
 
-    const ratio = totalBudget > 0 ? totalSpent / totalBudget : 0;
-    const remaining = totalBudget - totalSpent;
-    const pct = Math.min(Math.round(ratio * 100), 999);
+        let icon = 'pie-chart';
+        if (b.includedCategories && b.includedCategories.length > 0) {
+          const firstCat = categories.find(c => c.id === b.includedCategories[0] || c.name === b.includedCategories[0]);
+          if (firstCat?.icon) icon = firstCat.icon;
+        }
 
-    let statusText = 'On Track';
-    let statusColor = colors.success;
-    let statusBg = '#E6F4EA';
-
-    if (ratio > 1) {
-      statusText = 'Over Budget';
-      statusColor = colors.error;
-      statusBg = '#FFEBEE';
-    } else if (ratio >= 0.75) {
-      statusText = 'Near Limit';
-      statusColor = '#D97706';
-      statusBg = '#FEF3C7';
+        return {
+          id: b.id,
+          name: b.name,
+          color: b.color || colors.primary,
+          icon,
+          budget: b.amount,
+          spent,
+          left,
+          pct,
+          daily,
+          hasBudget: true
+        };
+      });
     }
 
-    return {
-      totalBudget,
-      totalSpent,
-      remaining,
-      pct,
-      ratio: Math.min(ratio, 1),
-      statusText,
-      statusColor,
-      statusBg
-    };
-  }, [categories, monthlyTxs, colors]);
+    return categories.filter(c => c.type === 'expense').map(cat => {
+      const spent = monthlyTxs
+        .filter(t => t.type === 'expense' && (t.category === cat.id || t.category === cat.name))
+        .reduce((sum, t) => sum + t.amount, 0);
 
-  // Top Expense Categories
-  const topCategories = useMemo(() => {
-    const catSpent: Record<string, number> = {};
-    monthlyTxs.filter(t => t.type === 'expense').forEach(t => {
-      catSpent[t.category] = (catSpent[t.category] || 0) + t.amount;
+      const hasBudget = Boolean(cat.budget && cat.budget > 0);
+      const budgetVal = hasBudget ? cat.budget! : 0;
+      const left = hasBudget ? budgetVal - spent : 0;
+      const pct = hasBudget ? Math.min((spent / budgetVal) * 100, 100) : (spent > 0 ? 100 : 0);
+      const daily = hasBudget ? Math.max(left / daysLeft, 0) : 0;
+
+      return {
+        id: cat.id,
+        name: cat.name,
+        color: cat.color || colors.primary,
+        icon: cat.icon || 'label',
+        budget: budgetVal,
+        spent,
+        left,
+        pct,
+        daily,
+        hasBudget
+      };
     });
+  }, [budgets, categories, transactions, monthlyTxs, daysLeft, currentYear, currentMonth, colors.primary]);
 
-    return Object.keys(catSpent)
-      .map(catId => {
-        const cat = categories.find(c => c.id === catId || c.name === catId);
-        return {
-          id: catId,
-          name: cat ? cat.name : catId,
-          icon: cat ? cat.icon : 'category',
-          color: cat ? cat.color : colors.primary,
-          budget: cat ? cat.budget : undefined,
-          spent: catSpent[catId],
-        };
-      })
-      .sort((a, b) => b.spent - a.spent)
-      .slice(0, 4);
-  }, [monthlyTxs, categories, colors]);
-
-  // Recent 5 Transactions
-  const recentTransactions = useMemo(() => {
-    return [...transactions]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 5);
+  // Grouped Transactions
+  const groupedTxs = useMemo(() => {
+    const sorted = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const groups: { title: string; data: Transaction[] }[] = [];
+    
+    sorted.slice(0, 50).forEach(t => { // Show last 50
+      const key = formatDateKey(t.date);
+      let group = groups.find(g => g.title === key);
+      if (!group) {
+        group = { title: key, data: [] };
+        groups.push(group);
+      }
+      group.data.push(t);
+    });
+    return groups;
   }, [transactions]);
 
+  // Header Time logic
+  const timeString = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const dayName = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const monthDay = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Top Greeting & Date Header */}
-      <View style={styles.topHeader}>
-        <View>
-          <Text style={[styles.greetingSub, { color: colors.onSurfaceVariant }]}>
-            {monthNames[currentMonth]} {currentYear} OVERVIEW
-          </Text>
-          <Text style={[styles.greetingTitle, { color: colors.onSurface }]}>
-            Dashboard
-          </Text>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* HEADER SECTION */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={[styles.timeText, { color: colors.onBackground }]}>{timeString}</Text>
+          <Text style={[styles.dateText, { color: colors.outline }]}>{dayName}</Text>
+          <Text style={[styles.dateText, { color: colors.outline }]}>{monthDay}, {currentYear}</Text>
         </View>
-        <TouchableOpacity 
-          style={[styles.settingsIconBtn, { backgroundColor: colors.surfaceVariant }]}
-          onPress={() => onNavigateTab('settings')}
-        >
-          <MaterialIcons name="tune" size={20} color={colors.onSurface} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Hero Net Worth Card */}
-      <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}>
-        <Text style={[styles.heroLabel, { color: colors.onSurfaceVariant }]}>NET WORTH BALANCE</Text>
-        <Text style={[styles.heroAmount, { color: colors.onSurface }]}>
-          {currencySymbol}{totalNetWorth.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-        </Text>
-
-        {/* Cashflow Row */}
-        <View style={styles.cashflowRow}>
-          <View style={styles.cashflowItem}>
-            <View style={[styles.cashflowBadge, { backgroundColor: '#E6F4EA' }]}>
-              <MaterialIcons name="arrow-downward" size={14} color={colors.success} />
-              <Text style={[styles.cashflowBadgeText, { color: colors.success }]}>Income</Text>
-            </View>
-            <Text style={[styles.cashflowVal, { color: colors.success }]}>
-              +{currencySymbol}{monthlyIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </Text>
-          </View>
-
-          <View style={[styles.cashflowDivider, { backgroundColor: colors.outline }]} />
-
-          <View style={styles.cashflowItem}>
-            <View style={[styles.cashflowBadge, { backgroundColor: '#FFEBEE' }]}>
-              <MaterialIcons name="arrow-upward" size={14} color={colors.error} />
-              <Text style={[styles.cashflowBadgeText, { color: colors.error }]}>Expenses</Text>
-            </View>
-            <Text style={[styles.cashflowVal, { color: colors.error }]}>
-              -{currencySymbol}{monthlyExpense.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-            </Text>
-          </View>
-        </View>
-
-        {/* Quick Action Buttons */}
-        <View style={styles.quickActionsRow}>
-          <TouchableOpacity 
-            style={[styles.quickActionBtn, { backgroundColor: colors.primary }]}
-            onPress={() => onAddTransaction('expense')}
-            activeOpacity={0.8}
-          >
-            <MaterialIcons name="remove-circle-outline" size={18} color={colors.onPrimary} style={{ marginRight: 6 }} />
-            <Text style={[styles.quickActionText, { color: colors.onPrimary }]}>Expense</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.quickActionBtn, { backgroundColor: colors.primaryContainer }]}
-            onPress={() => onAddTransaction('income')}
-            activeOpacity={0.8}
-          >
-            <MaterialIcons name="add-circle-outline" size={18} color={colors.onPrimaryContainer} style={{ marginRight: 6 }} />
-            <Text style={[styles.quickActionText, { color: colors.onPrimaryContainer }]}>Income</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.quickActionBtn, { backgroundColor: colors.surfaceVariant }]}
-            onPress={() => onAddTransaction('transfer')}
-            activeOpacity={0.8}
-          >
-            <MaterialIcons name="swap-horiz" size={18} color={colors.onSurface} style={{ marginRight: 6 }} />
-            <Text style={[styles.quickActionText, { color: colors.onSurface }]}>Transfer</Text>
-          </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <Text style={[styles.greetingText, { color: colors.outline }]}>Hello there</Text>
+          <Text style={[styles.nameText, { color: colors.primary }]}>Welcome back</Text>
         </View>
       </View>
 
-      {/* Monthly Budget Pace Widget */}
-      <TouchableOpacity 
-        style={[styles.widgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}
-        onPress={() => onNavigateTab('budgets')}
-        activeOpacity={0.8}
-      >
-        <View style={styles.widgetHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={[styles.widgetIconCircle, { backgroundColor: colors.primaryContainer }]}>
-              <MaterialIcons name="pie-chart" size={20} color={colors.primary} />
-            </View>
-            <View style={{ marginLeft: 10 }}>
-              <Text style={[styles.widgetTitle, { color: colors.onSurface }]}>Monthly Budget Pace</Text>
-              <Text style={[styles.widgetSubTitle, { color: colors.onSurfaceVariant }]}>
-                {budgetStats.totalBudget > 0 
-                  ? `${currencySymbol}${budgetStats.totalSpent.toFixed(2)} of ${currencySymbol}${budgetStats.totalBudget.toFixed(2)}`
-                  : 'No budgets set for categories'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.statusBadge, { backgroundColor: budgetStats.statusBg }]}>
-            <Text style={[styles.statusBadgeText, { color: budgetStats.statusColor }]}>
-              {budgetStats.statusText}
-            </Text>
-          </View>
-        </View>
-
-        {budgetStats.totalBudget > 0 && (
-          <View style={styles.widgetProgressContainer}>
-            <View style={[styles.widgetProgressTrack, { backgroundColor: colors.surfaceVariant }]}>
-              <View 
-                style={[
-                  styles.widgetProgressFill, 
-                  { 
-                    width: `${Math.min(budgetStats.pct, 100)}%`,
-                    backgroundColor: budgetStats.statusColor
-                  }
-                ]} 
-              />
-            </View>
-            <View style={styles.widgetProgressFooter}>
-              <Text style={[styles.widgetFooterText, { color: colors.onSurfaceVariant }]}>
-                {budgetStats.pct}% Spent
-              </Text>
-              <Text style={[
-                styles.widgetFooterText, 
-                { color: budgetStats.remaining >= 0 ? colors.success : colors.error, fontWeight: '700' }
-              ]}>
-                {budgetStats.remaining >= 0 
-                  ? `${currencySymbol}${budgetStats.remaining.toFixed(2)} remaining` 
-                  : `${currencySymbol}${Math.abs(budgetStats.remaining).toFixed(2)} over limit`}
-              </Text>
-            </View>
-          </View>
-        )}
-      </TouchableOpacity>
-
-      {/* Vaults & Accounts Carousel */}
-      <View style={styles.sectionHeaderRow}>
-        <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>Vaults & Accounts</Text>
-        <TouchableOpacity onPress={() => onNavigateTab('accounts')}>
-          <Text style={[styles.seeAllText, { color: colors.primary }]}>Manage ({accounts.length})</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carouselScroll}>
-        {accounts.map(acc => {
-          const bal = accountBalances[acc.id] || 0;
-          return (
-            <TouchableOpacity
-              key={acc.id}
-              style={[styles.accountCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}
-              onPress={() => onNavigateTab('accounts')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.accCardTop}>
-                <View style={[styles.accIconCircle, { backgroundColor: acc.color + '20' }]}>
-                  <MaterialIcons name={acc.icon as any} size={20} color={acc.color} />
+      {/* ACCOUNTS CAROUSEL */}
+      <View style={styles.carouselContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
+          {accountStats.map(acc => {
+            const isPos = acc.balance >= 0;
+            const dotColor = isPos ? colors.success : colors.error;
+            return (
+              <TouchableOpacity 
+                key={acc.id} 
+                style={[styles.accountCard, { backgroundColor: colors.surface }]}
+                onPress={() => onNavigateTab('accounts')}
+              >
+                <View style={styles.accCardTop}>
+                  <Text style={[styles.accName, { color: colors.onSurface }]} numberOfLines={1}>{acc.name}</Text>
+                  <View style={[styles.accDot, { backgroundColor: dotColor }]} />
                 </View>
-                <Text style={[styles.accTypeTag, { color: colors.onSurfaceVariant }]}>
-                  {acc.type.toUpperCase()}
+                <Text style={[styles.accBalance, { color: isPos ? colors.success : colors.error }]}>
+                  {isPos ? '' : '-'}{currencySymbol}{Math.abs(acc.balance).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
                 </Text>
-              </View>
-              <Text style={[styles.accName, { color: colors.onSurface }]} numberOfLines={1}>
-                {acc.name}
-              </Text>
-              <Text style={[styles.accBalance, { color: bal >= 0 ? colors.onSurface : colors.error }]}>
-                {currencySymbol}{bal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+                <Text style={[styles.accTxCount, { color: colors.outline }]}>{acc.txCount} transactions</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
-      {/* Top Category Spending */}
-      {topCategories.length > 0 && (
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>Top Category Burn</Text>
-            <TouchableOpacity onPress={() => onNavigateTab('stats')}>
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>Analytics</Text>
-            </TouchableOpacity>
-          </View>
+      {/* HORIZONTAL BUDGETS CAROUSEL */}
+      <View style={styles.sectionHeaderRow}>
+        <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Active Budgets</Text>
+        <TouchableOpacity onPress={() => onNavigateTab('budgets')}>
+          <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({userBudgetStats.length})</Text>
+        </TouchableOpacity>
+      </View>
 
-          <View style={styles.categoryGrid}>
-            {topCategories.map(cat => {
-              const pct = cat.budget ? Math.min(Math.round((cat.spent / cat.budget) * 100), 100) : 0;
-              return (
-                <View 
-                  key={cat.id} 
-                  style={[styles.catCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}
-                >
-                  <View style={styles.catCardTop}>
-                    <View style={[styles.catIconContainer, { backgroundColor: cat.color + '20' }]}>
-                      <MaterialIcons name={cat.icon as any} size={20} color={cat.color} />
-                    </View>
-                    <Text style={[styles.catSpentVal, { color: colors.onSurface }]}>
-                      {currencySymbol}{cat.spent.toFixed(2)}
-                    </Text>
-                  </View>
-                  <Text style={[styles.catTitle, { color: colors.onSurface }]} numberOfLines={1}>
-                    {cat.name}
-                  </Text>
-
-                  {cat.budget ? (
-                    <View style={styles.catProgressBox}>
-                      <View style={[styles.catTrack, { backgroundColor: colors.surfaceVariant }]}>
-                        <View style={[styles.catFill, { width: `${pct}%`, backgroundColor: cat.color }]} />
-                      </View>
-                      <Text style={[styles.catSub, { color: colors.onSurfaceVariant }]}>
-                        {pct}% of {currencySymbol}{cat.budget}
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={[styles.catSub, { color: colors.outline }]}>No budget target</Text>
-                  )}
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      {/* Recent Transactions Feed */}
-      <View style={styles.sectionContainer}>
-        <View style={styles.sectionHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>Recent Activity</Text>
-          <TouchableOpacity onPress={() => onNavigateTab('transactions')}>
-            <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({transactions.length})</Text>
-          </TouchableOpacity>
-        </View>
-
-        {recentTransactions.length === 0 ? (
-          <View style={[styles.emptyBox, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}>
-            <MaterialIcons name="receipt-long" size={36} color={colors.outline} />
-            <Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>No transactions logged yet.</Text>
+      <View style={styles.carouselContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
+          {userBudgetStats.map(b => (
             <TouchableOpacity 
-              style={[styles.addFirstBtn, { backgroundColor: colors.primary }]}
-              onPress={() => onAddTransaction()}
+              key={b.id} 
+              style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1 }]}
+              onPress={() => onNavigateTab('budgets')}
+              activeOpacity={0.85}
             >
-              <Text style={[styles.addFirstBtnText, { color: colors.onPrimary }]}>+ Log First Transaction</Text>
+              <View style={styles.bCardTop}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                  <View style={[styles.bIconWrap, { backgroundColor: `${b.color}20`, marginRight: 10 }]}>
+                    <MaterialIcons name={(b.icon || 'pie-chart') as any} size={20} color={b.color} />
+                  </View>
+                  <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
+              </View>
+
+              {b.hasBudget ? (
+                <>
+                  <View style={styles.bAmountRow}>
+                    <Text style={[styles.bLeft, { color: colors.onSurface }]}>
+                      {currencySymbol}{Math.max(b.left, 0).toLocaleString('en-IN')}
+                    </Text>
+                    <Text style={[styles.bTotal, { color: colors.outline }]}>
+                      left of {currencySymbol}{b.budget.toLocaleString('en-IN')}
+                    </Text>
+                  </View>
+
+                  <View style={styles.bProgressRow}>
+                    <Text style={[styles.bProgText, { color: colors.onSurface }]}>Spent {currencySymbol}{b.spent.toLocaleString('en-IN')}</Text>
+                    <Text style={[styles.bProgText, { color: colors.onSurface }]}>{Math.round(b.pct)}%</Text>
+                  </View>
+                  <View style={[styles.bProgressBar, { backgroundColor: `${b.color}20` }]}>
+                    <View style={[styles.bProgressFill, { backgroundColor: b.color, width: `${b.pct}%` }]} />
+                  </View>
+                  
+                  <Text style={[styles.bDailyText, { color: colors.outline }]} numberOfLines={1}>
+                    {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 0 })}/day for {daysLeft} days
+                  </Text>
+                </>
+              ) : (
+                <View style={{ marginTop: 12 }}>
+                  <Text style={[styles.bProgText, { color: colors.outline }]}>
+                    Spent: {currencySymbol}{b.spent.toLocaleString('en-IN')} (No limit set)
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
-          </View>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* SAVINGS GOALS CAROUSEL */}
+      <View style={styles.sectionHeaderRow}>
+        <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Savings Goals</Text>
+        <TouchableOpacity onPress={() => onNavigateTab('goals')}>
+          <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({(goals || []).length})</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.carouselContainer}>
+        {(!goals || goals.length === 0) ? (
+          <TouchableOpacity 
+            style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1, marginLeft: 24 }]}
+            onPress={() => onNavigateTab('goals')}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <MaterialIcons name="emoji-events" size={24} color={colors.primary} style={{ marginRight: 8 }} />
+              <Text style={[styles.bName, { color: colors.onSurface }]}>Set Savings Target</Text>
+            </View>
+            <Text style={[styles.bTotal, { color: colors.outline }]}>Track emergency funds, car, or vacation goals</Text>
+          </TouchableOpacity>
         ) : (
-          <View style={styles.txList}>
-            {recentTransactions.map(t => {
-              const cat = categories.find(c => c.id === t.category || c.name === t.category);
-              const acc = accounts.find(a => a.id === t.account);
-              const isInc = t.type === 'income';
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
+            {goals.map(g => {
+              const pct = g.targetAmount > 0 ? Math.min((g.currentAmount / g.targetAmount) * 100, 100) : 0;
+              const remaining = Math.max(g.targetAmount - g.currentAmount, 0);
 
               return (
-                <TouchableOpacity
-                  key={t.id}
-                  style={[styles.txItem, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}
-                  onPress={() => onEditTransaction(t)}
-                  activeOpacity={0.7}
+                <TouchableOpacity 
+                  key={g.id} 
+                  style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1 }]}
+                  onPress={() => onNavigateTab('goals')}
+                  activeOpacity={0.85}
                 >
-                  <View style={[styles.txIconBox, { backgroundColor: (cat?.color || colors.primary) + '20' }]}>
-                    <MaterialIcons 
-                      name={(cat?.icon || 'receipt') as any} 
-                      size={22} 
-                      color={cat?.color || colors.primary} 
-                    />
+                  <View style={styles.bCardTop}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                      <View style={[styles.bIconWrap, { backgroundColor: `${g.color || colors.primary}20`, marginRight: 10 }]}>
+                        <MaterialIcons name={(g.icon || 'savings') as any} size={20} color={g.color || colors.primary} />
+                      </View>
+                      <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{g.name}</Text>
+                    </View>
+                    <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
                   </View>
 
-                  <View style={styles.txMeta}>
-                    <Text style={[styles.txCategoryName, { color: colors.onSurface }]}>
-                      {cat?.name || t.category}
+                  <View style={styles.bAmountRow}>
+                    <Text style={[styles.bLeft, { color: colors.onSurface }]}>
+                      {currencySymbol}{g.currentAmount.toLocaleString('en-IN')}
                     </Text>
-                    <Text style={[styles.txSubText, { color: colors.onSurfaceVariant }]}>
-                      {acc?.name || 'Account'} • {t.date}
+                    <Text style={[styles.bTotal, { color: colors.outline }]}>
+                      of {currencySymbol}{g.targetAmount.toLocaleString('en-IN')}
                     </Text>
                   </View>
 
-                  <Text style={[
-                    styles.txAmountText,
-                    { color: isInc ? colors.success : colors.onSurface }
-                  ]}>
-                    {isInc ? '+' : '-'}{currencySymbol}{t.amount.toFixed(2)}
-                  </Text>
+                  <View style={styles.bProgressRow}>
+                    <Text style={[styles.bProgText, { color: colors.onSurface }]}>{Math.round(pct)}% Saved</Text>
+                    <Text style={[styles.bProgText, { color: colors.outline }]}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
+                  </View>
+                  <View style={[styles.bProgressBar, { backgroundColor: `${g.color || colors.primary}20` }]}>
+                    <View style={[styles.bProgressFill, { backgroundColor: g.color || colors.primary, width: `${pct}%` }]} />
+                  </View>
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
         )}
+      </View>
+
+      {/* SPLIT LAYOUT */}
+      <View style={[styles.splitContainer, isLargeScreen ? styles.splitRow : styles.splitCol]}>
+        
+        {/* LEFT COLUMN: UPCOMING & OVERDUE BILLS */}
+        <View style={[styles.leftColumn, isLargeScreen && { flex: 1, paddingRight: 24 }]}>
+          <View style={styles.goalsGrid}>
+            <TouchableOpacity 
+              style={[styles.goalCard, { backgroundColor: colors.surface }]}
+              onPress={() => onNavigateTab('recurring')}
+            >
+              <View style={styles.goalHeader}>
+                <MaterialIcons name="event" size={20} color={colors.primary} />
+                <Text style={[styles.goalTitle, { color: colors.onSurface }]}>Upcoming Bills</Text>
+              </View>
+              <View style={styles.goalFooter}>
+                <Text style={[styles.goalTx, { color: colors.outline }]}>{recurringStats.upcomingCount} due in 7d</Text>
+                <Text style={[styles.goalAmt, { color: colors.primary }]}>{currencySymbol}{recurringStats.upcomingSum.toLocaleString('en-IN')}</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.goalCard, { backgroundColor: colors.surface }]}
+              onPress={() => onNavigateTab('recurring')}
+            >
+              <View style={styles.goalHeader}>
+                <MaterialIcons name="warning" size={20} color={colors.error} />
+                <Text style={[styles.goalTitle, { color: colors.onSurface }]}>Overdue EMIs</Text>
+              </View>
+              <View style={styles.goalFooter}>
+                <Text style={[styles.goalTx, { color: colors.outline }]}>{recurringStats.overdueCount} overdue</Text>
+                <Text style={[styles.goalAmt, { color: colors.error }]}>{currencySymbol}{recurringStats.overdueSum.toLocaleString('en-IN')}</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+        </View>
+
+        {/* RIGHT COLUMN: RECENT TRANSACTIONS */}
+        <View style={[styles.rightColumn, isLargeScreen && { width: 450 }]}>
+          {groupedTxs.map(group => (
+            <View key={group.title} style={styles.txGroup}>
+              <Text style={[styles.txGroupTitle, { color: colors.outline }]}>{group.title}</Text>
+              
+              {group.data.map(tx => {
+                const isExpense = tx.type === 'expense' || tx.type === 'transfer';
+                const isIncome = tx.type === 'income';
+                
+                let amtColor = colors.onSurface;
+                if (isExpense) amtColor = colors.error;
+                if (isIncome) amtColor = colors.success;
+
+                let amtPrefix = isExpense ? '-' : (isIncome ? '+' : '');
+                
+                const cat = categories.find(c => c.id === tx.category);
+                const acc = accounts.find(a => a.id === tx.account);
+                const toAcc = accounts.find(a => a.id === tx.toAccount);
+                
+                let subObj: any = null;
+                if (tx.subcategory && cat?.subcategories) {
+                  subObj = cat.subcategories.find(s => {
+                    const isObj = typeof s === 'object';
+                    const sid = isObj ? (s as any).id : s;
+                    const sname = isObj ? (s as any).name : s;
+                    return sid === tx.subcategory || sname === tx.subcategory;
+                  });
+                  if (typeof subObj !== 'object') {
+                    subObj = { name: subObj, color: cat.color, icon: cat.icon };
+                  }
+                }
+
+                return (
+                  <TouchableOpacity 
+                    key={tx.id} 
+                    style={[styles.txItem, { backgroundColor: colors.surface }]}
+                    onPress={() => onEditTransaction(tx)}
+                  >
+                    <View style={styles.txIconWrap}>
+                      <View style={[styles.txIconCircle, { backgroundColor: `${cat?.color || colors.outline}20` }]}>
+                        <MaterialIcons name={(cat?.icon || 'help-outline') as any} size={24} color={cat?.color || colors.outline} />
+                      </View>
+                    </View>
+                    
+                    <View style={styles.txMid}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
+                        <Text style={[styles.txTitle, { color: colors.onSurface }]}>
+                          {tx.description || cat?.name || 'Transaction'}
+                        </Text>
+                        {subObj && (
+                          <View style={[styles.subPill, { backgroundColor: `${subObj.color}15` }]}>
+                            <MaterialIcons name={subObj.icon} size={12} color={subObj.color} style={{ marginRight: 4 }} />
+                            <Text style={[styles.subPillText, { color: colors.onSurface }]}>{subObj.name}</Text>
+                          </View>
+                        )}
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        {tx.type === 'transfer' ? (
+                          <>
+                            <Text style={[styles.txSub, { color: colors.outline }]}>{acc?.name || 'Unknown'}</Text>
+                            <MaterialIcons name="arrow-forward" size={12} color={colors.outline} style={{ marginHorizontal: 4 }} />
+                            <Text style={[styles.txSub, { color: colors.outline }]}>{toAcc?.name || 'Unknown'}</Text>
+                          </>
+                        ) : (
+                          <Text style={[styles.txSub, { color: colors.outline }]}>{acc?.name || 'Unknown'}</Text>
+                        )}
+                      </View>
+                    </View>
+                    
+                    <View style={styles.txRight}>
+                      <Text style={[styles.txAmount, { color: amtColor }]}>
+                        {amtPrefix}{currencySymbol}{tx.amount.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                      </Text>
+                      <Text style={[styles.txTime, { color: colors.outline }]}>{formatTime(tx.date)}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+          {groupedTxs.length === 0 && (
+            <View style={styles.emptyState}>
+              <MaterialIcons name="receipt-long" size={48} color={colors.outline} style={{ marginBottom: 16 }} />
+              <Text style={[styles.emptyText, { color: colors.outline }]}>No recent transactions found.</Text>
+            </View>
+          )}
+        </View>
+
       </View>
     </ScrollView>
   );
@@ -468,314 +513,296 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 110,
-  },
-  topHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 60 : 32,
+    paddingBottom: 24,
   },
-  greetingSub: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.5,
+  headerLeft: {
+    flex: 1,
+  },
+  timeText: {
+    fontSize: 48,
+    fontWeight: '300',
+    marginBottom: 4,
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: '500',
     marginBottom: 2,
   },
-  greetingTitle: {
-    fontSize: 26,
-    fontWeight: '900',
-  },
-  settingsIconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerRight: {
+    alignItems: 'flex-end',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  heroCard: {
-    padding: 20,
-    borderRadius: 24,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  heroLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-    marginBottom: 4,
-  },
-  heroAmount: {
-    fontSize: 32,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginBottom: 16,
-  },
-  cashflowRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  cashflowItem: {
-    flex: 1,
-  },
-  cashflowBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    marginBottom: 4,
-  },
-  cashflowBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-  cashflowVal: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  cashflowDivider: {
-    width: 1,
-    height: 32,
-    opacity: 0.2,
-    marginHorizontal: 12,
-  },
-  quickActionsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  quickActionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    height: 42,
-    borderRadius: 21,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quickActionText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  widgetCard: {
-    padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginBottom: 20,
-  },
-  widgetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  widgetIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  widgetTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  widgetSubTitle: {
-    fontSize: 12,
+  greetingText: {
+    fontSize: 16,
     fontWeight: '500',
-    marginTop: 1,
+    marginBottom: 4,
   },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  widgetProgressContainer: {
-    marginTop: 12,
-  },
-  widgetProgressTrack: {
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 6,
-  },
-  widgetProgressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  widgetProgressFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  widgetFooterText: {
-    fontSize: 11,
-    fontWeight: '600',
+  nameText: {
+    fontSize: 22,
+    fontWeight: '700',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    paddingHorizontal: 24,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  seeAllText: {
-    fontSize: 13,
+    fontSize: 20,
     fontWeight: '700',
   },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  horizontalBudgetCard: {
+    width: 260,
+    borderRadius: 20,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  carouselContainer: {
+    marginBottom: 32,
+  },
   carouselScroll: {
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    gap: 16,
   },
   accountCard: {
-    width: 160,
-    padding: 14,
-    borderRadius: 18,
-    borderWidth: 1,
-    marginRight: 12,
+    width: 150,
+    borderRadius: 16,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
   },
   accCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  accIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  accTypeTag: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    marginBottom: 8,
   },
   accName: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+    paddingRight: 8,
+  },
+  accDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   accBalance: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  sectionContainer: {
-    marginBottom: 24,
+  accTxCount: {
+    fontSize: 12,
   },
-  categoryGrid: {
+  splitContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 100,
+  },
+  splitRow: {
+    flexDirection: 'row',
+  },
+  splitCol: {
+    flexDirection: 'column',
+  },
+  leftColumn: {
+    marginBottom: 32,
+  },
+  rightColumn: {
+    
+  },
+  budgetsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 16,
+    marginBottom: 24,
   },
-  catCard: {
+  budgetCard: {
     flex: 1,
-    minWidth: '45%',
-    padding: 14,
-    borderRadius: 18,
-    borderWidth: 1,
+    minWidth: 280,
+    borderRadius: 20,
+    padding: 20,
   },
-  catCardTop: {
+  bCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  catIconContainer: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  bIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  catSpentVal: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  catTitle: {
-    fontSize: 13,
+  bName: {
+    fontSize: 20,
     fontWeight: '700',
-    marginBottom: 6,
   },
-  catProgressBox: {
-    gap: 4,
+  bAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 16,
   },
-  catTrack: {
-    height: 5,
-    borderRadius: 2.5,
-    overflow: 'hidden',
+  bLeft: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginRight: 8,
   },
-  catFill: {
-    height: '100%',
-    borderRadius: 2.5,
+  bTotal: {
+    fontSize: 14,
   },
-  catSub: {
-    fontSize: 10,
+  bProgressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  bProgText: {
+    fontSize: 12,
     fontWeight: '600',
   },
-  txList: {
-    gap: 8,
+  bProgressBar: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  bProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  bDailyText: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  goalsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  goalCard: {
+    flex: 1,
+    minWidth: 150,
+    borderRadius: 16,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  goalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  goalTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  goalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  goalTx: {
+    fontSize: 12,
+  },
+  goalAmt: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  txGroup: {
+    marginBottom: 24,
+  },
+  txGroupTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+    marginLeft: 4,
   },
   txItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderRadius: 16,
-    borderWidth: 1,
+    marginBottom: 8,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
   },
-  txIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+  txIconWrap: {
     marginRight: 12,
   },
-  txMeta: {
-    flex: 1,
-  },
-  txCategoryName: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  txSubText: {
-    fontSize: 11,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  txAmountText: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  emptyBox: {
-    padding: 32,
-    borderRadius: 20,
-    borderWidth: 1,
+  txIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  emptyText: {
-    fontSize: 14,
+  txMid: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  txTitle: {
+    fontSize: 15,
     fontWeight: '600',
-    marginTop: 10,
-    marginBottom: 16,
   },
-  addFirstBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+  subPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
-  addFirstBtnText: {
+  subPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  txSub: {
     fontSize: 13,
-    fontWeight: '700',
   },
+  txRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  txAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  txTime: {
+    fontSize: 12,
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+  }
 });

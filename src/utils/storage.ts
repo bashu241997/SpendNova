@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
+import Papa from 'papaparse';
+
 
 export type AccountType = 'savings' | 'credit' | 'cash' | 'custom';
 
@@ -15,6 +17,13 @@ export interface Account {
   type: AccountType;
 }
 
+export interface SubCategory {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -22,7 +31,7 @@ export interface Category {
   icon: string;
   color: string;
   budget?: number;
-  subcategories?: string[];
+  subcategories?: SubCategory[];
 }
 
 export interface Transaction {
@@ -41,6 +50,40 @@ export interface Transaction {
   isPending?: boolean;
 }
 
+export interface Budget {
+  id: string;
+  name: string;
+  amount: number;
+  color: string;
+  includedAccounts: string[];
+  includedCategories: string[];
+  excludedCategories: string[];
+  includedSubcategories: string[];
+}
+
+export interface RecurringTransaction {
+  id: string;
+  name: string;
+  amount: number;
+  type: 'expense' | 'income' | 'transfer';
+  frequency: 'monthly' | 'yearly' | 'weekly';
+  nextDueDate: string;
+  account: string;
+  category: string;
+  color: string;
+  icon: string;
+}
+
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate: string;
+  color: string;
+  icon: string;
+}
+
 export interface CloudBackup {
   id: string;
   timestamp: string;
@@ -52,37 +95,24 @@ export interface AppData {
   transactions: Transaction[];
   accounts: Account[];
   categories: Category[];
+  budgets?: Budget[];
+  recurring?: RecurringTransaction[];
+  goals?: Goal[];
 }
 
 const TRANSACTIONS_KEY = 'ledgeit_transactions';
 const ACCOUNTS_KEY = 'ledgeit_accounts';
 const CATEGORIES_KEY = 'ledgeit_categories';
+const BUDGETS_KEY = 'ledgeit_budgets';
+const RECURRING_KEY = 'ledgeit_recurring';
+const GOALS_KEY = 'ledgeit_goals';
 const CLOUD_BACKUPS_KEY = 'ledgeit_cloud_backups';
 const TERMS_ACCEPTED_KEY = 'ledgeit_terms_accepted';
 
 
-export const DEFAULT_ACCOUNTS: Account[] = [
-  { id: 'acc_cash', name: 'Main Cash', icon: 'payments', color: '#4CAF50', type: 'cash' },
-  { id: 'acc_savings', name: 'Chase Bank', icon: 'account-balance', color: '#2196F3', type: 'savings' },
-  { id: 'acc_credit', name: 'Barclays Card', icon: 'credit-card', color: '#F44336', type: 'credit' }
-];
+export const DEFAULT_ACCOUNTS: Account[] = [];
 
-export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'cat_salary', name: 'Salary', type: 'income', icon: 'work', color: '#10B981' },
-  { id: 'cat_allowance', name: 'Allowance', type: 'income', icon: 'card-giftcard', color: '#84CC16' },
-  { id: 'cat_bonus', name: 'Bonus', type: 'income', icon: 'monetization-on', color: '#14B8A6' },
-  { id: 'cat_other_inc', name: 'Other (Income)', type: 'income', icon: 'more-horiz', color: '#3B82F6' },
-  { id: 'cat_food', name: 'Food & Dining', type: 'expense', icon: 'restaurant', color: '#F59E0B', budget: 500 },
-  { id: 'cat_social', name: 'Social & Fun', type: 'expense', icon: 'sports-esports', color: '#EC4899', budget: 250 },
-  { id: 'cat_transport', name: 'Transport & Fuel', type: 'expense', icon: 'directions-car', color: '#06B6D4', budget: 180 },
-  { id: 'cat_culture', name: 'Culture & Movies', type: 'expense', icon: 'movie', color: '#6366F1', budget: 120 },
-  { id: 'cat_household', name: 'Household & Rent', type: 'expense', icon: 'home', color: '#EAB308', budget: 800 },
-  { id: 'cat_apparel', name: 'Apparel & Clothes', type: 'expense', icon: 'checkroom', color: '#A855F7', budget: 200 },
-  { id: 'cat_beauty', name: 'Beauty & Personal', type: 'expense', icon: 'spa', color: '#F43F5E', budget: 100 },
-  { id: 'cat_health', name: 'Health & Pharmacy', type: 'expense', icon: 'medical-services', color: '#EF4444', budget: 150 },
-  { id: 'cat_education', name: 'Education & Courses', type: 'expense', icon: 'school', color: '#3B82F6', budget: 300 },
-  { id: 'cat_other_exp', name: 'Other (Expense)', type: 'expense', icon: 'more-horiz', color: '#64748B', budget: 150 }
-];
+export const DEFAULT_CATEGORIES: Category[] = [];
 
 export const loadTransactions = async (): Promise<Transaction[]> => {
   try {
@@ -138,35 +168,129 @@ export const saveCategories = async (cats: Category[]): Promise<void> => {
   }
 };
 
+export const loadBudgets = async (): Promise<Budget[]> => {
+  try {
+    const raw = await AsyncStorage.getItem(BUDGETS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to load budgets', e);
+    return [];
+  }
+};
+
+export const saveBudgets = async (budgets: Budget[]): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(BUDGETS_KEY, JSON.stringify(budgets));
+  } catch (e) {
+    console.error('Failed to save budgets', e);
+  }
+};
+
+export const loadRecurring = async (): Promise<RecurringTransaction[]> => {
+  try {
+    const raw = await AsyncStorage.getItem(RECURRING_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to load recurring transactions', e);
+    return [];
+  }
+};
+
+export const saveRecurring = async (recurring: RecurringTransaction[]): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(RECURRING_KEY, JSON.stringify(recurring));
+  } catch (e) {
+    console.error('Failed to save recurring transactions', e);
+  }
+};
+
+export const loadGoals = async (): Promise<Goal[]> => {
+  try {
+    const raw = await AsyncStorage.getItem(GOALS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.error('Failed to load goals', e);
+    return [];
+  }
+};
+
+export const saveGoals = async (goals: Goal[]): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+  } catch (e) {
+    console.error('Failed to save goals', e);
+  }
+};
+
 export const exportDataToFile = async (data: AppData): Promise<boolean> => {
   try {
-    const jsonStr = JSON.stringify(data, null, 2);
-    
+    const rows = data.transactions.map(tx => {
+      const acc = data.accounts.find(a => a.id === tx.account);
+      const toAcc = data.accounts.find(a => a.id === tx.toAccount);
+      const cat = data.categories.find(c => c.id === tx.category);
+      let subName = '', subColor = '', subIcon = '';
+      if (tx.subcategory && cat?.subcategories) {
+        const sub = cat.subcategories.find(s => s.id === tx.subcategory || s.name === tx.subcategory);
+        if (sub) {
+          subName = sub.name;
+          subColor = sub.color;
+          subIcon = sub.icon;
+        } else {
+          subName = tx.subcategory; // fallback to string if legacy
+        }
+      }
+
+      return {
+        Date: tx.date,
+        Type: tx.type,
+        Amount: tx.amount,
+        Description: tx.description,
+        CategoryName: cat?.name || '',
+        CategoryColor: cat?.color || '',
+        CategoryIcon: cat?.icon || '',
+        CategoryType: cat?.type || '',
+        SubcategoryName: subName,
+        SubcategoryColor: subColor,
+        SubcategoryIcon: subIcon,
+        AccountName: acc?.name || '',
+        AccountColor: acc?.color || '',
+        AccountIcon: acc?.icon || '',
+        AccountType: acc?.type || '',
+        ToAccountName: toAcc?.name || '',
+        ToAccountColor: toAcc?.color || '',
+        ToAccountIcon: toAcc?.icon || '',
+        ToAccountType: toAcc?.type || '',
+        Notes: tx.notes || ''
+      };
+    });
+
+    const csvString = Papa.unparse(rows);
+
     if (Platform.OS === 'web') {
-      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'ledgeit_backup.json';
+      a.download = 'ledgeit_backup.csv';
       a.click();
       URL.revokeObjectURL(url);
       return true;
     }
 
-    const fileUri = ((FileSystem as any).documentDirectory || '') + 'ledgeit_backup.json';
-    await FileSystem.writeAsStringAsync(fileUri, jsonStr, {
+    const fileUri = ((FileSystem as any).documentDirectory || '') + 'ledgeit_backup.csv';
+    await FileSystem.writeAsStringAsync(fileUri, csvString, {
       encoding: FileSystem.EncodingType.UTF8,
     });
-
+    
     if (!(await Sharing.isAvailableAsync())) {
       alert('Sharing is not available on this platform');
       return false;
     }
 
     await Sharing.shareAsync(fileUri, {
-      mimeType: 'application/json',
+      mimeType: 'text/csv',
       dialogTitle: 'Export LedgeIt Data',
-      UTI: 'public.json',
+      UTI: 'public.comma-separated-values-text',
     });
     
     return true;
@@ -179,46 +303,161 @@ export const exportDataToFile = async (data: AppData): Promise<boolean> => {
 
 export const importDataFromFile = async (): Promise<AppData | null> => {
   try {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: 'application/json',
-      copyToCacheDirectory: true,
-    });
-
-    if (result.canceled || !result.assets || result.assets.length === 0) {
-      return null;
-    }
-
     let contents = '';
-    const asset = result.assets[0];
-    
+
     if (Platform.OS === 'web') {
-      if ((asset as any).file) {
-        contents = await (asset as any).file.text();
-      } else {
-        const response = await fetch(asset.uri);
-        contents = await response.text();
-      }
+      contents = await new Promise((resolve, reject) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.csv,text/csv';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+        
+        input.onchange = (e: any) => {
+          const file = e.target.files[0];
+          document.body.removeChild(input);
+          if (!file) {
+            resolve('');
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = (event) => resolve(event.target?.result as string);
+          reader.onerror = () => reject(new Error('Failed to read file natively on Web.'));
+          reader.readAsText(file);
+        };
+        input.click();
+      });
+      
+      if (!contents) return null;
     } else {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'text/comma-separated-values', 'public.comma-separated-values-text'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return null;
+      }
+      
+      const asset = result.assets[0];
       contents = await FileSystem.readAsStringAsync(asset.uri, {
         encoding: FileSystem.EncodingType.UTF8,
       });
     }
 
-    const parsedData = JSON.parse(contents);
-    
-    if (
-      parsedData &&
-      Array.isArray(parsedData.transactions) &&
-      Array.isArray(parsedData.accounts) &&
-      Array.isArray(parsedData.categories)
-    ) {
-      return parsedData as AppData;
-    } else {
-      throw new Error('Invalid backup file structure. Must contain transactions, accounts, and categories.');
+    const parseResult = Papa.parse(contents, { header: true, skipEmptyLines: true });
+    if (parseResult.errors.length > 0 && parseResult.data.length === 0) {
+      throw new Error('Invalid CSV file');
     }
-  } catch (e) {
-    console.error('Import failed', e);
-    alert('Import failed: ' + (e instanceof Error ? e.message : String(e)));
+
+    const rows: any[] = parseResult.data;
+    if (rows.length === 0) return { transactions: [], accounts: [], categories: [] };
+
+    const accountsMap = new Map<string, Account>();
+    const categoriesMap = new Map<string, Category>();
+    const transactions: Transaction[] = [];
+
+    const generateId = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Math.random().toString(36).substring(2, 6);
+
+    for (const row of rows) {
+      // Rehydrate Account
+      let accId = '';
+      if (row.AccountName) {
+        const key = row.AccountName.toLowerCase();
+        if (!accountsMap.has(key)) {
+          accId = 'acc_' + generateId(row.AccountName);
+          accountsMap.set(key, {
+            id: accId,
+            name: row.AccountName,
+            color: row.AccountColor || '#64748B',
+            icon: row.AccountIcon || 'account-balance',
+            type: (row.AccountType as AccountType) || 'custom'
+          });
+        } else {
+          accId = accountsMap.get(key)!.id;
+        }
+      }
+
+      // Rehydrate ToAccount
+      let toAccId = '';
+      if (row.ToAccountName) {
+        const key = row.ToAccountName.toLowerCase();
+        if (!accountsMap.has(key)) {
+          toAccId = 'acc_' + generateId(row.ToAccountName);
+          accountsMap.set(key, {
+            id: toAccId,
+            name: row.ToAccountName,
+            color: row.ToAccountColor || '#64748B',
+            icon: row.ToAccountIcon || 'account-balance',
+            type: (row.ToAccountType as AccountType) || 'custom'
+          });
+        } else {
+          toAccId = accountsMap.get(key)!.id;
+        }
+      }
+
+      // Rehydrate Category & Subcategory
+      let catId = '';
+      let subcatId = '';
+      if (row.CategoryName) {
+        const catKey = row.CategoryName.toLowerCase();
+        let cat = categoriesMap.get(catKey);
+        
+        if (!cat) {
+          catId = 'cat_' + generateId(row.CategoryName);
+          cat = {
+            id: catId,
+            name: row.CategoryName,
+            color: row.CategoryColor || '#64748B',
+            icon: row.CategoryIcon || 'label',
+            type: (row.CategoryType || row.Type || 'expense') as 'income' | 'expense',
+            subcategories: []
+          };
+          categoriesMap.set(catKey, cat);
+        } else {
+          catId = cat.id;
+        }
+
+        if (row.SubcategoryName) {
+          let sub = cat.subcategories?.find(s => s.name.toLowerCase() === row.SubcategoryName.toLowerCase());
+          if (!sub) {
+            subcatId = 'sub_' + generateId(row.SubcategoryName);
+            sub = {
+              id: subcatId,
+              name: row.SubcategoryName,
+              color: row.SubcategoryColor || cat.color,
+              icon: row.SubcategoryIcon || cat.icon
+            };
+            cat.subcategories = cat.subcategories || [];
+            cat.subcategories.push(sub);
+          } else {
+            subcatId = sub.id;
+          }
+        }
+      }
+
+      transactions.push({
+        id: 'tx_' + Math.random().toString(36).substr(2, 9),
+        date: row.Date || new Date().toISOString(),
+        type: (row.Type as 'income' | 'expense' | 'transfer') || 'expense',
+        amount: parseFloat(row.Amount) || 0,
+        description: row.Description || '',
+        account: accId,
+        toAccount: toAccId || undefined,
+        category: catId,
+        subcategory: subcatId || undefined,
+        notes: row.Notes || ''
+      });
+    }
+
+    return {
+      transactions,
+      accounts: Array.from(accountsMap.values()),
+      categories: Array.from(categoriesMap.values())
+    };
+  } catch (error) {
+    console.error('Import failed:', error);
+    alert('Failed to import file. Make sure it is a valid LedgeIt CSV backup.');
     return null;
   }
 };

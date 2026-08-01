@@ -1,76 +1,91 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  FlatList, 
-  TextInput,
-  ScrollView 
+  SectionList,
+  ScrollView,
+  Platform
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { ColorTheme } from '../theme/colors';
 import { useApp } from '../context/AppContext';
 import { Transaction, Account, Category } from '../utils/storage';
-import { CalendarView } from '../components/CalendarView';
 
 interface TransactionsScreenProps {
   onAddTransaction: () => void;
   onEditTransaction: (tx: Transaction) => void;
 }
 
-type TabType = 'daily' | 'calendar' | 'monthly';
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
   onAddTransaction,
   onEditTransaction,
 }) => {
   const { transactions, accounts, categories, colors, currencySymbol } = useApp();
-  const [activeTab, setActiveTab] = useState<TabType>('daily');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   const [currentFilterMonth, setCurrentFilterMonth] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
-  const monthNames = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
+  const monthScrollRef = useRef<ScrollView>(null);
 
-  const handlePrevMonth = () => {
-    setCurrentFilterMonth(new Date(currentFilterMonth.getFullYear(), currentFilterMonth.getMonth() - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentFilterMonth(new Date(currentFilterMonth.getFullYear(), currentFilterMonth.getMonth() + 1, 1));
-  };
+  useEffect(() => {
+    if (monthScrollRef.current) {
+      setTimeout(() => {
+        const selectedIndex = currentFilterMonth.getMonth();
+        monthScrollRef.current?.scrollTo({ x: Math.max(0, selectedIndex * 85 - 120), animated: true });
+      }, 50);
+    }
+  }, [currentFilterMonth]);
 
   const filterYear = currentFilterMonth.getFullYear();
   const filterMonth = currentFilterMonth.getMonth() + 1;
 
-  const getFilteredTransactions = () => {
-    return transactions.filter(t => {
+  const { sections, summary } = useMemo(() => {
+    let inc = 0;
+    let exp = 0;
+
+    const filtered = transactions.filter(t => {
       const txDate = new Date(t.date);
-      const inMonth = txDate.getFullYear() === filterYear && (txDate.getMonth() + 1) === filterMonth;
-      
-      if (!inMonth) return false;
-
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const categoryName = categories.find(c => c.id === t.category || c.name === t.category)?.name.toLowerCase() || '';
-        const accountName = accounts.find(a => a.id === t.account || a.name === t.account)?.name.toLowerCase() || '';
-        const desc = t.description.toLowerCase();
-        return desc.includes(query) || categoryName.includes(query) || accountName.includes(query);
-      }
-
-      return true;
+      return txDate.getFullYear() === filterYear && (txDate.getMonth() + 1) === filterMonth;
     });
-  };
 
-  const filteredList = getFilteredTransactions();
+    const groups: Record<string, Transaction[]> = {};
+    
+    filtered.forEach(t => {
+      if (t.type === 'income') inc += t.amount;
+      else if (t.type === 'expense') exp += t.amount;
+
+      const dateKey = t.date.split('T')[0] || t.date.split(' ')[0];
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(t);
+    });
+
+    const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+    
+    const sects = sortedDates.map(dateKey => {
+      const dayTxs = groups[dateKey].sort((a, b) => b.date.localeCompare(a.date));
+      let daySum = 0;
+      dayTxs.forEach(t => {
+        if (t.type === 'income') daySum += t.amount;
+        if (t.type === 'expense') daySum -= t.amount;
+      });
+
+      return {
+        title: dateKey,
+        data: dayTxs,
+        daySum
+      };
+    });
+
+    return {
+      sections: sects,
+      summary: { inc, exp, net: inc - exp }
+    };
+  }, [transactions, filterYear, filterMonth]);
 
   const getAccountInfo = (id: string): Account | undefined => {
     return accounts.find(a => a.id === id || a.name === id);
@@ -78,252 +93,191 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
 
   const getCategoryInfo = (id: string, type: string): Category | undefined => {
     if (type === 'transfer') {
-      return { id: 'transfer', name: 'Transfer', type: 'expense', icon: 'swap-horiz', color: colors.primary };
+      return { id: 'transfer', name: 'Transfer', type: 'expense', icon: 'swap-horiz', color: '#9CA3AF' };
     }
     return categories.find(c => c.id === id || c.name === id);
   };
 
-  const renderTransactionItem = (item: Transaction) => {
+  const renderTransactionItem = ({ item }: { item: Transaction }) => {
     const accountInfo = getAccountInfo(item.account);
     const toAccountInfo = item.toAccount ? getAccountInfo(item.toAccount) : undefined;
     const categoryInfo = getCategoryInfo(item.category, item.type);
 
-    let prefix = '-';
-    let amtColor = colors.error;
+    let amtColor = '#EF4444';
+    let amtIcon = 'arrow-drop-down';
+    
     if (item.type === 'income') {
-      prefix = '+';
-      amtColor = colors.success;
+      amtColor = '#22C55E';
+      amtIcon = 'arrow-drop-up';
     } else if (item.type === 'transfer') {
-      prefix = '';
-      amtColor = colors.info;
+      amtColor = '#6B7280';
+      amtIcon = 'swap-horiz';
+    }
+
+    const txDate = new Date(item.date);
+    const timeStr = isNaN(txDate.getTime()) ? '' : txDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (item.type === 'transfer') {
+      return (
+        <TouchableOpacity style={styles.txItemContainer} onPress={() => onEditTransaction(item)}>
+          <View style={[styles.iconCircle, { backgroundColor: '#E5E7EB' }]}>
+            <MaterialIcons name="swap-horiz" size={20} color="#6B7280" />
+          </View>
+          <View style={styles.txMiddle}>
+            <Text style={styles.txTitle}>{item.description || 'Transfer'}</Text>
+            <View style={styles.pillsRow}>
+              {accountInfo && (
+                <View style={[styles.pill, { backgroundColor: accountInfo.color ? `${accountInfo.color}20` : '#F3F4F6' }]}>
+                  <Text style={[styles.pillText, { color: accountInfo.color || '#374151' }]}>{accountInfo.name}</Text>
+                </View>
+              )}
+              <MaterialIcons name="arrow-right-alt" size={16} color="#9CA3AF" style={{ marginHorizontal: 4 }} />
+              {toAccountInfo && (
+                <View style={[styles.pill, { backgroundColor: toAccountInfo.color ? `${toAccountInfo.color}20` : '#F3F4F6' }]}>
+                  <Text style={[styles.pillText, { color: toAccountInfo.color || '#374151' }]}>{toAccountInfo.name}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          <View style={styles.txRight}>
+            <Text style={styles.txTime}>{timeStr}</Text>
+            <View style={styles.amtRow}>
+              <MaterialIcons name="swap-horiz" size={16} color={amtColor} style={{ marginRight: 2 }} />
+              <Text style={[styles.txAmount, { color: amtColor }]}>{currencySymbol}{item.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      );
     }
 
     return (
-      <TouchableOpacity 
-        style={[styles.txItem, { borderBottomColor: colors.surfaceVariant }]}
-        onPress={() => onEditTransaction(item)}
-      >
-        <View style={[styles.txIconWrapper, { backgroundColor: categoryInfo?.color || colors.primary }]}>
-          <MaterialIcons name={(categoryInfo?.icon || 'help-outline') as any} size={20} color="#FFF" />
+      <TouchableOpacity style={styles.txItemContainer} onPress={() => onEditTransaction(item)}>
+        <View style={[styles.iconCircle, { backgroundColor: categoryInfo?.color ? `${categoryInfo.color}30` : '#F3F4F6' }]}>
+          <MaterialIcons name={(categoryInfo?.icon || 'label') as any} size={20} color={categoryInfo?.color || '#6B7280'} />
         </View>
 
-        <View style={styles.txMainInfo}>
-          <Text style={[styles.txCategory, { color: colors.onBackground }]} numberOfLines={1}>
-            {categoryInfo?.name || item.category}
-          </Text>
-          <Text style={[styles.txDetails, { color: colors.outline }]} numberOfLines={1}>
-            {accountInfo?.name || 'Cash'} {toAccountInfo ? `➔ ${toAccountInfo.name}` : ''}
-            {item.description ? ` | ${item.description}` : ''}
-          </Text>
+        <View style={styles.txMiddle}>
+          <Text style={styles.txTitle} numberOfLines={1}>{item.description}</Text>
+          {!!item.subcategory && (
+            <View style={styles.subNoteRow}>
+              <MaterialIcons name="subdirectory-arrow-right" size={12} color="#9CA3AF" />
+              <Text style={styles.subNoteText} numberOfLines={1}>{item.subcategory}</Text>
+            </View>
+          )}
+          <View style={styles.pillsRow}>
+            {accountInfo && (
+              <View style={[styles.pill, { backgroundColor: accountInfo.color ? `${accountInfo.color}20` : '#F3F4F6' }]}>
+                <Text style={[styles.pillText, { color: accountInfo.color || '#374151' }]}>{accountInfo.name}</Text>
+              </View>
+            )}
+            {categoryInfo && (
+              <View style={[styles.pill, { backgroundColor: categoryInfo.color ? `${categoryInfo.color}20` : '#F3F4F6' }]}>
+                <Text style={[styles.pillText, { color: categoryInfo.color || '#374151' }]}>{categoryInfo.name}</Text>
+              </View>
+            )}
+          </View>
         </View>
 
-        <View style={styles.txRightInfo}>
-          <Text style={[styles.txAmount, { color: amtColor }]}>
-            {prefix}{currencySymbol}{item.amount.toFixed(2)}
-          </Text>
+        <View style={styles.txRight}>
+          <Text style={styles.txTime}>{timeStr}</Text>
+          <View style={styles.amtRow}>
+            <MaterialIcons name={amtIcon as any} size={18} color={amtColor} style={{ marginRight: -2 }} />
+            <Text style={[styles.txAmount, { color: amtColor }]}>
+              {currencySymbol}{item.amount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
+            </Text>
+          </View>
         </View>
       </TouchableOpacity>
     );
   };
 
-  const renderDailyTab = () => {
-    const groups: { [date: string]: { income: number; expense: number; list: Transaction[] } } = {};
-    
-    filteredList.forEach(t => {
-      if (!groups[t.date]) {
-        groups[t.date] = { income: 0, expense: 0, list: [] };
-      }
-      if (t.type === 'income') groups[t.date].income += t.amount;
-      else if (t.type === 'expense') groups[t.date].expense += t.amount;
-      groups[t.date].list.push(t);
-    });
-
-    const groupKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
-
-    if (groupKeys.length === 0) {
-      return (
-        <View style={styles.emptyView}>
-          <Text style={[styles.emptyText, { color: colors.outline }]}>No records in this period</Text>
-        </View>
-      );
-    }
+  const renderSectionHeader = ({ section: { title, daySum } }: any) => {
+    const d = new Date(title);
+    const isToday = new Date().toDateString() === d.toDateString();
+    const formattedDate = isNaN(d.getTime()) ? title : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    const headerTitle = isToday ? `Today, ${formattedDate}` : formattedDate;
 
     return (
-      <FlatList
-        data={groupKeys}
-        keyExtractor={item => item}
-        contentContainerStyle={styles.listPadding}
-        renderItem={({ item: dateKey }) => {
-          const group = groups[dateKey];
-          const dateObj = new Date(dateKey);
-          const dayNum = dateObj.getDate();
-          const dayName = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
-          
-          return (
-            <View style={[styles.dayCard, { backgroundColor: colors.surface }]}>
-              <View style={[styles.dayHeader, { borderBottomColor: colors.surfaceVariant }]}>
-                <View style={styles.dayDateWrapper}>
-                  <Text style={[styles.dayNumber, { color: colors.onSurface }]}>{dayNum}</Text>
-                  <View style={styles.dayMeta}>
-                    <Text style={[styles.dayOfWeek, { color: colors.outline }]}>{dayName}</Text>
-                    <Text style={[styles.dayFullDate, { color: colors.outline }]}>{dateKey}</Text>
-                  </View>
-                </View>
-                <View style={styles.dayTotals}>
-                  {group.income > 0 && (
-                    <Text style={[styles.dayTotalIncome, { color: colors.success }]}>
-                      +{currencySymbol}{group.income.toFixed(2)}
-                    </Text>
-                  )}
-                  {group.expense > 0 && (
-                    <Text style={[styles.dayTotalExpense, { color: colors.error }]}>
-                      -{currencySymbol}{group.expense.toFixed(2)}
-                    </Text>
-                  )}
-                </View>
-              </View>
-
-              {group.list.map(t => (
-                <View key={t.id}>
-                  {renderTransactionItem(t)}
-                </View>
-              ))}
-            </View>
-          );
-        }}
-      />
-    );
-  };
-
-  const renderCalendarTab = () => {
-    const dayTxs = transactions.filter(t => t.date === selectedDate);
-    
-    return (
-      <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-        <CalendarView
-          transactions={transactions}
-          colors={colors}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-        />
-        
-        <View style={styles.calendarListHeader}>
-          <Text style={[styles.calendarListTitle, { color: colors.onBackground }]}>
-            Records on {selectedDate}
-          </Text>
-          <Text style={[styles.calendarListCount, { color: colors.outline }]}>
-            {dayTxs.length} items
-          </Text>
-        </View>
-
-        {dayTxs.length === 0 ? (
-          <View style={styles.emptyView}>
-            <Text style={[styles.emptyText, { color: colors.outline }]}>No records on this day</Text>
-          </View>
-        ) : (
-          <View style={[styles.dayCard, { backgroundColor: colors.surface, marginHorizontal: 16 }]}>
-            {dayTxs.map(t => (
-              <View key={t.id}>
-                {renderTransactionItem(t)}
-              </View>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    );
-  };
-
-  const renderMonthlyTab = () => {
-    if (filteredList.length === 0) {
-      return (
-        <View style={styles.emptyView}>
-          <Text style={[styles.emptyText, { color: colors.outline }]}>No records in this period</Text>
-        </View>
-      );
-    }
-
-    const sortedList = [...filteredList].sort((a, b) => b.date.localeCompare(a.date));
-
-    return (
-      <FlatList
-        data={sortedList}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listPadding}
-        renderItem={({ item }) => (
-          <View style={[styles.dayCard, { backgroundColor: colors.surface, paddingHorizontal: 12 }]}>
-            <Text style={[styles.monthlyDateLabel, { color: colors.outline }]}>{item.date}</Text>
-            {renderTransactionItem(item)}
-          </View>
-        )}
-      />
+      <View style={styles.dateHeaderContainer}>
+        <Text style={styles.dateHeaderText}>{headerTitle}</Text>
+        <Text style={styles.dateHeaderSum}>
+          {daySum >= 0 ? '' : '-'}{currencySymbol}{Math.abs(daySum).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
+        </Text>
+      </View>
     );
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.topHeader}>
-        <View style={styles.periodRow}>
-          <TouchableOpacity onPress={handlePrevMonth} style={styles.periodArrow}>
-            <MaterialIcons name="chevron-left" size={28} color={colors.onBackground} />
-          </TouchableOpacity>
-          <Text style={[styles.periodTitle, { color: colors.onBackground }]}>
-            {monthNames[filterMonth - 1]} {filterYear}
-          </Text>
-          <TouchableOpacity onPress={handleNextMonth} style={styles.periodArrow}>
-            <MaterialIcons name="chevron-right" size={28} color={colors.onBackground} />
-          </TouchableOpacity>
-        </View>
+      <Text style={[styles.pageTitle, { color: colors.onBackground }]}>Transactions</Text>
 
-        <View style={[styles.searchBox, { backgroundColor: colors.surfaceVariant }]}>
-          <MaterialIcons name="search" size={20} color={colors.outline} style={{ marginRight: 8 }} />
-          <TextInput
-            placeholder="Search category, note, account..."
-            placeholderTextColor={colors.outline}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            style={[styles.searchInput, { color: colors.onSurfaceVariant }]}
-          />
-          {searchQuery !== '' && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <MaterialIcons name="close" size={20} color={colors.outline} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <View style={[styles.tabContainer, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceVariant }]}>
-        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
-          {(['daily', 'calendar', 'monthly'] as const).map(tab => {
-            const active = activeTab === tab;
+      <View style={styles.monthSelectorWrapper}>
+        <TouchableOpacity style={styles.monthArrow} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth - 2, 1))}>
+          <MaterialIcons name="chevron-left" size={24} color={colors.onSurfaceVariant} />
+        </TouchableOpacity>
+        
+        <ScrollView 
+          ref={monthScrollRef}
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.monthScroll}
+        >
+          {[...Array(12)].map((_, i) => {
+            const isSelected = filterMonth === i + 1;
             return (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={[
-                  styles.tabItem,
-                  active && { borderBottomColor: colors.primary, borderBottomWidth: 3 }
-                ]}
+              <TouchableOpacity 
+                key={i} 
+                style={[styles.monthItem, isSelected && styles.monthItemSelected]}
+                onPress={() => setCurrentFilterMonth(new Date(filterYear, i, 1))}
               >
-                <Text 
-                  style={[
-                    styles.tabLabel, 
-                    { color: active ? colors.primary : colors.outline },
-                    active && { fontWeight: '700' }
-                  ]}
-                >
-                  {tab.toUpperCase()}
+                <Text style={[
+                  styles.monthText, 
+                  isSelected ? styles.monthTextSelected : { color: colors.outline }
+                ]}>
+                  {MONTHS[i]}
                 </Text>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
+
+        <TouchableOpacity style={styles.monthArrow} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth, 1))}>
+          <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} />
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.body}>
-        {activeTab === 'daily' && renderDailyTab()}
-        {activeTab === 'calendar' && renderCalendarTab()}
-        {activeTab === 'monthly' && renderMonthlyTab()}
+      <View style={styles.summaryBar}>
+        <View style={styles.summaryBox}>
+          <Text style={[styles.summaryText, { color: '#EF4444' }]}>
+            - {currencySymbol}{summary.exp.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
+          </Text>
+        </View>
+        <View style={styles.summaryBox}>
+          <Text style={[styles.summaryText, { color: '#22C55E' }]}>
+            ^ {currencySymbol}{summary.inc.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
+          </Text>
+        </View>
+        <View style={styles.summaryBox}>
+          <Text style={[styles.summaryText, { color: '#374151' }]}>
+            = {currencySymbol}{summary.net.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
+          </Text>
+        </View>
       </View>
+
+      <SectionList
+        sections={sections}
+        keyExtractor={item => item.id}
+        renderItem={renderTransactionItem}
+        renderSectionHeader={renderSectionHeader}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        stickySectionHeadersEnabled={false}
+        ListEmptyComponent={
+          <View style={styles.emptyView}>
+            <Text style={{ color: '#9CA3AF' }}>No transactions in {MONTHS[filterMonth - 1]}</Text>
+          </View>
+        }
+      />
     </View>
   );
 };
@@ -332,191 +286,171 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  topHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 24,
+    marginBottom: 20,
   },
-  periodRow: {
+  monthSelectorWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  periodArrow: {
-    padding: 4,
-  },
-  periodTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginHorizontal: 16,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 40,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-  },
-  tabContainer: {
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
-  tabScroll: {
-    flexDirection: 'row',
+  monthArrow: {
+    padding: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    marginHorizontal: 8,
+  },
+  monthScroll: {
     paddingHorizontal: 8,
   },
-  tabItem: {
-    paddingHorizontal: 16,
+  monthItem: {
     paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  tabLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+  monthItemSelected: {
+    borderBottomColor: '#000',
   },
-  body: {
-    flex: 1,
-  },
-  emptyView: {
-    flex: 1,
-    height: 300,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
+  monthText: {
     fontSize: 14,
     fontWeight: '500',
   },
-  listPadding: {
+  monthTextSelected: {
+    color: '#000',
+    fontWeight: '700',
+  },
+  summaryBar: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 8,
+    paddingVertical: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+  },
+  summaryBox: {
+    alignItems: 'center',
+  },
+  summaryText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  listContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 110,
+    paddingBottom: 100,
+    paddingTop: 8,
   },
-  dayCard: {
-    borderRadius: 16,
-    marginBottom: 16,
-    paddingBottom: 8,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-  },
-  dayHeader: {
+  dateHeaderContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    borderBottomWidth: 0.5,
+    paddingVertical: 8,
+    marginTop: 16,
   },
-  dayDateWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dayNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginRight: 8,
-  },
-  dayMeta: {
-    justifyContent: 'center',
-  },
-  dayOfWeek: {
+  dateHeaderText: {
     fontSize: 12,
     fontWeight: '600',
+    color: '#9CA3AF',
   },
-  dayFullDate: {
-    fontSize: 9,
-  },
-  dayTotals: {
-    alignItems: 'flex-end',
-  },
-  dayTotalIncome: {
-    fontSize: 11,
+  dateHeaderSum: {
+    fontSize: 12,
     fontWeight: '600',
+    color: '#9CA3AF',
   },
-  dayTotalExpense: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  txItem: {
+  txItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 0.5,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.03)',
   },
-  txIconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  txMainInfo: {
+  txMiddle: {
     flex: 1,
+    justifyContent: 'center',
   },
-  txCategory: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  txDetails: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  txRightInfo: {
-    alignItems: 'flex-end',
-  },
-  txAmount: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  weekKeyText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  monthlyDateLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  calendarListHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  calendarListTitle: {
+  txTitle: {
     fontSize: 15,
     fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
   },
-  calendarListCount: {
+  subNoteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  subNoteText: {
     fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 4,
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  pill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  pillText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  txRight: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  txTime: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginBottom: 6,
+  },
+  amtRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  txAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  emptyView: {
+    paddingTop: 60,
+    alignItems: 'center',
   },
   fab: {
     position: 'absolute',
-    right: 20,
-    bottom: 20,
+    right: 24,
+    bottom: Platform.OS === 'web' ? 24 : 90,
     width: 56,
     height: 56,
     borderRadius: 28,
+    backgroundColor: '#374151',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 6,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-  },
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  }
 });

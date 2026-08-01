@@ -4,10 +4,11 @@ import {
   Text, 
   StyleSheet, 
   ScrollView, 
-  TouchableOpacity 
+  TouchableOpacity,
+  Platform,
+  useWindowDimensions
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { ColorTheme } from '../theme/colors';
 import { useApp } from '../context/AppContext';
 import { Account } from '../utils/storage';
 import { AccountModal } from '../components/AccountModal';
@@ -23,6 +24,7 @@ export const AccountsScreen: React.FC = () => {
     currencySymbol
   } = useApp();
 
+  const { width } = useWindowDimensions();
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
@@ -39,66 +41,78 @@ export const AccountsScreen: React.FC = () => {
     }, 0);
   };
 
-  const totalAssets = accounts.reduce((sum, acc) => sum + getAccountBalance(acc.id), 0);
+  const getTxCount = (accId: string) => {
+    return transactions.filter(t => t.account === accId || t.toAccount === accId).length;
+  };
+
+  // 2 columns for web/tablet, 1 for small mobile
+  const numColumns = width > 700 ? 2 : 1;
+  const cardWidth = width > 700 ? '48%' : '100%';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.topCardContainer}>
-        <View style={[styles.assetsCard, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.cardTitle, { color: colors.onPrimary, opacity: 0.8 }]}>Stack Assets</Text>
-          <Text style={[styles.cardBalance, { color: colors.onPrimary }]}>
-            {currencySymbol}{totalAssets.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </Text>
-        </View>
-      </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={[styles.pageTitle, { color: colors.onBackground }]}>Accounts</Text>
+        
+        <View style={styles.gridContainer}>
+          {accounts.map(acc => {
+            const balance = getAccountBalance(acc.id);
+            const txCount = getTxCount(acc.id);
 
-      <ScrollView contentContainerStyle={styles.listContainer}>
-        <View style={styles.listHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>My Vaults</Text>
+            return (
+              <TouchableOpacity 
+                key={acc.id} 
+                style={[
+                  styles.accountCard, 
+                  { 
+                    backgroundColor: colors.surface, 
+                    borderLeftColor: acc.color || colors.primary,
+                    width: cardWidth as any 
+                  }
+                ]}
+                onPress={() => {
+                  setEditingAccount(acc);
+                  setAddModalVisible(true);
+                }}
+              >
+                <View style={styles.cardTopRow}>
+                  <Text style={[styles.accountName, { color: colors.onSurface }]}>
+                    {acc.name}
+                  </Text>
+                  <Text style={styles.currencyText}>INR</Text>
+                </View>
+                
+                <View style={styles.cardBottomRow}>
+                  <Text style={styles.txCountText}>
+                    {txCount} {txCount === 1 ? 'transaction' : 'transactions'}
+                  </Text>
+                  
+                  <View style={styles.balanceContainer}>
+                    {balance > 0 && <MaterialIcons name="arrow-drop-up" size={20} color="#4CAF50" style={{ marginRight: -2 }} />}
+                    {balance < 0 && <MaterialIcons name="arrow-drop-down" size={20} color="#F44336" style={{ marginRight: -2 }} />}
+                    <Text style={[
+                      styles.accountBalanceText, 
+                      { color: balance === 0 ? colors.onSurface : (balance > 0 ? '#4CAF50' : '#F44336') }
+                    ]}>
+                      {balance !== 0 && currencySymbol}
+                      {balance === 0 ? '₹0' : Math.abs(balance).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+
           <TouchableOpacity 
+            style={[styles.addCard, { width: cardWidth as any }]}
             onPress={() => {
               setEditingAccount(null);
               setAddModalVisible(true);
             }}
-            style={[styles.addTextBtn, { backgroundColor: colors.primaryContainer }]}
           >
-            <MaterialIcons name="add" size={16} color={colors.onPrimaryContainer} />
-            <Text style={[styles.addText, { color: colors.onPrimaryContainer }]}>Create</Text>
+            <MaterialIcons name="add" size={24} color="#9CA3AF" />
           </TouchableOpacity>
         </View>
-
-        {accounts.map(acc => {
-          const balance = getAccountBalance(acc.id);
-
-          return (
-            <TouchableOpacity 
-              key={acc.id} 
-              style={[styles.accountCard, { backgroundColor: colors.surface }]}
-              onPress={() => {
-                setEditingAccount(acc);
-                setAddModalVisible(true);
-              }}
-            >
-              <View style={[styles.iconWrapper, { backgroundColor: acc.color }]}>
-                <MaterialIcons name={acc.icon as any} size={22} color="#FFF" />
-              </View>
-              
-              <View style={styles.accountInfo}>
-                <Text style={[styles.accountName, { color: colors.onBackground }]}>
-                  {acc.name}
-                </Text>
-                <Text style={{ fontSize: 10, color: colors.outline, textTransform: 'uppercase', marginBottom: 2 }}>
-                  {acc.type}
-                </Text>
-                <Text style={[styles.accountBalanceText, { color: balance >= 0 ? colors.onBackground : colors.error }]}>
-                  {currencySymbol}{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </Text>
-              </View>
-
-              <MaterialIcons name="edit" size={18} color={colors.outline} style={{ padding: 8 }} />
-            </TouchableOpacity>
-          );
-        })}
       </ScrollView>
 
       <AccountModal
@@ -123,86 +137,78 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  topCardContainer: {
-    padding: 16,
-  },
-  assetsCard: {
-    borderRadius: 24,
+  scrollContent: {
     padding: 24,
-    elevation: 4,
-    shadowColor: '#00E5FF',
+    paddingBottom: 100,
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 32,
+    marginTop: 24,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  accountCard: {
+    padding: 20,
+    borderRadius: 16,
+    borderLeftWidth: 5,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
   },
-  cardTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  cardBalance: {
-    fontSize: 32,
-    fontWeight: '800',
-  },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 110,
-  },
-  listHeader: {
+  cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  addTextBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  addText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  accountCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 20,
-    marginBottom: 10,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 3,
-  },
-  iconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  accountInfo: {
-    flex: 1,
+    marginBottom: 8,
   },
   accountName: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '600',
   },
-  accountBalanceText: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginTop: 2,
+  currencyText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontWeight: '600',
   },
+  cardBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  txCountText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  balanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  accountBalanceText: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  addCard: {
+    height: 90,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderStyle: 'solid',
+    backgroundColor: '#FAFAFA',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  }
 });

@@ -24,7 +24,7 @@ export interface ColorTheme {
 
 export type ThemeType = 'light' | 'dark';
 
-export type AccentTheme = 'slate' | 'emerald' | 'warm' | 'teal' | 'violet' | 'rose';
+export type AccentTheme = 'slate' | 'indigo' | 'emerald' | 'violet' | 'teal' | 'amber' | 'rose';
 
 export interface AccentOption {
   id: AccentTheme;
@@ -34,11 +34,12 @@ export interface AccentOption {
 
 export const ACCENT_OPTIONS: AccentOption[] = [
   { id: 'slate', name: 'Slate Gray', color: '#94A3B8' },
-  { id: 'warm', name: 'Warm Amber', color: '#FBBF24' },
-  { id: 'emerald', name: 'Forest Emerald', color: '#34D399' },
-  { id: 'teal', name: 'Ocean Blue', color: '#38BDF8' },
-  { id: 'violet', name: 'Royal Indigo', color: '#818CF8' },
-  { id: 'rose', name: 'Crimson Rose', color: '#FB7185' },
+  { id: 'indigo', name: 'Electric Indigo', color: '#6366F1' },
+  { id: 'emerald', name: 'Mint Emerald', color: '#10B981' },
+  { id: 'violet', name: 'Cyber Violet', color: '#8B5CF6' },
+  { id: 'teal', name: 'Ocean Cyan', color: '#06B6D4' },
+  { id: 'amber', name: 'Gold Sunburst', color: '#F59E0B' },
+  { id: 'rose', name: 'Crimson Rose', color: '#F43F5E' },
 ];
 
 const ACCENT_CONFIGS: Record<AccentTheme, {
@@ -54,47 +55,55 @@ const ACCENT_CONFIGS: Record<AccentTheme, {
     lightContainer: '#E2E8F0',
     onLightContainer: '#0F172A',
     darkPrimary: '#94A3B8',
-    darkContainer: '#35363A',
-    onDarkContainer: '#E8EAED',
+    darkContainer: '#1E293B',
+    onDarkContainer: '#F8FAFC',
   },
-  warm: {
-    lightPrimary: '#D97706',
-    lightContainer: '#FEF3C7',
-    onLightContainer: '#92400E',
-    darkPrimary: '#FBBF24',
-    darkContainer: '#3A342B',
-    onDarkContainer: '#FEF08A',
+  indigo: {
+    lightPrimary: '#4F46E5',
+    lightContainer: '#EEF2FF',
+    onLightContainer: '#312E81',
+    darkPrimary: '#818CF8',
+    darkContainer: '#1E1B4B',
+    onDarkContainer: '#E0E7FF',
   },
   emerald: {
     lightPrimary: '#059669',
-    lightContainer: '#D1FAE5',
-    onLightContainer: '#065F46',
+    lightContainer: '#ECFDF5',
+    onLightContainer: '#064E3B',
     darkPrimary: '#34D399',
-    darkContainer: '#27382E',
+    darkContainer: '#064E3B',
     onDarkContainer: '#A7F3D0',
+  },
+  violet: {
+    lightPrimary: '#7C3AED',
+    lightContainer: '#F5F3FF',
+    onLightContainer: '#4C1D95',
+    darkPrimary: '#A78BFA',
+    darkContainer: '#2E1065',
+    onDarkContainer: '#DDD6FE',
   },
   teal: {
     lightPrimary: '#0284C7',
-    lightContainer: '#E0F2FE',
-    onLightContainer: '#075985',
+    lightContainer: '#F0F9FF',
+    onLightContainer: '#0C4A6E',
     darkPrimary: '#38BDF8',
-    darkContainer: '#263642',
+    darkContainer: '#082F49',
     onDarkContainer: '#BAE6FD',
   },
-  violet: {
-    lightPrimary: '#4338CA',
-    lightContainer: '#EEF2FF',
-    onLightContainer: '#3730A3',
-    darkPrimary: '#818CF8',
-    darkContainer: '#2E3048',
-    onDarkContainer: '#C7D2FE',
+  amber: {
+    lightPrimary: '#D97706',
+    lightContainer: '#FFFBEB',
+    onLightContainer: '#78350F',
+    darkPrimary: '#FBBF24',
+    darkContainer: '#451A03',
+    onDarkContainer: '#FEF08A',
   },
   rose: {
     lightPrimary: '#E11D48',
-    lightContainer: '#FFE4E6',
-    onLightContainer: '#9F1239',
+    lightContainer: '#FFF1F2',
+    onLightContainer: '#881337',
     darkPrimary: '#FB7185',
-    darkContainer: '#382A2E',
+    darkContainer: '#4C0519',
     onDarkContainer: '#FECDD3',
   },
 };
@@ -105,26 +114,26 @@ export const getTheme = (type: ThemeType, accent: AccentTheme = 'slate'): ColorT
   if (type === 'dark') {
     return {
       primary: config.darkPrimary,
-      onPrimary: '#202124',
+      onPrimary: '#0F172A',
       primaryContainer: config.darkContainer,
       onPrimaryContainer: config.onDarkContainer,
-      secondary: '#E8EAED',
-      onSecondary: '#202124',
-      secondaryContainer: '#35363A',
-      onSecondaryContainer: '#E8EAED',
-      background: '#202124',
-      onBackground: '#E8EAED',
-      surface: '#292A2D',
-      onSurface: '#E8EAED',
-      surfaceVariant: '#35363A',
-      onSurfaceVariant: '#BDC1C6',
-      outline: '#3C4043',
-      error: '#F28B82',
-      onError: '#202124',
-      success: '#81C995',
-      onSuccess: '#202124',
-      info: '#8AB4F8',
-      onInfo: '#202124',
+      secondary: '#94A3B8',
+      onSecondary: '#0F172A',
+      secondaryContainer: '#1E293B',
+      onSecondaryContainer: '#F8FAFC',
+      background: '#0B0F19',
+      onBackground: '#F8FAFC',
+      surface: '#151B28',
+      onSurface: '#F8FAFC',
+      surfaceVariant: '#1E2638',
+      onSurfaceVariant: '#94A3B8',
+      outline: '#2A3447',
+      error: '#F43F5E',
+      onError: '#FFFFFF',
+      success: '#10B981',
+      onSuccess: '#FFFFFF',
+      info: '#38BDF8',
+      onInfo: '#FFFFFF',
     };
   }
 
@@ -133,26 +142,25 @@ export const getTheme = (type: ThemeType, accent: AccentTheme = 'slate'): ColorT
     onPrimary: '#FFFFFF',
     primaryContainer: config.lightContainer,
     onPrimaryContainer: config.onLightContainer,
-    secondary: '#3C4043',
+    secondary: '#475569',
     onSecondary: '#FFFFFF',
-    secondaryContainer: '#F1F3F4',
-    onSecondaryContainer: '#202124',
-    background: '#F8F9FA',
-    onBackground: '#202124',
+    secondaryContainer: '#F1F5F9',
+    onSecondaryContainer: '#0F172A',
+    background: '#F8FAFC',
+    onBackground: '#0F172A',
     surface: '#FFFFFF',
-    onSurface: '#202124',
-    surfaceVariant: '#F1F3F4',
-    onSurfaceVariant: '#5F6368',
-    outline: '#DADCE0',
-    error: '#D93025',
+    onSurface: '#0F172A',
+    surfaceVariant: '#F1F5F9',
+    onSurfaceVariant: '#64748B',
+    outline: '#E2E8F0',
+    error: '#E11D48',
     onError: '#FFFFFF',
-    success: '#188038',
+    success: '#059669',
     onSuccess: '#FFFFFF',
-    info: '#1A73E8',
+    info: '#0284C7',
     onInfo: '#FFFFFF',
   };
 };
 
 export const lightTheme = getTheme('light', 'slate');
 export const darkTheme = getTheme('dark', 'slate');
-

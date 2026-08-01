@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { ColorTheme } from '../theme/colors';
 import { Transaction, Category } from '../utils/storage';
 
@@ -11,133 +11,126 @@ interface AnalyticsChartProps {
   type: 'income' | 'expense';
 }
 
-interface ChartItem {
-  id: string;
-  name: string;
-  amount: number;
-  color: string;
-  percentage: number;
-}
-
 export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
   transactions,
-  categories,
   colors,
   type,
 }) => {
-  const filteredTxs = transactions.filter(t => t.type === type);
-  const totalAmount = filteredTxs.reduce((sum, t) => sum + t.amount, 0);
+  const [width, setWidth] = useState(Dimensions.get('window').width - 48); // default width, updated via onLayout
+  const height = 180;
+  const padding = 20;
 
-  const grouped = filteredTxs.reduce((acc, t) => {
-    acc[t.category] = (acc[t.category] || 0) + t.amount;
-    return acc;
-  }, {} as Record<string, number>);
+  const filteredTxs = useMemo(() => transactions.filter(t => t.type === type), [transactions, type]);
+  const totalAmount = useMemo(() => filteredTxs.reduce((sum, t) => sum + t.amount, 0), [filteredTxs]);
 
-  const chartData: ChartItem[] = Object.keys(grouped)
-    .map(catId => {
-      const cat = categories.find(c => c.id === catId || c.name === catId);
-      const name = cat ? cat.name : catId;
-      const color = cat ? cat.color : '#9E9E9E';
-      const amount = grouped[catId];
-      const percentage = totalAmount > 0 ? (amount / totalAmount) * 100 : 0;
+  // Aggregate by day of month (assuming data passed in is a single month)
+  const chartData = useMemo(() => {
+    if (filteredTxs.length === 0) return [];
+    
+    // Find the month we are looking at by checking the first transaction
+    // Or just default to current month if transactions is empty.
+    const sampleDate = filteredTxs[0] ? new Date(filteredTxs[0].date) : new Date();
+    const year = sampleDate.getFullYear();
+    const month = sampleDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      return {
-        id: catId,
-        name,
-        amount,
-        color,
-        percentage,
-      };
-    })
-    .sort((a, b) => b.amount - a.amount);
+    const dailyTotals = new Array(daysInMonth).fill(0);
+    
+    filteredTxs.forEach(t => {
+      const d = new Date(t.date);
+      if (d.getMonth() === month && d.getFullYear() === year) {
+        const dayIdx = d.getDate() - 1;
+        dailyTotals[dayIdx] += t.amount;
+      }
+    });
 
-  const RADIUS = 70;
-  const STROKE_WIDTH = 24;
-  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-  
-  let accumulatedPercent = 0;
+    // Instead of raw daily amounts, we can optionally make it cumulative, 
+    // but the user asked for an area chart. Usually, spending over time is cumulative in area charts
+    // or just daily spikes. Cumulative looks better for an area chart.
+    const cumulative = [];
+    let running = 0;
+    for (let i = 0; i < dailyTotals.length; i++) {
+      running += dailyTotals[i];
+      cumulative.push(running);
+    }
+    return cumulative;
+  }, [filteredTxs]);
 
-  return (
-    <View style={styles.container}>
-      {totalAmount === 0 ? (
+  const { maxVal, minVal } = useMemo(() => {
+    if (chartData.length === 0) return { maxVal: 0, minVal: 0 };
+    return {
+      maxVal: Math.max(...chartData),
+      minVal: Math.min(0, ...chartData)
+    };
+  }, [chartData]);
+
+  if (totalAmount === 0 || chartData.length === 0) {
+    return (
+      <View style={[styles.container, { height }]} onLayout={e => setWidth(e.nativeEvent.layout.width)}>
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: colors.outline }]}>
             No data available for this selection
           </Text>
         </View>
-      ) : (
-        <View style={styles.chartWrapper}>
-          <View style={styles.svgWrapper}>
-            <Svg width={180} height={180} viewBox="0 0 180 180">
-              <G rotation="-90" origin="90, 90">
-                <Circle
-                  cx="90"
-                  cy="90"
-                  r={RADIUS}
-                  fill="transparent"
-                  stroke={colors.surfaceVariant}
-                  strokeWidth={STROKE_WIDTH}
-                />
-                {chartData.map((item) => {
-                  const strokeDashoffset = CIRCUMFERENCE - (item.percentage / 100) * CIRCUMFERENCE;
-                  const rotationAngle = (accumulatedPercent / 100) * 360;
-                  accumulatedPercent += item.percentage;
+      </View>
+    );
+  }
 
-                  return (
-                    <Circle
-                      key={item.id}
-                      cx="90"
-                      cy="90"
-                      r={RADIUS}
-                      fill="transparent"
-                      stroke={item.color}
-                      strokeWidth={STROKE_WIDTH}
-                      strokeDasharray={CIRCUMFERENCE}
-                      strokeDashoffset={strokeDashoffset}
-                      rotation={rotationAngle}
-                      origin="90, 90"
-                      strokeLinecap="round"
-                    />
-                  );
-                })}
-              </G>
-            </Svg>
-            <View style={styles.centerLabel}>
-              <Text style={[styles.centerSub, { color: colors.outline }]}>Total</Text>
-              <Text 
-                numberOfLines={1} 
-                adjustsFontSizeToFit 
-                style={[styles.centerVal, { color: colors.onBackground }]}
-              >
-                ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Text>
-            </View>
-          </View>
+  // Calculate Path
+  const graphWidth = width - padding * 2;
+  const graphHeight = height - padding * 2;
+  
+  const stepX = graphWidth / (chartData.length - 1 || 1);
+  const rangeY = maxVal - minVal || 1; // avoid div by 0
 
-          <FlatList
-            data={chartData}
-            keyExtractor={item => item.id}
-            scrollEnabled={false}
-            style={styles.legendList}
-            renderItem={({ item }) => (
-              <View style={styles.legendItem}>
-                <View style={[styles.colorBadge, { backgroundColor: item.color }]} />
-                <View style={styles.legendInfo}>
-                  <Text style={[styles.legendName, { color: colors.onBackground }]} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.legendPct, { color: colors.outline }]}>
-                    {item.percentage.toFixed(1)}%
-                  </Text>
-                </View>
-                <Text style={[styles.legendVal, { color: colors.onBackground }]}>
-                  ${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </Text>
-              </View>
-            )}
-          />
-        </View>
-      )}
+  const getPoint = (val: number, index: number) => {
+    const x = padding + index * stepX;
+    const y = padding + graphHeight - ((val - minVal) / rangeY) * graphHeight;
+    return { x, y };
+  };
+
+  let linePath = '';
+  let areaPath = '';
+
+  chartData.forEach((val, i) => {
+    const p = getPoint(val, i);
+    if (i === 0) {
+      linePath += `M ${p.x},${p.y} `;
+      areaPath += `M ${p.x},${p.y} `;
+    } else {
+      // Smooth curve using bezier or simple lines. Simple lines for now.
+      linePath += `L ${p.x},${p.y} `;
+      areaPath += `L ${p.x},${p.y} `;
+    }
+  });
+
+  // Close area path
+  const firstP = getPoint(chartData[0], 0);
+  const lastP = getPoint(chartData[chartData.length - 1], chartData.length - 1);
+  const bottomY = padding + graphHeight;
+  
+  areaPath += `L ${lastP.x},${bottomY} L ${firstP.x},${bottomY} Z`;
+
+  const chartColor = type === 'income' ? colors.success : colors.error;
+
+  return (
+    <View style={styles.container} onLayout={e => setWidth(e.nativeEvent.layout.width)}>
+      <Svg width={width} height={height}>
+        <Defs>
+          <LinearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={chartColor} stopOpacity="0.3" />
+            <Stop offset="1" stopColor={chartColor} stopOpacity="0.0" />
+          </LinearGradient>
+        </Defs>
+        <Path d={areaPath} fill="url(#gradient)" />
+        <Path d={linePath} fill="none" stroke={chartColor} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+      </Svg>
+      <View style={styles.totalOverlay}>
+        <Text style={[styles.totalLabel, { color: colors.outline }]}>Total {type === 'income' ? 'Income' : 'Expense'}</Text>
+        <Text style={[styles.totalValue, { color: colors.onBackground }]}>
+          ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </Text>
+      </View>
     </View>
   );
 };
@@ -145,75 +138,29 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingVertical: 16,
+    width: '100%',
+    position: 'relative',
   },
   emptyContainer: {
-    height: 180,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyText: {
     fontSize: 14,
-    fontWeight: '500',
   },
-  chartWrapper: {
-    alignItems: 'center',
-  },
-  svgWrapper: {
-    position: 'relative',
-    width: 180,
-    height: 180,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  centerLabel: {
+  totalOverlay: {
     position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 110,
+    top: 24,
+    left: 24,
   },
-  centerSub: {
+  totalLabel: {
     fontSize: 12,
-    fontWeight: '500',
-  },
-  centerVal: {
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  legendList: {
-    width: '100%',
-    paddingHorizontal: 16,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  colorBadge: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 12,
-  },
-  legendInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingRight: 16,
-  },
-  legendName: {
-    fontSize: 14,
-    fontWeight: '500',
-    flex: 1,
-  },
-  legendPct: {
-    fontSize: 12,
-    marginLeft: 8,
-  },
-  legendVal: {
-    fontSize: 14,
     fontWeight: '600',
+    textTransform: 'uppercase',
   },
+  totalValue: {
+    fontSize: 24,
+    fontWeight: '800',
+  }
 });

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
-  Switch, 
-  TextInput, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Switch,
+  TextInput,
   Alert,
   ActivityIndicator,
   Modal
@@ -14,23 +14,30 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { ColorTheme, ACCENT_OPTIONS, AccentTheme } from '../theme/colors';
 import { useApp } from '../context/AppContext';
 import { exportDataToFile, importDataFromFile, CloudBackup } from '../utils/storage';
-import { CategoryModal } from '../components/CategoryModal';
-import { parseCashewCsv } from '../utils/csvParser';
 
-export const SettingsScreen: React.FC = () => {
-  const { 
-    themeType, 
-    setThemeType, 
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+
+WebBrowser.maybeCompleteAuthSession();
+
+interface SettingsScreenProps {
+  onNavigate?: (screen: string) => void;
+}
+
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) => {
+  const {
+    themeType,
+    setThemeType,
     accentTheme,
     setAccentTheme,
-    colors, 
-    transactions, 
-    accounts, 
-    categories, 
+    colors,
+    transactions,
+    accounts,
+    categories,
     importBackupData,
     mergeBackupData,
     cloudBackups,
@@ -42,174 +49,89 @@ export const SettingsScreen: React.FC = () => {
     deleteCategory,
     country,
     setCountry,
-
+    googleToken,
+    googleUser,
+    setGoogleAuth,
+    refreshCloudBackups,
+    currencySymbol
   } = useApp();
 
-  const [googleUser, setGoogleUser] = useState<{ email: string; name: string } | null>(null);
-  const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [backupNameInput, setBackupNameInput] = useState('My Device');
-
-  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [categoryType, setCategoryType] = useState<'income' | 'expense'>('expense');
 
   const [legalModalType, setLegalModalType] = useState<'terms' | 'privacy' | 'about' | 'contact' | null>(null);
 
-  const handleGoogleSignIn = () => {
-    setLoadingGoogle(true);
-    setTimeout(() => {
-      setGoogleUser({
-        email: 'baswanth.papisetty@gmail.com',
-        name: 'Baswanth Papisetty',
-      });
-      setLoadingGoogle(false);
-    }, 1500);
+  const [activeView, setActiveView] = useState<'main' | 'data_sync' | 'legal' | 'danger'>('main');
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: 'YOUR_WEB_CLIENT_ID', // Replaced by user later
+    iosClientId: 'YOUR_IOS_CLIENT_ID',
+    androidClientId: 'YOUR_ANDROID_CLIENT_ID',
+    scopes: ['https://www.googleapis.com/auth/drive.file', 'profile', 'email'],
+  });
+
+  React.useEffect(() => {
+    if (response?.type === 'success' && response.authentication?.accessToken) {
+      const fetchUserInfo = async (token: string) => {
+        try {
+          const res = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const user = await res.json();
+          await setGoogleAuth(token, user);
+        } catch (e) {
+          console.error('Failed to fetch user info', e);
+        }
+      };
+      fetchUserInfo(response.authentication.accessToken);
+    }
+  }, [response]);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await promptAsync();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleGoogleSignOut = () => {
-    setGoogleUser(null);
+  const handleGoogleSignOut = async () => {
+    await setGoogleAuth(null, null);
+  };
+
+  const handleCloudBackup = async () => {
+    await backupToCloud();
+  };
+
+  const handleCloudRestore = async (backup: any) => {
+    await restoreBackupFromCloud(backup.id);
+  };
+
+  const handleCloudDelete = async (backupId: string) => {
+    await removeCloudBackup(backupId);
+  };
+
+  const [alertMessage, setAlertMessage] = useState('');
+
+  const showAlert = (message: string) => {
+    setAlertMessage(message);
   };
 
   const handleExport = async () => {
     const success = await exportDataToFile({ transactions, accounts, categories });
     if (success) {
-      alert('Data exported successfully!');
+      showAlert('Data exported successfully!');
     }
   };
 
   const handleImport = async () => {
-    Alert.alert(
-      'Import Backup',
-      'This will OVERWRITE your current local data. Are you sure you want to proceed?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Import', 
-          onPress: async () => {
-            const imported = await importDataFromFile();
-            if (imported) {
-              await importBackupData(imported);
-              alert('Data imported successfully!');
-            }
-          }
-        }
-      ]
-    );
-  };
-
-  const [isImporting, setIsImporting] = useState(false);
-
-  const handleImportCashew = async () => {
-    try {
-      setIsImporting(true);
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['text/csv', 'text/comma-separated-values'],
-        copyToCacheDirectory: true,
-      });
-      
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        setIsImporting(false);
-        return;
-      }
-      
-      const asset = result.assets[0];
-      let fileContent = '';
-
-      if (Platform.OS === 'web') {
-        if ((asset as any).file) {
-          fileContent = await (asset as any).file.text();
-        } else {
-          const response = await fetch(asset.uri);
-          fileContent = await response.text();
-        }
-      } else {
-        fileContent = await FileSystem.readAsStringAsync(asset.uri);
-      }
-      
-      const parsedData = parseCashewCsv(fileContent);
-      setIsImporting(false);
-
-      if (parsedData.transactions.length === 0 && parsedData.accounts.length === 0) {
-        Alert.alert('Import Failed', 'No valid Cashew data found in this CSV.');
-        return;
-      }
-
-      Alert.alert(
-        'Cashew Migration',
-        `Found ${parsedData.transactions.length} transactions, ${parsedData.accounts.length} accounts, ${parsedData.categories.length} categories. This will safely merge into your current database. Proceed?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Merge', 
-            onPress: async () => {
-              setIsImporting(true);
-              await mergeBackupData({
-                transactions: parsedData.transactions,
-                accounts: parsedData.accounts,
-                categories: parsedData.categories
-              });
-              setIsImporting(false);
-              alert('Cashew data migrated successfully! You can view them in Transactions and Accounts.');
-            }
-          }
-        ]
-      );
-    } catch (error) {
-       setIsImporting(false);
-       console.error(error);
-       alert('Failed to import Cashew CSV.');
+    const imported = await importDataFromFile();
+    if (imported) {
+      await importBackupData(imported);
+      showAlert('Data imported successfully! Check your dashboard.');
     }
   };
 
-  const handleCloudBackup = async () => {
-    if (!backupNameInput.trim()) {
-      alert('Please enter a name for this backup');
-      return;
-    }
-    setLoadingGoogle(true);
-    setTimeout(async () => {
-      await backupToCloud(backupNameInput.trim());
-      setLoadingGoogle(false);
-      alert('Backup created successfully on Google Drive!');
-    }, 1200);
-  };
 
-  const handleCloudRestore = (backup: CloudBackup) => {
-    Alert.alert(
-      'Restore Cloud Backup',
-      `Restore data from backup "${backup.device}" created on ${new Date(backup.timestamp).toLocaleString()}? This will replace your local database.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Restore', 
-          onPress: async () => {
-            setLoadingGoogle(true);
-            setTimeout(async () => {
-              await restoreBackupFromCloud(backup.id);
-              setLoadingGoogle(false);
-              alert('Database restored successfully from Google Drive!');
-            }, 1500);
-          }
-        }
-      ]
-    );
-  };
-
-  const handleCloudDelete = (backupId: string) => {
-    Alert.alert(
-      'Delete Backup',
-      'Delete this backup from your Google Drive?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            await removeCloudBackup(backupId);
-          }
-        }
-      ]
-    );
-  };
 
   const handleResetData = () => {
     Alert.alert(
@@ -217,8 +139,8 @@ export const SettingsScreen: React.FC = () => {
       'This will permanently delete all transactions, accounts, and categories, resetting the database to defaults. This action is irreversible.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reset Everything', 
+        {
+          text: 'Reset Everything',
           style: 'destructive',
           onPress: async () => {
             await importBackupData({
@@ -257,46 +179,70 @@ export const SettingsScreen: React.FC = () => {
       case 'terms':
         return (
           <ScrollView style={styles.legalScroll}>
-            <Text style={[styles.legalTitle, { color: colors.onBackground }]}>Terms & Conditions</Text>
+            <Text style={[styles.legalTitle, { color: colors.onBackground }]}>Terms of Service (India)</Text>
             <Text style={[styles.legalText, { color: colors.onBackground }]}>
-              BY INSTALLING, OPENING, OR USING THIS APPLICATION (LedgeIt), YOU AUTOMATICALLY AGREE TO THESE TERMS. IF YOU DO NOT AGREE, YOU MUST IMMEDIATELY UNINSTALL AND DISCONTINUE USE.
-              {"\n\n"}
-              1. PROPRIETARY OWNERSHIP
+              <Text style={{ fontWeight: '700' }}>1. Electronic Contract & Acceptance</Text>
               {"\n"}
-              All designs, layouts, codebase, architecture, and rights of LedgeIt belong exclusively to Baswanth Papisetty. All rights are reserved.
+              This document is an electronic record generated pursuant to the Information Technology Act, 2000 and rules thereunder as applicable, including the Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021. By downloading, accessing, or using LedgeIt ("Application"), you ("User") enter into a legally binding contract under the Indian Contract Act, 1872 with the Developer.
               {"\n\n"}
-              2. AI DEVELOPED SOFTWARE & LIABILITY DISCLAIMER (NO-SUE AGREEMENT)
+              <Text style={{ fontWeight: '700' }}>2. Nature of Software & Non-Financial Status</Text>
               {"\n"}
-              LedgeIt has been developed with the assistance of paid premium AI services. No user, business, startup, enterprise, or third party can claim ownership, raise plagiarism flags, or sue the developer (Baswanth Papisetty) or the application under any circumstances. By using the app, you waive any right to bring legal action or lawsuits against the developer.
+              The Application is an offline, local-first utility designed solely for personal ledger tracking and manual expense recording. The Application is NOT registered with the Securities and Exchange Board of India (SEBI), Reserve Bank of India (RBI), or any other regulatory body in India as a Non-Banking Financial Company (NBFC), financial adviser, or investment broker. Nothing contained herein constitutes financial advice, tax guidance, or banking services under Indian law.
               {"\n\n"}
-              3. PRIVACY & DATA SAFETY
+              <Text style={{ fontWeight: '700' }}>3. Absolute Disclaimer of Warranties</Text>
               {"\n"}
-              LedgeIt is for personal use only. We collect ZERO personal data on any server. All transactions and vaults balances are stored physically on your device's local storage (AsyncStorage). We do not collect, monitor, or sell your financial data. The Google login connection is strictly device-to-Google-Drive direct backup operations, and no third party has control or oversight.
+              The Application is provided strictly on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind. To the fullest extent permissible under applicable Indian laws, the Developer disclaims all warranties, express or implied, including accuracy of automated currency conversions, budget statistics, or data durability.
               {"\n\n"}
-              4. WIPE DATA
+              <Text style={{ fontWeight: '700' }}>4. Total Limitation of Liability & Hold Harmless</Text>
               {"\n"}
-              Triggering the "Wipe Local Data" command inside settings will permanently and irreversibly erase all local entries, accounts, and categories from your device storage.
+              To the maximum extent permitted by Section 79 of the Information Technology Act, 2000 and general law:
+              {"\n"}
+              (a) The Developer, creators, and contributors shall have ZERO legal or financial liability for any direct, indirect, incidental, punitive, special, or consequential damages whatsoever (including data loss, device corruption, financial miscalculations, or business interruption).
+              {"\n"}
+              (b) You explicitly agree to indemnify, defend, and hold harmless the Developer against any claims, losses, lawsuits, proceedings, or demands brought by you or third parties.
+              {"\n\n"}
+              <Text style={{ fontWeight: '700' }}>5. Dispute Resolution & Exclusive Jurisdiction</Text>
+              {"\n"}
+              Any dispute, controversy, or claim arising out of or relating to this Agreement shall be referred to and finally resolved by binding arbitration under the Indian Arbitration and Conciliation Act, 1996. The seat and venue of arbitration shall be Bengaluru, Karnataka, India. Subject to arbitration, courts in Bengaluru, Karnataka, India shall have exclusive jurisdiction over all legal matters.
+              {"\n\n"}
+              <Text style={{ fontWeight: '700' }}>6. Intellectual Property & Anti-Reverse Engineering</Text>
+              {"\n"}
+              All intellectual property rights, trademarks, design rights, branding, code architecture, and source assets are owned exclusively by the Developer protected under the Copyright Act, 1957 and Trade Marks Act, 1999 of India. You shall not decompile, reverse engineer, disassemble, modify, or create derivative works of this Application.
+              {"\n\n"}
+              <Text style={{ fontWeight: '700' }}>7. User Capacity & Competency to Contract</Text>
+              {"\n"}
+              By using this Application, you represent that you are at least 18 years of age or possess legal capacity to enter into a binding contract pursuant to Section 11 of the Indian Contract Act, 1872.
+              {"\n\n"}
+              <Text style={{ fontWeight: '700' }}>8. Force Majeure & Severability</Text>
+              {"\n"}
+              The Developer shall not be held liable for failure to perform obligations due to acts of God, network outages, server failures, hardware breakdown, or statutory changes. If any provision of these Terms is deemed invalid or unenforceable by a court of competent jurisdiction, the remaining provisions shall remain in full force and effect.
             </Text>
           </ScrollView>
         );
       case 'privacy':
         return (
           <ScrollView style={styles.legalScroll}>
-            <Text style={[styles.legalTitle, { color: colors.onBackground }]}>Privacy Policy</Text>
+            <Text style={[styles.legalTitle, { color: colors.onBackground }]}>Privacy Policy (India DPDP Act 2023)</Text>
             <Text style={[styles.legalText, { color: colors.onBackground }]}>
-              Your privacy is our absolute priority.
-              {"\n\n"}
-              1. Zero Server-Side Collection
+              <Text style={{ fontWeight: '700' }}>1. Local Data Fiduciary Disclosure</Text>
               {"\n"}
-              We do not run remote data collection servers. All budgeting summaries, transaction notes, and financial balances remain entirely private on your device.
+              Pursuant to the Digital Personal Data Protection (DPDP) Act, 2023 of India, LedgeIt operates as a zero-telemetry, local-first application. You are the Data Principal and the sole controller of your personal data. 100% of your transaction entries, account balances, and budget categories are stored directly on your personal device's local database.
               {"\n\n"}
-              2. Google Drive Permissions
+              <Text style={{ fontWeight: '700' }}>2. No Central Server Transmission</Text>
               {"\n"}
-              When using the Google Drive backup feature, the app connects directly to your own Google account. Backup file transfers are isolated entirely between your device and your personal cloud folder. We never access, retrieve, or transmit your credentials or financial metadata.
+              We do not operate central database servers, tracking cookies, analytics trackers, or user profiling algorithms. No financial metrics or personal identifiers are collected, transmitted, sold, or shared with third parties or government databases.
               {"\n\n"}
-              3. Compliance
+              <Text style={{ fontWeight: '700' }}>3. Google Drive Cloud Sync Disclosures</Text>
               {"\n"}
-              This privacy system complies with standard local privacy protection guidelines for launching on Web, Android, and iOS store platforms.
+              If you choose to enable Google Drive Cloud Backup, OAuth authentication occurs directly between your personal device and Google LLC's servers. The backup CSV files are uploaded straight into your personal Google Drive account. The Application developers never view, store, or receive your Google tokens, passwords, or cloud data files.
+              {"\n\n"}
+              <Text style={{ fontWeight: '700' }}>4. Data Erasure & Export Rights</Text>
+              {"\n"}
+              Under the DPDP Act 2023, you retain total rights to access, export, or permanently erase your data. You can instantly export all records to CSV or perform a complete, unrecoverable database wipe using the "Wipe Data" button in Settings.
+              {"\n\n"}
+              <Text style={{ fontWeight: '700' }}>5. Children's Data Protection</Text>
+              {"\n"}
+              In strict accordance with Section 9 of the DPDP Act 2023, the Application does not track, profile, or process personal data of minors. Minors may use the Application only under direct parental supervision.
             </Text>
           </ScrollView>
         );
@@ -309,24 +255,24 @@ export const SettingsScreen: React.FC = () => {
               {"\n"}
               Version 1.0.0 (Build 1)
               {"\n\n"}
-              A beautiful, manual multi-currency expense ledger designed with responsive desktop sidebars, custom calculator numpads, and local backup files.
-              {"\n\n"}
-              Developed for secure cross-platform budgeting.
+              A high-performance, local-first multi-currency ledger compliant with Indian data privacy standards. Built for total data sovereignty.
             </Text>
           </View>
         );
       case 'contact':
         return (
           <View style={styles.legalScroll}>
-            <Text style={[styles.legalTitle, { color: colors.onBackground }]}>Contact & Support</Text>
+            <Text style={[styles.legalTitle, { color: colors.onBackground }]}>Legal & Support Contact</Text>
             <Text style={[styles.legalText, { color: colors.onBackground, textAlign: 'center' }]}>
-              Need assistance?
+              Developer & Grievance Officer
               {"\n\n"}
-              For bugs, support requests, or data questions, contact:
+              As required under the IT Intermediary Guidelines 2021:
               {"\n\n"}
               <Text style={{ fontWeight: '700', color: colors.primary }}>
                 papisettybaswanth@gmail.com
               </Text>
+              {"\n\n"}
+              Bengaluru, Karnataka, India
             </Text>
           </View>
         );
@@ -337,25 +283,26 @@ export const SettingsScreen: React.FC = () => {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: 'transparent' }]} contentContainerStyle={styles.contentPadding}>
-      
+
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Google Drive Sync</Text>
-        
-        {loadingGoogle && (
+
+        {!request && (
           <View style={styles.loaderBox}>
             <ActivityIndicator size="small" color={colors.primary} />
             <Text style={[styles.loaderText, { color: colors.outline }]}>Connecting to Drive...</Text>
           </View>
         )}
 
-        {!loadingGoogle && !googleUser && (
+        {!!request && !googleUser && (
           <View style={{ alignItems: 'center', paddingTop: 4 }}>
             <Text style={[styles.googleDesc, { color: colors.outline }]}>
               Backup and sync manual transactions to other devices using your Google Drive space.
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.googleBtn, { backgroundColor: colors.primaryContainer }]}
               onPress={handleGoogleSignIn}
+              disabled={!request}
             >
               <MaterialIcons name="login" size={18} color={colors.onPrimaryContainer} style={{ marginRight: 8 }} />
               <Text style={[styles.googleBtnText, { color: colors.onPrimaryContainer }]}>
@@ -365,7 +312,7 @@ export const SettingsScreen: React.FC = () => {
           </View>
         )}
 
-        {!loadingGoogle && googleUser && (
+        {!!request && googleUser && (
           <View style={{ width: '100%' }}>
             <View style={styles.userInfoRow}>
               <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
@@ -386,15 +333,15 @@ export const SettingsScreen: React.FC = () => {
                 onChangeText={setBackupNameInput}
                 placeholder="e.g. Device Name"
                 placeholderTextColor={colors.outline}
-                style={[styles.backupNameInput, { 
-                  borderColor: colors.outline, 
+                style={[styles.backupNameInput, {
+                  borderColor: colors.outline,
                   color: colors.onSurface,
                   backgroundColor: colors.surfaceVariant
                 }]}
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.backupActionBtn, { backgroundColor: colors.primary }]}
-                onPress={handleCloudBackup}
+                onPress={() => backupToCloud()}
               >
                 <MaterialIcons name="cloud-upload" size={18} color={colors.onPrimary} />
                 <Text style={[styles.backupActionText, { color: colors.onPrimary }]}>Sync</Text>
@@ -404,21 +351,19 @@ export const SettingsScreen: React.FC = () => {
             {cloudBackups.length > 0 && (
               <View style={{ marginTop: 8 }}>
                 <Text style={[styles.smallTitle, { color: colors.onSurface }]}>Available Cloud Backups</Text>
-                {cloudBackups.slice(0, 2).map(backup => (
-                  <View key={backup.id} style={[styles.backupListItem, { borderBottomColor: colors.surfaceVariant }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.backupItemDevice, { color: colors.onSurface }]} numberOfLines={1}>
-                        {backup.device}
-                      </Text>
+                {cloudBackups.map(backup => (
+                  <View key={backup.id} style={[styles.backupListItem, { borderBottomColor: colors.outline }]}>
+                    <View>
+                      <Text style={[styles.backupItemDevice, { color: colors.onSurface }]}>{backup.name}</Text>
                       <Text style={[styles.backupItemDate, { color: colors.outline }]}>
-                        {new Date(backup.timestamp).toLocaleDateString()}
+                        {backup.modifiedTime ? new Date(backup.modifiedTime).toLocaleString() : ''}
                       </Text>
                     </View>
-                    <View style={{ flexDirection: 'row' }}>
-                      <TouchableOpacity onPress={() => handleCloudRestore(backup)} style={styles.actionIconBtn}>
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <TouchableOpacity onPress={() => restoreBackupFromCloud(backup.id)} style={styles.actionIconBtn}>
                         <MaterialIcons name="cloud-download" size={18} color={colors.success} />
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleCloudDelete(backup.id)} style={[styles.actionIconBtn, { marginLeft: 8 }]}>
+                      <TouchableOpacity onPress={() => removeCloudBackup(backup.id)} style={[styles.actionIconBtn, { marginLeft: 8 }]}>
                         <MaterialIcons name="delete" size={18} color={colors.error} />
                       </TouchableOpacity>
                     </View>
@@ -435,7 +380,7 @@ export const SettingsScreen: React.FC = () => {
         <Text style={[styles.googleDesc, { color: colors.outline, marginBottom: 12 }]}>
           Choose the cosmetic currency prefix symbol applied to your Vaults, Flow inputs, and Vibe analytics:
         </Text>
-        
+
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
           {(['US', 'IN', 'EU', 'UK'] as const).map((cnt) => {
             const active = country === cnt;
@@ -530,30 +475,16 @@ export const SettingsScreen: React.FC = () => {
         </View>
 
         <View style={[styles.bentoSquareCard, { backgroundColor: colors.surface }]}>
-          <MaterialIcons name="local-offer" size={24} color={colors.primary} style={{ marginBottom: 6 }} />
-          <View>
-            <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>Categories</Text>
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
-              <TouchableOpacity 
-                style={[styles.smallPill, { backgroundColor: colors.primaryContainer }]}
-                onPress={() => {
-                  setCategoryType('expense');
-                  setCategoryModalVisible(true);
-                }}
-              >
-                <Text style={[styles.smallPillText, { color: colors.primary }]}>Burn</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.smallPill, { backgroundColor: colors.primaryContainer }]}
-                onPress={() => {
-                  setCategoryType('income');
-                  setCategoryModalVisible(true);
-                }}
-              >
-                <Text style={[styles.smallPillText, { color: colors.primary }]}>Earn</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer }]}>
+            <MaterialIcons name="category" size={24} color={colors.primary} />
           </View>
+          <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>Categories</Text>
+          <TouchableOpacity
+            style={[styles.smallPill, { backgroundColor: colors.primaryContainer, marginTop: 8 }]}
+            onPress={() => onNavigate?.('categories')}
+          >
+            <Text style={[styles.smallPillText, { color: colors.primary }]}>Manage</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -563,14 +494,14 @@ export const SettingsScreen: React.FC = () => {
           Export database logs as local files, or import an existing data file.
         </Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.flexButton, { backgroundColor: colors.primaryContainer }]}
             onPress={handleExport}
           >
             <MaterialIcons name="file-upload" size={18} color={colors.primary} />
             <Text style={[styles.flexButtonText, { color: colors.primary }]}>Export Data</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.flexButton, { backgroundColor: colors.primaryContainer }]}
             onPress={handleImport}
           >
@@ -578,20 +509,7 @@ export const SettingsScreen: React.FC = () => {
             <Text style={[styles.flexButtonText, { color: colors.primary }]}>Import Data</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={[styles.flexButton, { backgroundColor: colors.secondaryContainer, marginTop: 8 }]}
-          onPress={handleImportCashew}
-          disabled={isImporting}
-        >
-          {isImporting ? (
-            <ActivityIndicator size="small" color={colors.primary} />
-          ) : (
-            <>
-              <MaterialIcons name="move-to-inbox" size={18} color={colors.primary} />
-              <Text style={[styles.flexButtonText, { color: colors.primary }]}>Migrate from Cashew (CSV)</Text>
-            </>
-          )}
-        </TouchableOpacity>
+
       </View>
 
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
@@ -618,7 +536,7 @@ export const SettingsScreen: React.FC = () => {
             <Text style={[styles.bentoLabel, { color: colors.error }]}>Dangerous Actions</Text>
             <Text style={[styles.bentoSubLabel, { color: colors.outline }]}>Wipe database parameters</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.dangerBtn, { backgroundColor: colors.error }]}
             onPress={handleResetData}
           >
@@ -627,18 +545,7 @@ export const SettingsScreen: React.FC = () => {
         </View>
       </View>
 
-      <CategoryModal
-        visible={categoryModalVisible}
-        onClose={() => setCategoryModalVisible(false)}
-        colors={colors}
-        categories={categories}
-        type={categoryType}
-        onSelect={() => {}}
-        onAddCategory={(name, type, color, icon) => addCategory({ name, type, color, icon })}
-        onUpdateCategory={updateCategory}
-        onDeleteCategory={deleteCategory}
-        manageMode={true}
-      />
+
 
       <Modal
         visible={legalModalType !== null}
@@ -655,16 +562,47 @@ export const SettingsScreen: React.FC = () => {
               <Text style={[styles.modalHeaderTitle, { color: colors.onBackground }]}>Legal Document</Text>
               <View style={{ width: 24 }} />
             </View>
-            
+
             {renderLegalContent()}
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={!!alertMessage}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setAlertMessage('')}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <View style={{ width: '100%', maxWidth: 400, backgroundColor: colors.surface, borderRadius: 20, padding: 24, elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 }}>
+            <MaterialIcons name="info-outline" size={40} color={colors.primary} style={{ alignSelf: 'center', marginBottom: 16 }} />
+            <Text style={{ fontSize: 16, fontWeight: '600', color: colors.onSurface, textAlign: 'center', marginBottom: 24 }}>
+              {alertMessage}
+            </Text>
+            <TouchableOpacity
+              style={{ backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}
+              onPress={() => setAlertMessage('')}
+            >
+              <Text style={{ color: colors.onPrimary, fontWeight: '700', fontSize: 16 }}>Okay</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   container: {
     flex: 1,
   },

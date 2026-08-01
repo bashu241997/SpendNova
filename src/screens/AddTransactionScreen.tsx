@@ -14,7 +14,7 @@ import { useApp } from '../context/AppContext';
 import { Account, Category, Transaction } from '../utils/storage';
 import { Numpad } from '../components/Numpad';
 import { AccountModal } from '../components/AccountModal';
-import { CategoryModal } from '../components/CategoryModal';
+import { CategoryPickerModal } from '../components/CategoryPickerModal';
 
 interface AddTransactionScreenProps {
   onBack: () => void;
@@ -49,32 +49,49 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
     transactionToEdit?.amount ? transactionToEdit.amount.toString() : '0'
   );
   
-  const [account, setAccount] = useState<Account>(() => {
+  const [account, setAccount] = useState<Account | undefined>(() => {
     if (transactionToEdit) {
       return accounts.find(a => a.id === transactionToEdit.account || a.name === transactionToEdit.account) || accounts[0];
     }
     return accounts[0];
   });
 
-  const [toAccount, setToAccount] = useState<Account>(() => {
+  const [toAccount, setToAccount] = useState<Account | undefined>(() => {
     if (transactionToEdit?.toAccount) {
       return accounts.find(a => a.id === transactionToEdit.toAccount || a.name === transactionToEdit.toAccount) || accounts[1];
     }
     return accounts[1] || accounts[0];
   });
 
-  const [category, setCategory] = useState<Category>(() => {
+  const [category, setCategory] = useState<Category | undefined>(() => {
     if (transactionToEdit) {
       return categories.find(c => c.id === transactionToEdit.category || c.name === transactionToEdit.category) || categories[0];
     }
     return categories.find(c => c.type === 'expense') || categories[0];
   });
 
-  const [description, setDescription] = useState(transactionToEdit?.description || '');
+  // Auto-sync when accounts or categories finish loading from AsyncStorage
+  React.useEffect(() => {
+    if (!account && accounts.length > 0) {
+      setAccount(accounts[0]);
+    }
+    if (!toAccount && accounts.length > 0) {
+      setToAccount(accounts[1] || accounts[0]);
+    }
+    if (!category && categories.length > 0) {
+      setCategory(categories.find(c => c.type === (type === 'transfer' ? 'expense' : type)) || categories[0]);
+    }
+  }, [accounts, categories]);
 
+  const [subcategory, setSubcategory] = useState<string>(transactionToEdit?.subcategory || '');
+  const [description, setDescription] = useState(transactionToEdit?.description || '');
   const [accountModalVisible, setAccountModalVisible] = useState(false);
   const [toAccountModalVisible, setToAccountModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+
+  const activeAccount = account || accounts[0] || { id: 'acc_def', name: 'Cash', color: colors.primary, icon: 'account-balance-wallet', type: 'cash' };
+  const activeToAccount = toAccount || accounts[1] || accounts[0] || { id: 'acc_def2', name: 'Bank', color: colors.secondary, icon: 'account-balance', type: 'savings' };
+  const activeCategory = category || categories[0] || { id: 'cat_def', name: 'General', color: colors.primary, icon: 'label', type: 'expense' };
 
   const handleNumpadDone = async (finalAmount: number) => {
     if (finalAmount <= 0) {
@@ -86,9 +103,9 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
       date,
       amount: finalAmount,
       type,
-      account: account.id,
-      toAccount: type === 'transfer' ? toAccount.id : undefined,
-      category: type === 'transfer' ? 'Transfer' : category.id,
+      account: activeAccount.id,
+      toAccount: type === 'transfer' ? activeToAccount.id : undefined,
+      category: type === 'transfer' ? 'Transfer' : activeCategory.id,
       description,
     };
 
@@ -168,7 +185,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                 style={[styles.tabItem, active && { backgroundColor: tabBg }]}
               >
                 <Text style={[styles.tabLabel, { color: tabText }]}>
-                  {tab === 'expense' ? 'BURN' : tab === 'income' ? 'EARN' : 'SHIFT'}
+                  {tab === 'expense' ? 'EXPENSE' : tab === 'income' ? 'INCOME' : 'TRANSFER'}
                 </Text>
               </TouchableOpacity>
             );
@@ -176,7 +193,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         </View>
 
         <View style={[styles.amountContainer, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.amountLabel, { color: colors.outline }]}>FLOW AMOUNT</Text>
+          <Text style={[styles.amountLabel, { color: colors.outline }]}>AMOUNT</Text>
           <View style={styles.amountValueWrapper}>
             <Text style={[styles.currencySign, { color: dynamicColor }]}>{currencySymbol}</Text>
             {Platform.OS === 'web' ? (
@@ -227,9 +244,9 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
               onPress={() => setAccountModalVisible(true)} 
               style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
             >
-              <View style={[styles.selectedIndicator, { backgroundColor: account.color }]} />
+              <View style={[styles.selectedIndicator, { backgroundColor: activeAccount.color }]} />
               <Text style={[styles.pickerText, { color: colors.onSurfaceVariant }]}>
-                {account.name}
+                {activeAccount.name}
               </Text>
               <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
             </TouchableOpacity>
@@ -241,9 +258,9 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                   onPress={() => setToAccountModalVisible(true)} 
                   style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant, flex: 1 }]}
                 >
-                  <View style={[styles.selectedIndicator, { backgroundColor: toAccount.color }]} />
+                  <View style={[styles.selectedIndicator, { backgroundColor: activeToAccount.color }]} />
                   <Text style={[styles.pickerText, { color: colors.onSurfaceVariant }]}>
-                    {toAccount.name}
+                    {activeToAccount.name}
                   </Text>
                   <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
                 </TouchableOpacity>
@@ -259,9 +276,9 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
               onPress={() => setCategoryModalVisible(true)} 
               style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
             >
-              <View style={[styles.selectedIndicator, { backgroundColor: category.color }]} />
+              <View style={[styles.selectedIndicator, { backgroundColor: activeCategory.color }]} />
               <Text style={[styles.pickerText, { color: colors.onSurfaceVariant }]}>
-                {category.name}
+                {activeCategory.name}
               </Text>
               <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
             </TouchableOpacity>
@@ -329,15 +346,19 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         }}
       />
 
-      <CategoryModal
+      <CategoryPickerModal
         visible={categoryModalVisible}
         onClose={() => setCategoryModalVisible(false)}
         colors={colors}
         categories={categories}
         type={type === 'transfer' ? 'expense' : type}
-        onSelect={setCategory}
-        onAddCategory={async (name, catType, color, icon) => {
-          await addCategory({ name, type: catType, color, icon });
+        onSelect={(cat, sub) => {
+          setCategory(cat);
+          if (sub) {
+            setSubcategory(sub);
+          } else {
+            setSubcategory('');
+          }
         }}
       />
     </View>

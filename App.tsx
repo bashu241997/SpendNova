@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  SafeAreaView, 
-  TouchableOpacity, 
-  Platform, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  SafeAreaView,
+  TouchableOpacity,
+  Platform,
   StatusBar as RNStatusBar,
   ActivityIndicator,
   useWindowDimensions
@@ -20,10 +20,14 @@ import { AccountsScreen } from './src/screens/AccountsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { AddTransactionScreen } from './src/screens/AddTransactionScreen';
+import { CategoriesScreen } from './src/screens/CategoriesScreen';
+import { MoreScreen } from './src/screens/MoreScreen';
+import { RecurringScreen } from './src/screens/RecurringScreen';
+import { GoalsScreen } from './src/screens/GoalsScreen';
 
 import { Transaction } from './src/utils/storage';
 
-type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings';
+type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings' | 'categories' | 'more' | 'recurring' | 'goals';
 
 function MainAppContent() {
   const { colors, themeType, loading } = useApp();
@@ -57,7 +61,7 @@ function MainAppContent() {
     switch (activeTab) {
       case 'home':
         return (
-          <HomeScreen 
+          <HomeScreen
             onAddTransaction={() => setIsAddMode(true)}
             onEditTransaction={handleEditTransaction}
             onNavigateTab={(tab) => setActiveTab(tab as MainTab)}
@@ -65,7 +69,7 @@ function MainAppContent() {
         );
       case 'transactions':
         return (
-          <TransactionsScreen 
+          <TransactionsScreen
             onAddTransaction={() => setIsAddMode(true)}
             onEditTransaction={handleEditTransaction}
           />
@@ -77,7 +81,15 @@ function MainAppContent() {
       case 'accounts':
         return <AccountsScreen />;
       case 'settings':
-        return <SettingsScreen />;
+        return <SettingsScreen onNavigate={(t) => setActiveTab(t as any)} />;
+      case 'categories':
+        return <CategoriesScreen onBack={() => setActiveTab('settings')} />;
+      case 'more':
+        return <MoreScreen onNavigate={(t) => setActiveTab(t as any)} />;
+      case 'recurring':
+        return <RecurringScreen />;
+      case 'goals':
+        return <GoalsScreen />;
     }
   };
 
@@ -89,32 +101,36 @@ function MainAppContent() {
       case 'stats': return 'Analytics';
       case 'accounts': return 'Accounts';
       case 'settings': return 'Settings';
+      case 'categories': return 'Categories';
+      case 'more': return 'More';
+      case 'recurring': return 'Subscriptions & EMIs';
+      case 'goals': return 'Savings Goals';
     }
   };
 
   const safeAreaStyle = [
     styles.safeArea,
-    { backgroundColor: 'transparent' },
+    { backgroundColor: colors.background },
     Platform.OS === 'web' && { alignItems: 'center', justifyContent: 'center' }
   ] as any;
 
   const containerStyle = [
     styles.rootContainer,
-    { backgroundColor: 'transparent' },
+    { backgroundColor: colors.background },
     Platform.OS === 'web' && { borderColor: colors.surfaceVariant }
   ] as any;
 
   const glassSidebarStyle = [
     styles.sidebar,
-    { 
+    {
       backgroundColor: colors.surface,
-      borderRightColor: colors.outline 
+      borderRightColor: colors.outline
     }
   ];
 
   const glassBottomTabStyle = [
     styles.bottomTabBar,
-    { 
+    {
       backgroundColor: colors.surface,
       borderColor: colors.outline
     }
@@ -125,10 +141,10 @@ function MainAppContent() {
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background, flexDirection: 'row' }]}>
         <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
 
-        
+
         <View style={glassSidebarStyle}>
           <Text style={[styles.sidebarLogo, { color: colors.primary }]}>LedgeIt</Text>
-          
+
           <View style={styles.sidebarMenu}>
             {(['home', 'transactions', 'budgets', 'stats', 'accounts', 'settings'] as MainTab[]).map(tab => {
               const active = activeTab === tab;
@@ -165,10 +181,10 @@ function MainAppContent() {
                   ]}
                   activeOpacity={0.8}
                 >
-                  <MaterialIcons 
-                    name={icon as any} 
-                    size={22} 
-                    color={active ? colors.primary : colors.outline} 
+                  <MaterialIcons
+                    name={icon as any}
+                    size={22}
+                    color={active ? colors.primary : colors.outline}
                     style={{ marginRight: 12 }}
                   />
                   <Text style={[
@@ -207,9 +223,9 @@ function MainAppContent() {
         {isAddMode && (
           <View style={styles.desktopModalOverlay}>
             <View style={[styles.desktopModalContainer, { backgroundColor: colors.background, shadowColor: '#000', borderColor: colors.surfaceVariant }]}>
-              <AddTransactionScreen 
-                onBack={handleCloseAddMode} 
-                transactionToEdit={editingTransaction} 
+              <AddTransactionScreen
+                onBack={handleCloseAddMode}
+                transactionToEdit={editingTransaction}
               />
             </View>
           </View>
@@ -224,9 +240,9 @@ function MainAppContent() {
         <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
 
         <View style={containerStyle}>
-          <AddTransactionScreen 
-            onBack={handleCloseAddMode} 
-            transactionToEdit={editingTransaction} 
+          <AddTransactionScreen
+            onBack={handleCloseAddMode}
+            transactionToEdit={editingTransaction}
           />
         </View>
       </SafeAreaView>
@@ -257,10 +273,10 @@ function MainAppContent() {
               styles.tabPill,
               activeTab === 'home' && { backgroundColor: colors.primaryContainer }
             ]}>
-              <MaterialIcons 
-                name="dashboard" 
-                size={22} 
-                color={activeTab === 'home' ? colors.primary : colors.outline} 
+              <MaterialIcons
+                name="dashboard"
+                size={22}
+                color={activeTab === 'home' ? colors.primary : colors.outline}
               />
             </View>
             <Text style={[
@@ -281,10 +297,10 @@ function MainAppContent() {
               styles.tabPill,
               activeTab === 'transactions' && { backgroundColor: colors.primaryContainer }
             ]}>
-              <MaterialIcons 
-                name="receipt" 
-                size={22} 
-                color={activeTab === 'transactions' ? colors.primary : colors.outline} 
+              <MaterialIcons
+                name="receipt"
+                size={22}
+                color={activeTab === 'transactions' ? colors.primary : colors.outline}
               />
             </View>
             <Text style={[
@@ -292,8 +308,18 @@ function MainAppContent() {
               { color: activeTab === 'transactions' ? colors.onBackground : colors.outline },
               activeTab === 'transactions' && { fontWeight: '700' }
             ]}>
-              Activity
+              Transaction
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setIsAddMode(true)}
+            style={styles.tabButton}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.centerAddCircle, { backgroundColor: colors.primary }]}>
+              <MaterialIcons name="add" size={24} color={colors.onPrimary} />
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -305,10 +331,10 @@ function MainAppContent() {
               styles.tabPill,
               activeTab === 'budgets' && { backgroundColor: colors.primaryContainer }
             ]}>
-              <MaterialIcons 
-                name="pie-chart" 
-                size={22} 
-                color={activeTab === 'budgets' ? colors.primary : colors.outline} 
+              <MaterialIcons
+                name="pie-chart"
+                size={22}
+                color={activeTab === 'budgets' ? colors.primary : colors.outline}
               />
             </View>
             <Text style={[
@@ -321,84 +347,26 @@ function MainAppContent() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => setActiveTab('stats')}
+            onPress={() => setActiveTab('more')}
             style={styles.tabButton}
             activeOpacity={0.8}
           >
             <View style={[
               styles.tabPill,
-              activeTab === 'stats' && { backgroundColor: colors.primaryContainer }
+              ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { backgroundColor: colors.primaryContainer }
             ]}>
-              <MaterialIcons 
-                name="bar-chart" 
-                size={22} 
-                color={activeTab === 'stats' ? colors.primary : colors.outline} 
+              <MaterialIcons
+                name="menu"
+                size={22}
+                color={['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.primary : colors.outline}
               />
             </View>
             <Text style={[
               styles.tabLabelText,
-              { color: activeTab === 'stats' ? colors.onBackground : colors.outline },
-              activeTab === 'stats' && { fontWeight: '700' }
+              { color: ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.onBackground : colors.outline },
+              ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { fontWeight: '700' }
             ]}>
-              Analytics
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setIsAddMode(true)}
-            style={styles.centerTabButton}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.centerAddPill, { backgroundColor: colors.primary }]}>
-              <Text style={[styles.centerAddText, { color: colors.onPrimary }]}>+ ADD</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab('accounts')}
-            style={styles.tabButton}
-            activeOpacity={0.8}
-          >
-            <View style={[
-              styles.tabPill,
-              activeTab === 'accounts' && { backgroundColor: colors.primaryContainer }
-            ]}>
-              <MaterialIcons 
-                name="account-balance-wallet" 
-                size={22} 
-                color={activeTab === 'accounts' ? colors.primary : colors.outline} 
-              />
-            </View>
-            <Text style={[
-              styles.tabLabelText,
-              { color: activeTab === 'accounts' ? colors.onBackground : colors.outline },
-              activeTab === 'accounts' && { fontWeight: '700' }
-            ]}>
-              Accounts
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab('settings')}
-            style={styles.tabButton}
-            activeOpacity={0.8}
-          >
-            <View style={[
-              styles.tabPill,
-              activeTab === 'settings' && { backgroundColor: colors.primaryContainer }
-            ]}>
-              <MaterialIcons 
-                name="settings" 
-                size={22} 
-                color={activeTab === 'settings' ? colors.primary : colors.outline} 
-              />
-            </View>
-            <Text style={[
-              styles.tabLabelText,
-              { color: activeTab === 'settings' ? colors.onBackground : colors.outline },
-              activeTab === 'settings' && { fontWeight: '700' }
-            ]}>
-              Settings
+              More
             </Text>
           </TouchableOpacity>
         </View>
@@ -497,6 +465,37 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 0.25,
+  },
+  headerAddBtn: {
+    padding: 4,
+  },
+  centerAddCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  fabButton: {
+    position: 'absolute',
+    bottom: 85,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    zIndex: 99,
   },
   centerTabButton: {
     flex: 1.2,
