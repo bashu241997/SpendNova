@@ -184,7 +184,7 @@ function MainAppContent() {
           <Text style={[styles.sidebarLogo, { color: colors.primary }]}>SpendNova</Text>
 
           <View style={styles.sidebarMenu}>
-            {(['home', 'transactions', 'budgets', 'stats', 'accounts', 'settings'] as MainTab[]).map(tab => {
+            {(['home', 'transactions', 'accounts', 'budgets', 'goals', 'recurring', 'stats', 'settings'] as MainTab[]).map(tab => {
               const active = activeTab === tab;
               let icon = 'dashboard';
               let label = 'Home';
@@ -195,15 +195,21 @@ function MainAppContent() {
               } else if (tab === 'transactions') {
                 icon = 'receipt';
                 label = 'Transactions';
-              } else if (tab === 'budgets') {
-                icon = 'pie-chart';
-                label = 'Budgets';
-              } else if (tab === 'stats') {
-                icon = 'bar-chart';
-                label = 'Analytics';
               } else if (tab === 'accounts') {
                 icon = 'account-balance-wallet';
                 label = 'Accounts';
+              } else if (tab === 'budgets') {
+                icon = 'pie-chart';
+                label = 'Budgets';
+              } else if (tab === 'goals') {
+                icon = 'emoji-events';
+                label = 'Savings Goals';
+              } else if (tab === 'recurring') {
+                icon = 'event-repeat';
+                label = 'Subscriptions & EMIs';
+              } else if (tab === 'stats') {
+                icon = 'bar-chart';
+                label = 'Analytics';
               } else if (tab === 'settings') {
                 icon = 'settings';
                 label = 'Settings';

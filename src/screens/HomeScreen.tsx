@@ -268,18 +268,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               {userBudgetStats.map(b => (
                 <TouchableOpacity 
                   key={b.id} 
-                  style={[styles.horizontalBudgetCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1 }]}
+                  style={[
+                    styles.horizontalBudgetCard, 
+                    { 
+                      backgroundColor: `${b.color}15`, 
+                      borderColor: `${b.color}30`, 
+                      borderWidth: 1 
+                    }
+                  ]}
                   onPress={() => onNavigateTab('budgets')}
                   activeOpacity={0.85}
                 >
                   <View style={styles.bCardTop}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                      <View style={[styles.bIconWrap, { backgroundColor: `${b.color}20`, marginRight: 10 }]}>
-                        <MaterialIcons name={(b.icon || 'pie-chart') as any} size={20} color={b.color} />
-                      </View>
-                      <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
+                    <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
+                    <View style={[styles.bIconWrap, { backgroundColor: `${b.color}25` }]}>
+                      <MaterialIcons name={(b.icon || 'history') as any} size={18} color={b.color} />
                     </View>
-                    <MaterialIcons name="chevron-right" size={20} color={colors.outline} />
                   </View>
 
                   {b.hasBudget ? (
@@ -293,16 +297,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         </Text>
                       </View>
 
-                      <View style={styles.bProgressRow}>
-                        <Text style={[styles.bProgText, { color: colors.onSurface }]}>Spent {currencySymbol}{b.spent.toLocaleString('en-IN')}</Text>
-                        <Text style={[styles.bProgText, { color: colors.onSurface }]}>{Math.round(b.pct)}%</Text>
+                      {/* TODAY MARKER & PROGRESS BAR */}
+                      <View style={styles.todayMarkerWrapper}>
+                        <View style={[styles.todayBadge, { left: `${Math.min(Math.max(b.pct, 5), 85)}%` }]}>
+                          <Text style={styles.todayText}>Today</Text>
+                        </View>
+                        <View style={[styles.bProgressBar, { backgroundColor: 'rgba(0,0,0,0.06)' }]}>
+                          <View style={[styles.bProgressFill, { backgroundColor: b.color, width: `${b.pct}%` }]} />
+                        </View>
+                        <View style={styles.dateRangeRow}>
+                          <Text style={[styles.dateRangeText, { color: colors.outline }]}>Aug 1</Text>
+                          <Text style={[styles.dateRangeText, { color: colors.outline }]}>Aug 31</Text>
+                        </View>
                       </View>
-                      <View style={[styles.bProgressBar, { backgroundColor: `${b.color}20` }]}>
-                        <View style={[styles.bProgressFill, { backgroundColor: b.color, width: `${b.pct}%` }]} />
-                      </View>
-                      
+
                       <Text style={[styles.bDailyText, { color: colors.outline }]} numberOfLines={1}>
-                        {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 0 })}/day for {daysLeft} days
+                        You can spend {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 0 })}/day for {daysLeft} more days
                       </Text>
                     </>
                   ) : (
@@ -694,15 +704,44 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   bProgressFill: {
     height: '100%',
     borderRadius: 4,
   },
+  todayMarkerWrapper: {
+    marginTop: 4,
+    marginBottom: 12,
+    position: 'relative',
+  },
+  todayBadge: {
+    position: 'absolute',
+    top: -18,
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    zIndex: 2,
+  },
+  todayText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  dateRangeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  dateRangeText: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
   bDailyText: {
-    fontSize: 13,
+    fontSize: 11,
     textAlign: 'center',
+    marginTop: 4,
   },
   goalsGrid: {
     flexDirection: 'row',
