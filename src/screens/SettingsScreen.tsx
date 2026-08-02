@@ -85,6 +85,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
     iosClientId: googleClientIds.iosClientId || 'disabled.apps.googleusercontent.com',
     androidClientId: googleClientIds.androidClientId || 'disabled.apps.googleusercontent.com',
     scopes: ['https://www.googleapis.com/auth/drive.file', 'profile', 'email'],
+    ...(Platform.OS === 'web' ? {
+      redirectUri: typeof window !== 'undefined' ? window.location.origin : 'https://spendnova-ledger.web.app'
+    } : {})
   });
 
   React.useEffect(() => {
@@ -106,6 +109,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
 
   const handleGoogleSignIn = async () => {
     try {
+      console.log("GOOGLE SIGN IN REDIRECT URI IS:", request?.redirectUri);
       await promptAsync();
     } catch (e) {
       console.error(e);
