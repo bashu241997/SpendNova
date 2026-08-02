@@ -103,6 +103,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               key={`day-${day}`}
               style={[
                 styles.cell,
+                { borderColor: colors.outline },
                 isSelected && { backgroundColor: colors.primaryContainer, borderRadius: 8 }
               ]}
               onPress={() => onSelectDate(dateStr)}

@@ -119,28 +119,28 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
 
     if (item.type === 'transfer') {
       return (
-        <TouchableOpacity style={styles.txItemContainer} onPress={() => onEditTransaction(item)}>
-          <View style={[styles.iconCircle, { backgroundColor: '#E5E7EB' }]}>
-            <MaterialIcons name="swap-horiz" size={20} color="#6B7280" />
+        <TouchableOpacity style={[styles.txItemContainer, { borderBottomColor: colors.surfaceVariant }]} onPress={() => onEditTransaction(item)}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.surfaceVariant }]}>
+            <MaterialIcons name="swap-horiz" size={20} color={colors.onSurfaceVariant} />
           </View>
           <View style={styles.txMiddle}>
-            <Text style={styles.txTitle}>{item.description || 'Transfer'}</Text>
+            <Text style={[styles.txTitle, { color: colors.onSurface }]}>{item.description || 'Transfer'}</Text>
             <View style={styles.pillsRow}>
               {accountInfo && (
-                <View style={[styles.pill, { backgroundColor: accountInfo.color ? `${accountInfo.color}20` : '#F3F4F6' }]}>
-                  <Text style={[styles.pillText, { color: accountInfo.color || '#374151' }]}>{accountInfo.name}</Text>
+                <View style={[styles.pill, { backgroundColor: accountInfo.color ? `${accountInfo.color}20` : colors.surfaceVariant }]}>
+                  <Text style={[styles.pillText, { color: accountInfo.color || colors.onSurfaceVariant }]}>{accountInfo.name}</Text>
                 </View>
               )}
               <MaterialIcons name="arrow-right-alt" size={16} color="#9CA3AF" style={{ marginHorizontal: 4 }} />
               {toAccountInfo && (
-                <View style={[styles.pill, { backgroundColor: toAccountInfo.color ? `${toAccountInfo.color}20` : '#F3F4F6' }]}>
-                  <Text style={[styles.pillText, { color: toAccountInfo.color || '#374151' }]}>{toAccountInfo.name}</Text>
+                <View style={[styles.pill, { backgroundColor: toAccountInfo.color ? `${toAccountInfo.color}20` : colors.surfaceVariant }]}>
+                  <Text style={[styles.pillText, { color: toAccountInfo.color || colors.onSurfaceVariant }]}>{toAccountInfo.name}</Text>
                 </View>
               )}
             </View>
           </View>
           <View style={styles.txRight}>
-            <Text style={styles.txTime}>{timeStr}</Text>
+            <Text style={[styles.txTime, { color: colors.onSurfaceVariant }]}>{timeStr}</Text>
             <View style={styles.amtRow}>
               <MaterialIcons name="swap-horiz" size={16} color={amtColor} style={{ marginRight: 2 }} />
               <Text style={[styles.txAmount, { color: amtColor }]}>{currencySymbol}{item.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</Text>
@@ -151,35 +151,37 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
     }
 
     return (
-      <TouchableOpacity style={styles.txItemContainer} onPress={() => onEditTransaction(item)}>
-        <View style={[styles.iconCircle, { backgroundColor: categoryInfo?.color ? `${categoryInfo.color}30` : '#F3F4F6' }]}>
-          <MaterialIcons name={(categoryInfo?.icon || 'label') as any} size={20} color={categoryInfo?.color || '#6B7280'} />
+      <TouchableOpacity style={[styles.txItemContainer, { borderBottomColor: colors.surfaceVariant }]} onPress={() => onEditTransaction(item)}>
+        <View style={[styles.iconCircle, { backgroundColor: categoryInfo?.color ? `${categoryInfo.color}20` : colors.surfaceVariant }]}>
+          <MaterialIcons name={(categoryInfo?.icon || 'label') as any} size={20} color={categoryInfo?.color || colors.onSurfaceVariant} />
         </View>
 
         <View style={styles.txMiddle}>
-          <Text style={styles.txTitle} numberOfLines={1}>{item.description}</Text>
+          <Text style={[styles.txTitle, { color: colors.onSurface }]} numberOfLines={1}>{item.description}</Text>
           {!!item.subcategory && (
             <View style={styles.subNoteRow}>
-              <MaterialIcons name="subdirectory-arrow-right" size={12} color="#9CA3AF" />
-              <Text style={styles.subNoteText} numberOfLines={1}>{item.subcategory}</Text>
+              <MaterialIcons name="subdirectory-arrow-right" size={12} color={colors.onSurfaceVariant} />
+              <Text style={[styles.subNoteText, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
+                {(() => { const cat = getCategoryInfo(item.category, item.type); if (cat?.subcategories) { const sub = cat.subcategories.find((s: any) => { const sid = typeof s === 'object' ? s.id : s; const sn = typeof s === 'object' ? s.name : s; return sid === item.subcategory || sn === item.subcategory; }); if (sub && typeof sub === 'object') return (sub as any).name; } return item.subcategory; })()}
+              </Text>
             </View>
           )}
           <View style={styles.pillsRow}>
             {accountInfo && (
-              <View style={[styles.pill, { backgroundColor: accountInfo.color ? `${accountInfo.color}20` : '#F3F4F6' }]}>
-                <Text style={[styles.pillText, { color: accountInfo.color || '#374151' }]}>{accountInfo.name}</Text>
+              <View style={[styles.pill, { backgroundColor: accountInfo.color ? `${accountInfo.color}20` : colors.surfaceVariant }]}>
+                <Text style={[styles.pillText, { color: accountInfo.color || colors.onSurfaceVariant }]}>{accountInfo.name}</Text>
               </View>
             )}
             {categoryInfo && (
-              <View style={[styles.pill, { backgroundColor: categoryInfo.color ? `${categoryInfo.color}20` : '#F3F4F6' }]}>
-                <Text style={[styles.pillText, { color: categoryInfo.color || '#374151' }]}>{categoryInfo.name}</Text>
+              <View style={[styles.pill, { backgroundColor: categoryInfo.color ? `${categoryInfo.color}20` : colors.surfaceVariant }]}>
+                <Text style={[styles.pillText, { color: categoryInfo.color || colors.onSurfaceVariant }]}>{categoryInfo.name}</Text>
               </View>
             )}
           </View>
         </View>
 
         <View style={styles.txRight}>
-          <Text style={styles.txTime}>{timeStr}</Text>
+          <Text style={[styles.txTime, { color: colors.onSurfaceVariant }]}>{timeStr}</Text>
           <View style={styles.amtRow}>
             <MaterialIcons name={amtIcon as any} size={18} color={amtColor} style={{ marginRight: -2 }} />
             <Text style={[styles.txAmount, { color: amtColor }]}>
@@ -199,8 +201,8 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
 
     return (
       <View style={styles.dateHeaderContainer}>
-        <Text style={styles.dateHeaderText}>{headerTitle}</Text>
-        <Text style={styles.dateHeaderSum}>
+        <Text style={[styles.dateHeaderText, { color: colors.onSurfaceVariant }]}>{headerTitle}</Text>
+        <Text style={[styles.dateHeaderSum, { color: colors.onSurfaceVariant }]}>
           {daySum >= 0 ? '' : '-'}{currencySymbol}{Math.abs(daySum).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
         </Text>
       </View>
@@ -212,7 +214,7 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
       <Text style={[styles.pageTitle, { color: colors.onBackground }]}>Transactions</Text>
 
       <View style={styles.monthSelectorWrapper}>
-        <TouchableOpacity style={styles.monthArrow} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth - 2, 1))}>
+        <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.surfaceVariant }]} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth - 2, 1))}>
           <MaterialIcons name="chevron-left" size={24} color={colors.onSurfaceVariant} />
         </TouchableOpacity>
         
@@ -227,12 +229,12 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
             return (
               <TouchableOpacity 
                 key={i} 
-                style={[styles.monthItem, isSelected && styles.monthItemSelected]}
+                style={[styles.monthItem, isSelected && { borderBottomColor: colors.onSurface }]}
                 onPress={() => setCurrentFilterMonth(new Date(filterYear, i, 1))}
               >
                 <Text style={[
                   styles.monthText, 
-                  isSelected ? styles.monthTextSelected : { color: colors.outline }
+                  isSelected ? { color: colors.onSurface, fontWeight: '700' as const } : { color: colors.onSurfaceVariant }
                 ]}>
                   {MONTHS[i]}
                 </Text>
@@ -241,24 +243,24 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
           })}
         </ScrollView>
 
-        <TouchableOpacity style={styles.monthArrow} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth, 1))}>
+        <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.surfaceVariant }]} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth, 1))}>
           <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.summaryBar}>
+      <View style={[styles.summaryBar, { backgroundColor: colors.surfaceVariant }]}>
         <View style={styles.summaryBox}>
-          <Text style={[styles.summaryText, { color: '#EF4444' }]}>
+          <Text style={[styles.summaryText, { color: colors.error }]}>
             - {currencySymbol}{summary.exp.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
           </Text>
         </View>
         <View style={styles.summaryBox}>
-          <Text style={[styles.summaryText, { color: '#22C55E' }]}>
+          <Text style={[styles.summaryText, { color: colors.success }]}>
             ^ {currencySymbol}{summary.inc.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
           </Text>
         </View>
         <View style={styles.summaryBox}>
-          <Text style={[styles.summaryText, { color: '#374151' }]}>
+          <Text style={[styles.summaryText, { color: colors.onSurface }]}>
             = {currencySymbol}{summary.net.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
           </Text>
         </View>
@@ -274,7 +276,7 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
         stickySectionHeadersEnabled={false}
         ListEmptyComponent={
           <View style={styles.emptyView}>
-            <Text style={{ color: '#9CA3AF' }}>No transactions in {MONTHS[filterMonth - 1]}</Text>
+            <Text style={{ color: colors.onSurfaceVariant }}>No transactions in {MONTHS[filterMonth - 1]}</Text>
           </View>
         }
       />
@@ -297,12 +299,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   monthArrow: {
     padding: 8,
-    backgroundColor: '#F3F4F6',
     borderRadius: 20,
     marginHorizontal: 8,
   },
@@ -315,23 +314,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  monthItemSelected: {
-    borderBottomColor: '#000',
-  },
   monthText: {
     fontSize: 14,
     fontWeight: '500',
   },
-  monthTextSelected: {
-    color: '#000',
-    fontWeight: '700',
-  },
   summaryBar: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
     marginHorizontal: 16,
     marginTop: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingVertical: 10,
     justifyContent: 'space-between',
     paddingHorizontal: 24,
@@ -358,19 +349,16 @@ const styles = StyleSheet.create({
   dateHeaderText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#9CA3AF',
   },
   dateHeaderSum: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#9CA3AF',
   },
   txItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.03)',
   },
   iconCircle: {
     width: 44,
@@ -387,7 +375,6 @@ const styles = StyleSheet.create({
   txTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1F2937',
     marginBottom: 4,
   },
   subNoteRow: {
@@ -397,7 +384,6 @@ const styles = StyleSheet.create({
   },
   subNoteText: {
     fontSize: 12,
-    color: '#6B7280',
     marginLeft: 4,
   },
   pillsRow: {
@@ -422,7 +408,6 @@ const styles = StyleSheet.create({
   },
   txTime: {
     fontSize: 11,
-    color: '#9CA3AF',
     marginBottom: 6,
   },
   amtRow: {

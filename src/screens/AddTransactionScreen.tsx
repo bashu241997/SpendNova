@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   TextInput,
   ScrollView,
-  Platform
+  Platform,
+  Modal,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ColorTheme } from '../theme/colors';
@@ -15,6 +16,7 @@ import { Account, Category, Transaction } from '../utils/storage';
 import { Numpad } from '../components/Numpad';
 import { AccountModal } from '../components/AccountModal';
 import { CategoryPickerModal } from '../components/CategoryPickerModal';
+import { CalendarView } from '../components/CalendarView';
 
 interface AddTransactionScreenProps {
   onBack: () => void;
@@ -29,6 +31,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
     colors, 
     accounts, 
     categories, 
+    transactions,
     addTransaction, 
     updateTransaction,
     deleteTransaction,
@@ -88,6 +91,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
   const [accountModalVisible, setAccountModalVisible] = useState(false);
   const [toAccountModalVisible, setToAccountModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
 
   const activeAccount = account || accounts[0] || { id: 'acc_def', name: 'Cash', color: colors.primary, icon: 'account-balance-wallet', type: 'cash' };
   const activeToAccount = toAccount || accounts[1] || accounts[0] || { id: 'acc_def2', name: 'Bank', color: colors.secondary, icon: 'account-balance', type: 'savings' };
@@ -230,7 +234,12 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
             <TouchableOpacity onPress={() => handleDateChange(-1)} style={styles.dateArrow}>
               <MaterialIcons name="chevron-left" size={24} color={colors.primary} />
             </TouchableOpacity>
-            <Text style={[styles.dateText, { color: colors.onBackground }]}>{date}</Text>
+            <TouchableOpacity 
+              onPress={() => setShowCalendarModal(true)}
+              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%' }}
+            >
+              <Text style={[styles.dateText, { color: colors.onBackground, textDecorationLine: 'underline' }]}>{date}</Text>
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => handleDateChange(1)} style={styles.dateArrow}>
               <MaterialIcons name="chevron-right" size={24} color={colors.primary} />
             </TouchableOpacity>
@@ -361,6 +370,33 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           }
         }}
       />
+
+      <Modal 
+        visible={showCalendarModal} 
+        transparent 
+        animationType="fade" 
+        onRequestClose={() => setShowCalendarModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.surfaceVariant }]}>
+              <Text style={[styles.modalTitle, { color: colors.onSurface }]}>Select Date</Text>
+              <TouchableOpacity onPress={() => setShowCalendarModal(false)} style={{ padding: 4 }}>
+                <MaterialIcons name="close" size={24} color={colors.onSurface} />
+              </TouchableOpacity>
+            </View>
+            <CalendarView
+              transactions={transactions}
+              colors={colors}
+              selectedDate={date}
+              onSelectDate={(newDate) => {
+                setDate(newDate);
+                setShowCalendarModal(false);
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -497,6 +533,36 @@ const styles = StyleSheet.create({
   },
   saveButtonTextWeb: {
     fontSize: 16,
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '92%',
+    maxWidth: 400,
+    borderRadius: 24,
+    padding: 12,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
     fontWeight: '700',
   },
 });

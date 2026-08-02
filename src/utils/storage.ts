@@ -231,32 +231,64 @@ export const saveGoals = async (goals: Goal[]): Promise<void> => {
 
 export const exportDataToFile = async (data: AppData): Promise<boolean> => {
   try {
-    const backup = JSON.stringify({
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      data: {
-        transactions: data.transactions,
-        accounts: data.accounts,
-        categories: data.categories,
-        budgets: data.budgets || [],
-        recurring: data.recurring || [],
-        goals: data.goals || [],
-      },
-    }, null, 2);
+    const dateStr = new Date().toISOString().slice(0, 10);
+
+    const rows = data.transactions.map(tx => {
+      const acc = data.accounts.find(a => a.id === tx.account);
+      const toAcc = data.accounts.find(a => a.id === tx.toAccount);
+      const cat = data.categories.find(c => c.id === tx.category);
+      let subName = '', subColor = '', subIcon = '';
+      if (tx.subcategory && cat?.subcategories) {
+        const sub = cat.subcategories.find(s => s.id === tx.subcategory || s.name === tx.subcategory);
+        if (sub) {
+          subName = (sub as any).name || String(sub);
+          subColor = (sub as any).color || '';
+          subIcon = (sub as any).icon || '';
+        } else {
+          subName = tx.subcategory;
+        }
+      }
+
+      return {
+        Date: tx.date,
+        Type: tx.type,
+        Amount: tx.amount,
+        Description: tx.description,
+        CategoryName: cat?.name || '',
+        CategoryColor: cat?.color || '',
+        CategoryIcon: cat?.icon || '',
+        CategoryType: cat?.type || '',
+        SubcategoryName: subName,
+        SubcategoryColor: subColor,
+        SubcategoryIcon: subIcon,
+        AccountName: acc?.name || '',
+        AccountColor: acc?.color || '',
+        AccountIcon: (acc as any)?.icon || '',
+        AccountType: acc?.type || '',
+        ToAccountName: toAcc?.name || '',
+        ToAccountColor: toAcc?.color || '',
+        ToAccountIcon: (toAcc as any)?.icon || '',
+        ToAccountType: toAcc?.type || '',
+        Notes: (tx as any).notes || ''
+      };
+    });
+
+    const csvString = Papa.unparse(rows);
+    const fileName = `spendnova_${dateStr}.csv`;
 
     if (Platform.OS === 'web') {
-      const blob = new Blob([backup], { type: 'application/json;charset=utf-8;' });
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'spendnova_backup.json';
+      a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
       return true;
     }
 
-    const fileUri = ((FileSystem as any).documentDirectory || '') + 'spendnova_backup.json';
-    await FileSystem.writeAsStringAsync(fileUri, backup, {
+    const fileUri = ((FileSystem as any).documentDirectory || '') + fileName;
+    await FileSystem.writeAsStringAsync(fileUri, csvString, {
       encoding: FileSystem.EncodingType.UTF8,
     });
     
@@ -266,9 +298,9 @@ export const exportDataToFile = async (data: AppData): Promise<boolean> => {
     }
 
     await Sharing.shareAsync(fileUri, {
-      mimeType: 'application/json',
-      dialogTitle: 'Export SpendNova backup',
-      UTI: 'public.json',
+      mimeType: 'text/csv',
+      dialogTitle: 'Export SpendNova Data',
+      UTI: 'public.comma-separated-values-text',
     });
     
     return true;
@@ -287,7 +319,7 @@ export const importDataFromFile = async (): Promise<AppData | null> => {
       contents = await new Promise((resolve, reject) => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.json,application/json,.csv,text/csv';
+        input.accept = '.csv,text/csv,.json,application/json';
         input.style.display = 'none';
         document.body.appendChild(input);
         
@@ -309,7 +341,7 @@ export const importDataFromFile = async (): Promise<AppData | null> => {
       if (!contents) return null;
     } else {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/json', 'public.json', 'text/csv', 'text/comma-separated-values', 'public.comma-separated-values-text'],
+        type: ['text/csv', 'text/comma-separated-values', 'public.comma-separated-values-text', 'application/json', 'public.json'],
         copyToCacheDirectory: true,
       });
 
@@ -452,7 +484,7 @@ export const importDataFromFile = async (): Promise<AppData | null> => {
     };
   } catch (error) {
     console.error('Import failed:', error);
-    alert('Failed to import file. Choose a SpendNova JSON backup or a supported legacy CSV file.');
+    alert('Failed to import file. Choose a valid SpendNova CSV backup file.');
     return null;
   }
 };

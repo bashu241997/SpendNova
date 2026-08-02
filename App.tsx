@@ -268,7 +268,7 @@ function MainAppContent() {
             onPress={() => setIsAddMode(true)}
           >
             <MaterialIcons name="add" size={20} color={colors.onPrimary} style={{ marginRight: 8 }} />
-            <Text style={[styles.sidebarAddText, { color: colors.onPrimary }]}>+ Add Entry</Text>
+            <Text style={[styles.sidebarAddText, { color: colors.onPrimary }]}>Add Entry</Text>
           </TouchableOpacity>
         </View>
 

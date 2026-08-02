@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -47,7 +47,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 1024;
   const carouselCardWidth = isLargeScreen ? 280 : Math.min(Math.max(width - 32, 280), 340);
-  const desktopFeatureCardWidth = isLargeScreen ? 460 : carouselCardWidth;
+  const desktopFeatureCardWidth = isLargeScreen ? 420 : Math.min(Math.max(width - 40, 290), 360);
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -56,6 +56,78 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const daysInMonth = endOfMonth.getDate();
   const currentDay = now.getDate();
   const daysLeft = daysInMonth - currentDay + 1;
+
+  const [containerWidth, setContainerWidth] = useState(300);
+
+  const squareGap = 3.5;
+  const squareSize = useMemo(() => {
+    const padding = 32;
+    const totalGapsWidth = 17 * squareGap;
+    const availableWidth = containerWidth - padding;
+    return Math.max(Math.floor((availableWidth - totalGapsWidth) / 18), 6);
+  }, [containerWidth]);
+
+  const gridHeight = useMemo(() => {
+    return 7 * squareSize + 6 * squareGap;
+  }, [squareSize]);
+
+  // 1. Generate activity heatmap (last 18 weeks, Sun-Sat)
+  const heatmapData = useMemo(() => {
+    const days: { date: Date; dateStr: string; count: number; amount: number }[] = [];
+    const today = new Date();
+    
+    // Find the Sunday 17 weeks ago
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay() - 17 * 7);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 18 * 7; i++) {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      
+      const dayTxs = transactions.filter(t => {
+        const txDate = new Date(t.date);
+        return txDate.getFullYear() === d.getFullYear() &&
+               txDate.getMonth() === d.getMonth() &&
+               txDate.getDate() === d.getDate();
+      });
+      const count = dayTxs.length;
+      const amount = dayTxs.reduce((sum, t) => sum + t.amount, 0);
+      const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      days.push({
+        date: d,
+        dateStr,
+        count,
+        amount
+      });
+    }
+    return days;
+  }, [transactions]);
+
+  const weeks = useMemo(() => {
+    const weeksList: typeof heatmapData[] = [];
+    for (let i = 0; i < 18; i++) {
+      weeksList.push(heatmapData.slice(i * 7, (i + 1) * 7));
+    }
+    return weeksList;
+  }, [heatmapData]);
+
+  const weekLabels = useMemo(() => {
+    const labels: { index: number; text: string }[] = [];
+    weeks.forEach((week, index) => {
+      if (index % 3 === 0) {
+        const sun = week[0]?.date;
+        if (sun) {
+          labels.push({
+            index,
+            text: sun.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          });
+        }
+      }
+    });
+    return labels;
+  }, [weeks]);
 
   // Recurring EMIs / Subscriptions Stats (Upcoming vs Overdue)
   const recurringStats = useMemo(() => {
@@ -257,6 +329,85 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </ScrollView>
           </View>
 
+          {/* SPENDING FLOW SECTION (Heatmap Only) */}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Spending Flow</Text>
+            <TouchableOpacity onPress={() => onNavigateTab('stats')}>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>View Details</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View 
+            style={[styles.analyticsCard, { backgroundColor: colors.surface }]}
+            onLayout={(e) => {
+              const w = e.nativeEvent.layout.width;
+              if (w > 0) setContainerWidth(w);
+            }}
+          >
+            <Text style={[styles.heatmapTitle, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>Transaction Activity (Last 18 Weeks)</Text>
+            
+            <View style={styles.heatmapWrapper}>
+              {/* Day of week labels */}
+              <View style={[styles.dayLabelsCol, { height: gridHeight }]}>
+                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>S</Text>
+                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>M</Text>
+                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>T</Text>
+                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>W</Text>
+                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>T</Text>
+                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>F</Text>
+                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>S</Text>
+              </View>
+
+              <View style={{ flex: 1 }}>
+                <View style={[styles.heatmapGrid, { height: gridHeight, gap: squareGap }]}>
+                  {weeks.map((week, wIdx) => (
+                    <View key={`week-${wIdx}`} style={[styles.heatmapColumn, { gap: squareGap }]}>
+                      {week.map((day, dIdx) => {
+                        let bg = colors.surfaceVariant;
+                        if (day.count > 0) {
+                          if (day.count === 1) bg = `${colors.primary}33`;
+                          else if (day.count === 2) bg = `${colors.primary}77`;
+                          else bg = colors.primary;
+                        }
+                        return (
+                          <View 
+                            key={day.dateStr} 
+                            style={[styles.heatmapSquare, { width: squareSize, height: squareSize, backgroundColor: bg }]} 
+                          />
+                        );
+                      })}
+                    </View>
+                  ))}
+                </View>
+
+                {/* Heatmap Dates Labels */}
+                <View style={styles.heatmapLabelsRow}>
+                  {weekLabels.map((lbl, idx) => {
+                    const leftPos = lbl.index * (squareSize + squareGap);
+                    return (
+                      <Text 
+                        key={`lbl-${idx}`} 
+                        style={[styles.heatmapLabelText, { color: colors.onSurfaceVariant, left: leftPos }]}
+                      >
+                        {lbl.text}
+                      </Text>
+                    );
+                  })}
+                </View>
+              </View>
+            </View>
+
+            {/* Legend section at the bottom */}
+            <View style={[styles.legendRow, { borderTopColor: colors.surfaceVariant }]}>
+              <Text style={[styles.legendText, { color: colors.onSurfaceVariant }]}>Less</Text>
+              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: colors.surfaceVariant }]} />
+              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: `${colors.primary}33` }]} />
+              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: `${colors.primary}77` }]} />
+              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: colors.primary }]} />
+              <Text style={[styles.legendText, { color: colors.onSurfaceVariant }]}>More</Text>
+            </View>
+          </View>
+
           {/* HORIZONTAL BUDGETS CAROUSEL */}
           <View style={styles.sectionHeaderRow}>
             <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Active Budgets</Text>
@@ -266,6 +417,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
 
           <View style={styles.carouselContainer}>
+            {(!budgets || budgets.length === 0) ? (
+              <TouchableOpacity
+                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: colors.primaryContainer, borderColor: colors.primary }]}
+                onPress={() => onNavigateTab('budgets')}
+              >
+                <View style={[styles.emptyGoalIcon, { backgroundColor: colors.surface }]}>
+                  <MaterialIcons name="account-balance-wallet" size={23} color={colors.primary} />
+                </View>
+                <View style={styles.emptyGoalContent}>
+                  <Text style={[styles.emptyGoalTitle, { color: colors.onPrimaryContainer }]}>Create a budget</Text>
+                  <Text style={[styles.emptyGoalDescription, { color: colors.onPrimaryContainer }]}>Set spending limits and track where your money goes.</Text>
+                </View>
+                <View style={[styles.emptyGoalAction, { backgroundColor: colors.primary }]}>
+                  <MaterialIcons name="add" size={18} color={colors.onPrimary} />
+                </View>
+              </TouchableOpacity>
+            ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
               {userBudgetStats.map(b => {
                 // Calculate progress position (day of month percentage for Today badge)
@@ -283,52 +451,42 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     key={b.id} 
                     style={[
                       styles.horizontalBudgetCard,
-                      { width: desktopFeatureCardWidth },
-                      { 
-                        backgroundColor: colors.surface, 
-                        borderColor: colors.outline + '30', 
-                        borderWidth: 1 
-                      }
+                      { width: desktopFeatureCardWidth, backgroundColor: colors.surface }
                     ]}
                     onPress={() => onNavigateTab('budgets')}
                     activeOpacity={0.85}
                   >
-                    {/* PASTEL TOP HEADER BAND */}
-                    <View style={[styles.bCardHeaderBand, { backgroundColor: `${b.color}25` }]}>
+                    {/* SOFT TINTED TOP HEADER BAND */}
+                    <View style={[styles.bCardHeaderBand, { backgroundColor: `${b.color}12` }]}>
                       <View style={styles.bCardTop}>
-                        <Text style={[styles.bName, { color: '#0F172A' }]} numberOfLines={1}>{b.name}</Text>
-                        <View style={[styles.bIconWrap, { backgroundColor: 'rgba(0,0,0,0.08)' }]}>
-                          <MaterialIcons name={(b.icon || 'history') as any} size={16} color="#0F172A" />
+                        <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
+                        <View style={[styles.bIconWrap, { backgroundColor: `${b.color}18` }]}>
+                          <MaterialIcons name={(b.icon || 'pie-chart') as any} size={16} color={b.color || colors.primary} />
                         </View>
                       </View>
 
                       <View style={styles.bAmountRow}>
-                        <Text style={[styles.bLeft, { color: '#0F172A' }]}>
+                        <Text style={[styles.bLeft, { color: colors.onSurface }]}>
                           {currencySymbol}{Math.max(b.left, 0).toLocaleString('en-IN')}
                         </Text>
-                        <Text style={[styles.bTotal, { color: '#475569' }]}>
+                        <Text style={[styles.bTotal, { color: colors.onSurfaceVariant }]}>
                           left of {currencySymbol}{b.budget.toLocaleString('en-IN')}
                         </Text>
                       </View>
                     </View>
 
-                    {/* WHITE BOTTOM BODY BAND */}
+                    {/* BODY BAND */}
                     <View style={styles.bCardBodyBand}>
                       {b.hasBudget ? (
                         <>
                           {/* TODAY MARKER & PROGRESS BAR */}
                           <View style={styles.todayMarkerWrapper}>
-                            <View style={[styles.todayBadge, { left: `${dayPct}%` }]}>
-                              <Text style={styles.todayText}>Today</Text>
+                            <View style={[styles.todayBadge, { left: `${dayPct}%`, backgroundColor: colors.onSurface }]}>
+                              <Text style={[styles.todayText, { color: colors.surface }]}>Today</Text>
                             </View>
                             
-                            <View style={[styles.bProgressBar, { backgroundColor: '#E2E8F0' }]}>
-                              <View style={[styles.bProgressFill, { backgroundColor: b.color || colors.primary, width: `${Math.min(b.pct, 100)}%` }]} />
-                              {b.pct > 0 && (
-                                <Text style={[styles.bProgPercentInside, { color: b.pct > 50 ? '#FFFFFF' : '#0F172A' }]}>
-                                  {Math.round(b.pct)}%
-                                </Text>
-                              )}
+                            <View style={[styles.bProgressBar, { backgroundColor: `${b.color}15` }]}>
+                              <View style={[styles.bProgressFill, { backgroundColor: `${b.color}90`, width: `${Math.min(b.pct, 100)}%` }]} />
                             </View>
                             
                             <View style={styles.dateRangeRow}>
@@ -342,7 +500,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                           </Text>
                         </>
                       ) : (
-                        <View style={{ marginTop: 8 }}>
+                        <View style={{ marginTop: 4 }}>
                           <Text style={[styles.bDailyText, { color: colors.onSurfaceVariant }]}>
                             Spent: {currencySymbol}{b.spent.toLocaleString('en-IN')} (No limit set)
                           </Text>
@@ -353,6 +511,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 );
               })}
             </ScrollView>
+            )}
           </View>
 
           {/* SAVINGS GOALS CAROUSEL */}
@@ -389,21 +548,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   return (
                     <TouchableOpacity 
                       key={g.id} 
-                      style={[styles.horizontalBudgetCard, { width: desktopFeatureCardWidth, backgroundColor: colors.surface, borderColor: colors.surfaceVariant, borderWidth: 1 }]}
+                      style={[styles.goalCardHorizontal, { width: desktopFeatureCardWidth, backgroundColor: colors.surface }]}
                       onPress={() => onNavigateTab('goals')}
                       activeOpacity={0.85}
                     >
-                      <View style={styles.bCardTop}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                          <View style={[styles.bIconWrap, { backgroundColor: `${g.color || colors.primary}20`, marginRight: 10 }]}>
-                            <MaterialIcons name={(g.icon || 'savings') as any} size={20} color={g.color || colors.primary} />
-                          </View>
-                          <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{g.name}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                        <View style={[styles.bIconWrap, { backgroundColor: `${g.color || colors.primary}12`, marginRight: 10, width: 34, height: 34, borderRadius: 17 }]}>
+                          <MaterialIcons name={(g.icon || 'savings') as any} size={18} color={g.color || colors.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[{ fontSize: 15, fontWeight: '700', color: colors.onSurface }]} numberOfLines={1}>{g.name}</Text>
                         </View>
                         <MaterialIcons name="chevron-right" size={20} color={colors.onSurfaceVariant} />
                       </View>
 
-                      <View style={styles.bAmountRow}>
+                      <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 10 }}>
                         <Text style={[styles.bLeft, { color: colors.onSurface }]}>
                           {currencySymbol}{g.currentAmount.toLocaleString('en-IN')}
                         </Text>
@@ -412,12 +571,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         </Text>
                       </View>
 
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: colors.onSurface }}>{Math.round(pct)}% Saved</Text>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: colors.onSurfaceVariant }}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
+                      <View style={[styles.bProgressBar, { backgroundColor: `${g.color || colors.primary}12`, marginBottom: 8 }]}>
+                        <View style={[styles.bProgressFill, { backgroundColor: `${g.color || colors.primary}80`, width: `${pct}%` }]} />
                       </View>
-                      <View style={[styles.bProgressBar, { backgroundColor: `${g.color || colors.primary}20` }]}>
-                        <View style={[styles.bProgressFill, { backgroundColor: g.color || colors.primary, width: `${pct}%` }]} />
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Text style={{ fontSize: 12, fontWeight: '500', color: colors.onSurfaceVariant }}>{Math.round(pct)}% saved</Text>
+                        <Text style={{ fontSize: 12, fontWeight: '500', color: colors.onSurfaceVariant }}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
                       </View>
                     </TouchableOpacity>
                   );
@@ -676,11 +835,21 @@ const styles = StyleSheet.create({
     width: 260,
     borderRadius: 18,
     overflow: 'hidden',
-    elevation: 3,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  goalCardHorizontal: {
+    width: 280,
+    borderRadius: 20,
+    padding: 18,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 3 },
   },
   emptyGoalCard: {
     flexDirection: 'row',
@@ -720,31 +889,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bCardHeaderBand: {
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 10,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 14,
   },
   bCardBodyBand: {
-    paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 12,
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
   bCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   bIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
   },
   bName: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
     flex: 1,
   },
   bAmountRow: {
@@ -752,8 +921,8 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   bLeft: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: '700',
     marginRight: 6,
   },
   bTotal: {
@@ -761,16 +930,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   bProgressBar: {
-    height: 10,
-    borderRadius: 5,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
     marginBottom: 4,
-    position: 'relative',
-    justifyContent: 'center',
   },
   bProgressFill: {
     height: '100%',
-    borderRadius: 5,
+    borderRadius: 4,
   },
   bProgPercentInside: {
     position: 'absolute',
@@ -779,21 +946,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   todayMarkerWrapper: {
-    marginTop: 4,
-    marginBottom: 12,
+    marginTop: 2,
+    marginBottom: 10,
     position: 'relative',
   },
   todayBadge: {
     position: 'absolute',
-    top: -18,
-    backgroundColor: '#1E293B',
+    top: -16,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 8,
     zIndex: 2,
   },
   todayText: {
-    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '700',
   },
@@ -921,5 +1086,98 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-  }
+  },
+  analyticsCard: {
+    borderRadius: 24,
+    padding: 16,
+    marginBottom: 24,
+    marginHorizontal: Platform.OS === 'web' ? 28 : 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  chartTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  chartAmount: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  heatmapContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
+  heatmapTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  heatmapWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  dayLabelsCol: {
+    marginRight: 8,
+    height: 91,
+    justifyContent: 'space-around',
+  },
+  dayLabelText: {
+    fontSize: 8,
+    fontWeight: '700',
+    textAlign: 'right',
+    width: 10,
+  },
+  heatmapGrid: {
+    flexDirection: 'row',
+    gap: 3.5,
+    height: 91,
+  },
+  heatmapColumn: {
+    flexDirection: 'column',
+    gap: 3.5,
+  },
+  heatmapSquare: {
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+  },
+  heatmapLabelsRow: {
+    height: 16,
+    position: 'relative',
+    marginTop: 6,
+  },
+  heatmapLabelText: {
+    position: 'absolute',
+    fontSize: 8,
+    fontWeight: '600',
+  },
+  legendRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+  },
+  legendText: {
+    fontSize: 9,
+    fontWeight: '600',
+    marginHorizontal: 2,
+  },
+  legendSquare: {
+    marginHorizontal: 1,
+  },
 });

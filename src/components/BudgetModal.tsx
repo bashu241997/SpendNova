@@ -222,13 +222,13 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                   return (
                     <TouchableOpacity
                       key={cat.id}
-                      style={[styles.catSquare, isSel && { backgroundColor: `${cat.color}20` }]}
+                      style={[styles.catSquare, isSel && { backgroundColor: `${cat.color}15` }]}
                       onPress={() => toggleCategoryInclude(cat.id)}
                     >
-                      <View style={[styles.catIconWrap, { backgroundColor: isSel ? cat.color : '#E5E7EB' }]}>
-                        <MaterialIcons name={cat.icon as any} size={24} color={isSel ? '#FFF' : '#9CA3AF'} />
+                      <View style={[styles.catIconWrap, { backgroundColor: isSel ? cat.color : colors.surfaceVariant }]}>
+                        <MaterialIcons name={cat.icon as any} size={24} color={isSel ? '#FFF' : colors.onSurfaceVariant} />
                       </View>
-                      <Text style={[styles.catText, isSel && { color: cat.color, fontWeight: '700' }]} numberOfLines={1}>{cat.name}</Text>
+                      <Text style={[styles.catText, { color: colors.onSurfaceVariant }, isSel && { color: cat.color, fontWeight: '700' }]} numberOfLines={1}>{cat.name}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -266,13 +266,13 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                   return (
                     <TouchableOpacity
                       key={`ex_${cat.id}`}
-                      style={[styles.catSquare, { opacity: isEx ? 1 : 0.5 }, isEx && { backgroundColor: '#FEE2E2' }]}
+                      style={[styles.catSquare, { opacity: isEx ? 1 : 0.5 }, isEx && { backgroundColor: `${colors.error}15` }]}
                       onPress={() => toggleCategoryExclude(cat.id)}
                     >
-                      <View style={[styles.catIconWrap, { backgroundColor: isEx ? '#EF4444' : '#E5E7EB' }]}>
-                        <MaterialIcons name={cat.icon as any} size={24} color={isEx ? '#FFF' : '#9CA3AF'} />
+                      <View style={[styles.catIconWrap, { backgroundColor: isEx ? colors.error : colors.surfaceVariant }]}>
+                        <MaterialIcons name={cat.icon as any} size={24} color={isEx ? '#FFF' : colors.onSurfaceVariant} />
                       </View>
-                      <Text style={[styles.catText, isEx && { color: '#EF4444', fontWeight: '700' }]} numberOfLines={1}>{cat.name}</Text>
+                      <Text style={[styles.catText, { color: colors.onSurfaceVariant }, isEx && { color: colors.error, fontWeight: '700' }]} numberOfLines={1}>{cat.name}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6B7280',
+    color: '#94A3B8',
     marginBottom: 8,
     textTransform: 'uppercase',
   },
@@ -356,8 +356,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 16,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
   },
   colorScroll: {
     flexDirection: 'row',
@@ -406,7 +404,6 @@ const styles = StyleSheet.create({
   },
   catText: {
     fontSize: 10,
-    color: '#6B7280',
     textAlign: 'center',
   },
   subContainer: {
@@ -418,7 +415,7 @@ const styles = StyleSheet.create({
   subLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6B7280',
+    color: '#94A3B8',
     marginBottom: 12,
   },
   subGrid: {

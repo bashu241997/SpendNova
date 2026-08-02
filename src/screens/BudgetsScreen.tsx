@@ -114,24 +114,24 @@ export const BudgetsScreen: React.FC = () => {
             return (
               <View key={b.id} style={[styles.budgetCard, { width: cardWidth as any }]}>
                 {/* Top Half */}
-                <View style={[styles.cardTop, { backgroundColor: `${b.color}40` }]}>
+                <View style={[styles.cardTop, { backgroundColor: `${b.color}30` }]}>
                   <View style={styles.cardHeaderRow}>
-                    <Text style={styles.budgetName}>{b.name}</Text>
+                    <Text style={[styles.budgetName, { color: colors.onSurface }]}>{b.name}</Text>
                     <TouchableOpacity onPress={() => openEdit(b)}>
-                      <MaterialIcons name="edit" size={20} color="rgba(0,0,0,0.5)" />
+                      <MaterialIcons name="edit" size={20} color={colors.onSurfaceVariant} />
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.budgetAmounts}>
-                    <Text style={styles.spentAmount}>{currencySymbol}{spent.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</Text>
-                    <Text style={styles.totalAmount}> left of {currencySymbol}{b.amount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</Text>
+                    <Text style={[styles.spentAmount, { color: colors.onSurface }]}>{currencySymbol}{spent.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</Text>
+                    <Text style={[styles.totalAmount, { color: colors.onSurfaceVariant }]}> left of {currencySymbol}{b.amount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</Text>
                   </Text>
                 </View>
                 
                 {/* Bottom Half */}
                 <View style={[styles.cardBottom, { backgroundColor: colors.surface }]}>
                   <View style={styles.progressContainer}>
-                    <Text style={styles.dateLabel}>{daysInfo.monthName} 1</Text>
-                    <View style={styles.progressBarBg}>
+                    <Text style={[styles.dateLabel, { color: colors.onSurfaceVariant }]}>{daysInfo.monthName} 1</Text>
+                    <View style={[styles.progressBarBg, { backgroundColor: colors.surfaceVariant }]}>
                       <View style={[styles.progressBarFill, { width: `${clampedPercent}%`, backgroundColor: b.color }]}>
                         {clampedPercent > 15 && (
                           <Text style={styles.progressPercentText}>{Math.round(clampedPercent)}%</Text>
@@ -140,16 +140,16 @@ export const BudgetsScreen: React.FC = () => {
                       
                       {/* Today Marker */}
                       <View style={[styles.todayMarker, { left: `${(daysInfo.currentDay / daysInfo.daysInMonth) * 100}%` }]}>
-                        <View style={styles.todayTooltip}>
-                          <Text style={styles.todayTooltipText}>Today</Text>
+                        <View style={[styles.todayTooltip, { backgroundColor: colors.onSurface }]}>
+                          <Text style={[styles.todayTooltipText, { color: colors.surface }]}>Today</Text>
                         </View>
-                        <View style={styles.todayLine} />
+                        <View style={[styles.todayLine, { backgroundColor: colors.onSurface }]} />
                       </View>
                     </View>
-                    <Text style={styles.dateLabel}>{daysInfo.monthName} {daysInfo.daysInMonth}</Text>
+                    <Text style={[styles.dateLabel, { color: colors.onSurfaceVariant }]}>{daysInfo.monthName} {daysInfo.daysInMonth}</Text>
                   </View>
                   
-                  <Text style={styles.dailyLimitText}>
+                  <Text style={[styles.dailyLimitText, { color: colors.onSurfaceVariant }]}>
                     You can spend {currencySymbol}{dailyAvailable.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}/day for {daysInfo.daysRemaining} more days
                   </Text>
                 </View>
@@ -157,8 +157,8 @@ export const BudgetsScreen: React.FC = () => {
             );
           })}
 
-          <TouchableOpacity style={[styles.addCard, { width: cardWidth as any }]} onPress={openAdd}>
-            <MaterialIcons name="add" size={32} color="#9CA3AF" />
+          <TouchableOpacity style={[styles.addCard, { width: cardWidth as any, borderColor: colors.outline }]} onPress={openAdd}>
+            <MaterialIcons name="add" size={32} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -176,8 +176,8 @@ export const BudgetsScreen: React.FC = () => {
         currencySymbol={currencySymbol}
       />
 
-      <TouchableOpacity style={styles.fab} onPress={openAdd}>
-        <MaterialIcons name="add" size={28} color="#FFF" />
+      <TouchableOpacity style={[styles.fab, { backgroundColor: colors.primary }]} onPress={openAdd}>
+        <MaterialIcons name="add" size={28} color={colors.onPrimary} />
       </TouchableOpacity>
     </View>
   );
@@ -245,7 +245,6 @@ const styles = StyleSheet.create({
   budgetName: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1F2937',
   },
   budgetAmounts: {
     flexDirection: 'row',
@@ -254,12 +253,10 @@ const styles = StyleSheet.create({
   spentAmount: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#111827',
   },
   totalAmount: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4B5563',
   },
   cardBottom: {
     padding: 24,
@@ -273,14 +270,12 @@ const styles = StyleSheet.create({
   dateLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#6B7280',
     width: 40,
     textAlign: 'center',
   },
   progressBarBg: {
     flex: 1,
     height: 16,
-    backgroundColor: '#E5E7EB',
     borderRadius: 8,
     marginHorizontal: 12,
     overflow: 'visible',
@@ -304,34 +299,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   todayTooltip: {
-    backgroundColor: '#1F2937',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     marginBottom: 2,
   },
   todayTooltipText: {
-    color: '#FFF',
     fontSize: 8,
     fontWeight: '700',
   },
   todayLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#1F2937',
     borderRadius: 1,
   },
   dailyLimitText: {
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '500',
-    color: '#9CA3AF',
   },
   addCard: {
     height: 160,
     borderRadius: 24,
     borderWidth: 2,
-    borderColor: '#E5E7EB',
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
     justifyContent: 'center',
@@ -345,7 +335,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#374151',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
