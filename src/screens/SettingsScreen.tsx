@@ -288,7 +288,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
       contentContainerStyle={[styles.contentPadding, isWideLayout && styles.desktopContent]}
     >
 
-      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
+      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Google Drive Sync</Text>
 
         {!isGoogleConfigured ? (
@@ -372,7 +372,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
         )}
       </View>
 
-      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
+      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Active Currency / Region</Text>
         <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>
           Select the currency symbol displayed throughout the app.
@@ -417,7 +417,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
         </View>
       </View>
 
-      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
+      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Theme Accent Palette</Text>
         <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>
           Choose the accent color used for actions and highlights.
@@ -455,7 +455,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
       </View>
 
       <View style={styles.bentoRow}>
-        <View style={[styles.bentoSquareCard, { backgroundColor: colors.surface }]}>
+        <View style={[styles.bentoSquareCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <MaterialIcons name="dark-mode" size={24} color={colors.primary} />
             <Switch
@@ -471,7 +471,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
           </View>
         </View>
 
-        <View style={[styles.bentoSquareCard, { backgroundColor: colors.surface }]}>
+        <View style={[styles.bentoSquareCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
           <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer }]}>
             <MaterialIcons name="category" size={24} color={colors.primary} />
           </View>
@@ -485,7 +485,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
         </View>
       </View>
 
-      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
+      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Local Storage Ledger</Text>
         <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>
           Export every SpendNova record as a JSON backup, or restore a JSON backup. Legacy transaction CSV files can still be imported.
@@ -509,7 +509,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
 
       </View>
 
-      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface }]}>
+      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Legals & Legal Disclosures</Text>
         <View style={styles.badgeGrid}>
           <TouchableOpacity style={[styles.legalBadge, { backgroundColor: colors.surfaceVariant }]} onPress={() => setLegalModalType('terms')}>

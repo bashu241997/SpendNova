@@ -24,6 +24,7 @@ import { CategoriesScreen } from './src/screens/CategoriesScreen';
 import { MoreScreen } from './src/screens/MoreScreen';
 import { RecurringScreen } from './src/screens/RecurringScreen';
 import { GoalsScreen } from './src/screens/GoalsScreen';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Transaction } from './src/utils/storage';
 
@@ -168,13 +169,13 @@ function MainAppContent() {
 
   const safeAreaStyle = [
     styles.safeArea,
-    { backgroundColor: colors.background },
+    { backgroundColor: 'transparent' },
     Platform.OS === 'web' && { alignItems: 'center', justifyContent: 'center' }
   ] as any;
 
   const containerStyle = [
     styles.rootContainer,
-    { backgroundColor: colors.background },
+    { backgroundColor: 'transparent' },
     Platform.OS === 'web' && { borderColor: colors.surfaceVariant }
   ] as any;
 
@@ -196,8 +197,9 @@ function MainAppContent() {
 
   if (isDesktop) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background, flexDirection: 'row' }]}>
-        <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
+      <LinearGradient colors={colors.backgroundGradient as [string, string]} style={{ flex: 1, flexDirection: 'row' }}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent', flexDirection: 'row', flex: 1 }]}>
+          <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
 
 
         <View style={glassSidebarStyle}>
@@ -295,141 +297,146 @@ function MainAppContent() {
           </View>
         )}
       </SafeAreaView>
-    );
-  }
+    </LinearGradient>
+  );
+}
 
   if (isAddMode) {
     return (
-      <SafeAreaView style={safeAreaStyle}>
-        <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
+      <LinearGradient colors={colors.backgroundGradient as [string, string]} style={{ flex: 1 }}>
+        <SafeAreaView style={safeAreaStyle}>
+          <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
 
-        <View style={containerStyle}>
-          <AddTransactionScreen
-            onBack={handleCloseAddMode}
-            transactionToEdit={editingTransaction}
-          />
-        </View>
-      </SafeAreaView>
+          <View style={containerStyle}>
+            <AddTransactionScreen
+              onBack={handleCloseAddMode}
+              transactionToEdit={editingTransaction}
+            />
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
     );
   }
 
   return (
-    <SafeAreaView style={safeAreaStyle}>
-      <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
-      <View style={containerStyle}>
-        <View style={styles.viewport}>
-          {renderActiveScreen()}
+    <LinearGradient colors={colors.backgroundGradient as [string, string]} style={{ flex: 1 }}>
+      <SafeAreaView style={safeAreaStyle}>
+        <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
+        <View style={containerStyle}>
+          <View style={styles.viewport}>
+            {renderActiveScreen()}
+          </View>
+
+          <View style={glassBottomTabStyle}>
+            <TouchableOpacity
+              onPress={() => setActiveTab('home')}
+              style={styles.tabButton}
+              activeOpacity={0.8}
+            >
+              <View style={[
+                styles.tabPill,
+                activeTab === 'home' && { backgroundColor: colors.primaryContainer }
+              ]}>
+                <MaterialIcons
+                  name="dashboard"
+                  size={22}
+                  color={activeTab === 'home' ? colors.primary : colors.onSurfaceVariant}
+                />
+              </View>
+              <Text style={[
+                styles.tabLabelText,
+                { color: activeTab === 'home' ? colors.onBackground : colors.onSurfaceVariant },
+                activeTab === 'home' && { fontWeight: '700' }
+              ]}>
+                Home
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setActiveTab('transactions')}
+              style={styles.tabButton}
+              activeOpacity={0.8}
+            >
+              <View style={[
+                styles.tabPill,
+                activeTab === 'transactions' && { backgroundColor: colors.primaryContainer }
+              ]}>
+                <MaterialIcons
+                  name="receipt"
+                  size={22}
+                  color={activeTab === 'transactions' ? colors.primary : colors.onSurfaceVariant}
+                />
+              </View>
+              <Text style={[
+                styles.tabLabelText,
+                { color: activeTab === 'transactions' ? colors.onBackground : colors.onSurfaceVariant },
+                activeTab === 'transactions' && { fontWeight: '700' }
+              ]}>
+                Transaction
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setIsAddMode(true)}
+              style={styles.tabButton}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.centerAddCircle, { backgroundColor: colors.primary }]}>
+                <MaterialIcons name="add" size={24} color={colors.onPrimary} />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setActiveTab('budgets')}
+              style={styles.tabButton}
+              activeOpacity={0.8}
+            >
+              <View style={[
+                styles.tabPill,
+                activeTab === 'budgets' && { backgroundColor: colors.primaryContainer }
+              ]}>
+                <MaterialIcons
+                  name="pie-chart"
+                  size={22}
+                  color={activeTab === 'budgets' ? colors.primary : colors.onSurfaceVariant}
+                />
+              </View>
+              <Text style={[
+                styles.tabLabelText,
+                { color: activeTab === 'budgets' ? colors.onBackground : colors.onSurfaceVariant },
+                activeTab === 'budgets' && { fontWeight: '700' }
+              ]}>
+                Budgets
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setActiveTab('more')}
+              style={styles.tabButton}
+              activeOpacity={0.8}
+            >
+              <View style={[
+                styles.tabPill,
+                ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { backgroundColor: colors.primaryContainer }
+              ]}>
+                <MaterialIcons
+                  name="menu"
+                  size={22}
+                  color={['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.primary : colors.onSurfaceVariant}
+                />
+              </View>
+              <Text style={[
+                styles.tabLabelText,
+                { color: ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.onBackground : colors.onSurfaceVariant },
+                ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { fontWeight: '700' }
+              ]}>
+                More
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <View style={glassBottomTabStyle}>
-          <TouchableOpacity
-            onPress={() => setActiveTab('home')}
-            style={styles.tabButton}
-            activeOpacity={0.8}
-          >
-            <View style={[
-              styles.tabPill,
-              activeTab === 'home' && { backgroundColor: colors.primaryContainer }
-            ]}>
-              <MaterialIcons
-                name="dashboard"
-                size={22}
-                color={activeTab === 'home' ? colors.primary : colors.onSurfaceVariant}
-              />
-            </View>
-            <Text style={[
-              styles.tabLabelText,
-              { color: activeTab === 'home' ? colors.onBackground : colors.onSurfaceVariant },
-              activeTab === 'home' && { fontWeight: '700' }
-            ]}>
-              Home
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab('transactions')}
-            style={styles.tabButton}
-            activeOpacity={0.8}
-          >
-            <View style={[
-              styles.tabPill,
-              activeTab === 'transactions' && { backgroundColor: colors.primaryContainer }
-            ]}>
-              <MaterialIcons
-                name="receipt"
-                size={22}
-                color={activeTab === 'transactions' ? colors.primary : colors.onSurfaceVariant}
-              />
-            </View>
-            <Text style={[
-              styles.tabLabelText,
-              { color: activeTab === 'transactions' ? colors.onBackground : colors.onSurfaceVariant },
-              activeTab === 'transactions' && { fontWeight: '700' }
-            ]}>
-              Transaction
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setIsAddMode(true)}
-            style={styles.tabButton}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.centerAddCircle, { backgroundColor: colors.primary }]}>
-              <MaterialIcons name="add" size={24} color={colors.onPrimary} />
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab('budgets')}
-            style={styles.tabButton}
-            activeOpacity={0.8}
-          >
-            <View style={[
-              styles.tabPill,
-              activeTab === 'budgets' && { backgroundColor: colors.primaryContainer }
-            ]}>
-              <MaterialIcons
-                name="pie-chart"
-                size={22}
-                color={activeTab === 'budgets' ? colors.primary : colors.onSurfaceVariant}
-              />
-            </View>
-            <Text style={[
-              styles.tabLabelText,
-              { color: activeTab === 'budgets' ? colors.onBackground : colors.onSurfaceVariant },
-              activeTab === 'budgets' && { fontWeight: '700' }
-            ]}>
-              Budgets
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveTab('more')}
-            style={styles.tabButton}
-            activeOpacity={0.8}
-          >
-            <View style={[
-              styles.tabPill,
-              ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { backgroundColor: colors.primaryContainer }
-            ]}>
-              <MaterialIcons
-                name="menu"
-                size={22}
-                color={['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.primary : colors.onSurfaceVariant}
-              />
-            </View>
-            <Text style={[
-              styles.tabLabelText,
-              { color: ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.onBackground : colors.onSurfaceVariant },
-              ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { fontWeight: '700' }
-            ]}>
-              More
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 

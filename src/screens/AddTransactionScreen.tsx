@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   TextInput,
   ScrollView,
   Platform,
   Modal,
+  Keyboard,
+  InputAccessoryView,
+  Button,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ColorTheme } from '../theme/colors';
 import { useApp } from '../context/AppContext';
 import { Account, Category, Transaction } from '../utils/storage';
-import { Numpad } from '../components/Numpad';
 import { AccountModal } from '../components/AccountModal';
 import { CategoryPickerModal } from '../components/CategoryPickerModal';
 import { CalendarView } from '../components/CalendarView';
@@ -23,35 +25,38 @@ interface AddTransactionScreenProps {
   transactionToEdit?: Transaction;
 }
 
-export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({ 
+export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
   onBack,
-  transactionToEdit 
+  transactionToEdit
 }) => {
-  const { 
-    colors, 
-    accounts, 
-    categories, 
+  const {
+    colors,
+    accounts,
+    categories,
     transactions,
-    addTransaction, 
+    addTransaction,
     updateTransaction,
     deleteTransaction,
     addAccount,
     addCategory,
-    currencySymbol
+    currencySymbol,
+    themeType
   } = useApp();
+
+  const inputAccessoryViewID = 'amountKeyboardAccessory';
 
   const [type, setType] = useState<'income' | 'expense' | 'transfer'>(
     transactionToEdit?.type || 'expense'
   );
-  
+
   const [date, setDate] = useState(
     transactionToEdit?.date || new Date().toISOString().split('T')[0]
   );
-  
+
   const [amountStr, setAmountStr] = useState(
     transactionToEdit?.amount ? transactionToEdit.amount.toString() : '0'
   );
-  
+
   const [account, setAccount] = useState<Account | undefined>(() => {
     if (transactionToEdit) {
       return accounts.find(a => a.id === transactionToEdit.account || a.name === transactionToEdit.account) || accounts[0];
@@ -200,31 +205,24 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           <Text style={[styles.amountLabel, { color: colors.outline }]}>AMOUNT</Text>
           <View style={styles.amountValueWrapper}>
             <Text style={[styles.currencySign, { color: dynamicColor }]}>{currencySymbol}</Text>
-            {Platform.OS === 'web' ? (
-              <TextInput
-                value={amountStr}
-                onChangeText={setAmountStr}
-                keyboardType="numeric"
-                style={[
-                  styles.amountValueText, 
-                  { 
-                    color: dynamicColor, 
-                    minWidth: 160, 
-                    borderBottomWidth: 1.5, 
-                    borderBottomColor: dynamicColor,
-                    textAlign: 'center' 
-                  }
-                ]}
-              />
-            ) : (
-              <Text 
-                numberOfLines={1} 
-                adjustsFontSizeToFit 
-                style={[styles.amountValueText, { color: dynamicColor }]}
-              >
-                {amountStr}
-              </Text>
-            )}
+            <TextInput
+              value={amountStr}
+              onChangeText={setAmountStr}
+              keyboardType="decimal-pad"
+              inputAccessoryViewID={inputAccessoryViewID}
+              placeholder="0.00"
+              placeholderTextColor={colors.outline}
+              style={[
+                styles.amountValueText,
+                {
+                  color: dynamicColor,
+                  minWidth: 160,
+                  borderBottomWidth: 1.5,
+                  borderBottomColor: dynamicColor,
+                  textAlign: 'center'
+                }
+              ]}
+            />
           </View>
         </View>
 
@@ -234,7 +232,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
             <TouchableOpacity onPress={() => handleDateChange(-1)} style={styles.dateArrow}>
               <MaterialIcons name="chevron-left" size={24} color={colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setShowCalendarModal(true)}
               style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%' }}
             >
@@ -249,8 +247,8 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         <View style={styles.formRow}>
           <MaterialIcons name="account-balance-wallet" size={24} color={colors.outline} style={styles.fieldIcon} />
           <View style={styles.pickerWrapper}>
-            <TouchableOpacity 
-              onPress={() => setAccountModalVisible(true)} 
+            <TouchableOpacity
+              onPress={() => setAccountModalVisible(true)}
               style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
             >
               <View style={[styles.selectedIndicator, { backgroundColor: activeAccount.color }]} />
@@ -259,12 +257,12 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
               </Text>
               <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
             </TouchableOpacity>
-            
+
             {type === 'transfer' && (
               <>
                 <MaterialIcons name="trending-flat" size={24} color={colors.primary} style={{ marginHorizontal: 8 }} />
-                <TouchableOpacity 
-                  onPress={() => setToAccountModalVisible(true)} 
+                <TouchableOpacity
+                  onPress={() => setToAccountModalVisible(true)}
                   style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant, flex: 1 }]}
                 >
                   <View style={[styles.selectedIndicator, { backgroundColor: activeToAccount.color }]} />
@@ -281,8 +279,8 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         {type !== 'transfer' && (
           <View style={styles.formRow}>
             <MaterialIcons name="category" size={24} color={colors.outline} style={styles.fieldIcon} />
-            <TouchableOpacity 
-              onPress={() => setCategoryModalVisible(true)} 
+            <TouchableOpacity
+              onPress={() => setCategoryModalVisible(true)}
               style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
             >
               <View style={[styles.selectedIndicator, { backgroundColor: activeCategory.color }]} />
@@ -301,7 +299,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
             placeholderTextColor={colors.outline}
             value={description}
             onChangeText={setDescription}
-            style={[styles.descriptionInput, { 
+            style={[styles.descriptionInput, {
               color: colors.onBackground,
               borderColor: colors.surfaceVariant,
               backgroundColor: colors.surfaceVariant
@@ -309,29 +307,20 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           />
         </View>
 
-        {Platform.OS === 'web' && (
-          <TouchableOpacity
-            style={[styles.saveButtonWeb, { backgroundColor: colors.primary }]}
-            onPress={() => {
-              const numericVal = parseFloat(amountStr) || 0;
-              handleNumpadDone(numericVal);
-            }}
-          >
-            <Text style={[styles.saveButtonTextWeb, { color: colors.onPrimary }]}>
-              Save Drop
-            </Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[styles.saveButtonWeb, { backgroundColor: colors.primary }]}
+          onPress={() => {
+            const numericVal = parseFloat(amountStr) || 0;
+            handleNumpadDone(numericVal);
+          }}
+        >
+          <Text style={[styles.saveButtonTextWeb, { color: colors.onPrimary }]}>
+            Save Transaction
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
 
-      {Platform.OS !== 'web' && (
-        <Numpad
-          colors={colors}
-          initialValue={amountStr}
-          onValueChange={setAmountStr}
-          onDone={handleNumpadDone}
-        />
-      )}
+      {/* Numpad removed */}
 
       <AccountModal
         visible={accountModalVisible}
@@ -371,10 +360,10 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         }}
       />
 
-      <Modal 
-        visible={showCalendarModal} 
-        transparent 
-        animationType="fade" 
+      <Modal
+        visible={showCalendarModal}
+        transparent
+        animationType="fade"
         onRequestClose={() => setShowCalendarModal(false)}
       >
         <View style={styles.modalOverlay}>
@@ -397,6 +386,27 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           </View>
         </View>
       </Modal>
+
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID={inputAccessoryViewID}>
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            backgroundColor: themeType === 'dark' ? '#1E293B' : '#F6F6F6',
+            paddingHorizontal: 16,
+            paddingVertical: 4,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: '#A7A7AA',
+          }}>
+            <Button
+              title="Done"
+              onPress={() => Keyboard.dismiss()}
+              color={themeType === 'dark' ? '#38BDF8' : '#007AFF'}
+            />
+          </View>
+        </InputAccessoryView>
+      )}
     </View>
   );
 };
