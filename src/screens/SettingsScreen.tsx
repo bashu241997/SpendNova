@@ -109,7 +109,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
 
   const handleGoogleSignIn = async () => {
     try {
-      console.log("GOOGLE SIGN IN REDIRECT URI IS:", request?.redirectUri);
       await promptAsync();
     } catch (e) {
       console.error(e);
