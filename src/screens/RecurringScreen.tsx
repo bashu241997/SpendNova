@@ -13,7 +13,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { RecurringTransaction } from '../utils/storage';
 
-export const RecurringScreen: React.FC = () => {
+interface RecurringScreenProps {
+  onBack?: () => void;
+}
+
+export const RecurringScreen: React.FC<RecurringScreenProps> = ({ onBack }) => {
   const { recurringTxs, accounts, categories, colors, currencySymbol, addRecurring, updateRecurring, deleteRecurring } = useApp();
   const { width } = useWindowDimensions();
 
@@ -114,15 +118,20 @@ export const RecurringScreen: React.FC = () => {
     const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays < 0) return { label: 'Overdue', color: colors.error };
     if (diffDays <= 3) return { label: `Due in ${diffDays}d`, color: '#F59E0B' };
-    return { label: `Due on ${due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, color: colors.outline };
+    return { label: `Due on ${due.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, color: colors.onSurfaceVariant };
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <View>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={{ marginRight: 12, padding: 4 }}>
+            <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
+          </TouchableOpacity>
+        )}
+        <View style={{ flex: 1 }}>
           <Text style={[styles.pageTitle, { color: colors.onBackground }]}>Subscriptions & EMIs</Text>
-          <Text style={[styles.subTitle, { color: colors.outline }]}>
+          <Text style={[styles.subTitle, { color: colors.onSurfaceVariant }]}>
             Monthly Commitment: {currencySymbol}{Math.round(totalMonthlyCommitment).toLocaleString('en-IN')}/mo
           </Text>
         </View>
@@ -134,9 +143,9 @@ export const RecurringScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {recurringTxs.length === 0 ? (
           <View style={styles.emptyCard}>
-            <MaterialIcons name="event-repeat" size={48} color={colors.outline} />
+            <MaterialIcons name="event-repeat" size={48} color={colors.onSurfaceVariant} />
             <Text style={[styles.emptyText, { color: colors.onBackground }]}>No recurring subscriptions or EMIs set up yet</Text>
-            <Text style={[styles.emptySubText, { color: colors.outline }]}>Tap + to track your monthly bills, Netflix, Rent, or Car Loan EMI</Text>
+            <Text style={[styles.emptySubText, { color: colors.onSurfaceVariant }]}>Tap + to track your monthly bills, Netflix, Rent, or Car Loan EMI</Text>
           </View>
         ) : (
           <View style={styles.grid}>
@@ -157,7 +166,7 @@ export const RecurringScreen: React.FC = () => {
                       </View>
                       <View style={{ flex: 1, marginLeft: 12 }}>
                         <Text style={[styles.itemName, { color: colors.onSurface }]} numberOfLines={1}>{item.name}</Text>
-                        <Text style={[styles.itemFreq, { color: colors.outline }]}>{item.frequency.toUpperCase()} • {catObj?.name || 'Bill'}</Text>
+                        <Text style={[styles.itemFreq, { color: colors.onSurfaceVariant }]}>{item.frequency.toUpperCase()} • {catObj?.name || 'Bill'}</Text>
                       </View>
                     </View>
                     <View style={[styles.statusBadge, { backgroundColor: `${status.color}20` }]}>

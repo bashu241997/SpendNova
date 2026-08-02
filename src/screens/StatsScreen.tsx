@@ -15,9 +15,10 @@ import { AnalyticsChart } from '../components/AnalyticsChart';
 
 interface StatsScreenProps {
   onEditTransaction: (tx: Transaction) => void;
+  onBack?: () => void;
 }
 
-export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction }) => {
+export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onBack }) => {
   const { transactions, categories, colors, currencySymbol } = useApp();
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [selectedCategoryForDrillDown, setSelectedCategoryForDrillDown] = useState<string | null>(null);
@@ -110,6 +111,15 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction }) =
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.topHeader}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+          {onBack && (
+            <TouchableOpacity onPress={onBack} style={{ marginRight: 12, padding: 4 }}>
+              <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
+            </TouchableOpacity>
+          )}
+          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.onBackground }}>Analytics</Text>
+        </View>
+
         <View style={styles.periodRow}>
           <TouchableOpacity onPress={handlePrevMonth} style={styles.periodArrow}>
             <MaterialIcons name="chevron-left" size={28} color={colors.onBackground} />
@@ -187,7 +197,7 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction }) =
                 onPress={() => onEditTransaction(item)}
               >
                 <View style={styles.txMainInfo}>
-                  <Text style={[styles.txDate, { color: colors.outline }]}>{item.date}</Text>
+                  <Text style={[styles.txDate, { color: colors.onSurfaceVariant }]}>{item.date}</Text>
                   <Text style={[styles.txDesc, { color: colors.onBackground }]}>
                     {item.description || 'No description'}
                   </Text>
@@ -208,16 +218,16 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction }) =
                 {vibeStatus}
               </Text>
             </View>
-            <Text style={[styles.vibeDesc, { color: colors.outline }]}>{vibeMessage}</Text>
+            <Text style={[styles.vibeDesc, { color: colors.onSurfaceVariant }]}>{vibeMessage}</Text>
             
             <View style={[styles.vibeStatsRow, { marginTop: 12 }]}>
               <View style={styles.vibeCol}>
-                <Text style={{ fontSize: 10, color: colors.outline, fontWeight: '600' }}>TOTAL INCOME</Text>
+                <Text style={{ fontSize: 10, color: colors.onSurfaceVariant, fontWeight: '600' }}>TOTAL INCOME</Text>
                 <Text style={{ fontSize: 14, color: colors.success, fontWeight: '800' }}>+{currencySymbol}{totalEarned.toFixed(2)}</Text>
               </View>
               <View style={[styles.vibeDivider, { backgroundColor: colors.surfaceVariant }]} />
               <View style={styles.vibeCol}>
-                <Text style={{ fontSize: 10, color: colors.outline, fontWeight: '600' }}>TOTAL EXPENSE</Text>
+                <Text style={{ fontSize: 10, color: colors.onSurfaceVariant, fontWeight: '600' }}>TOTAL EXPENSE</Text>
                 <Text style={{ fontSize: 14, color: colors.error, fontWeight: '800' }}>-{currencySymbol}{totalBurned.toFixed(2)}</Text>
               </View>
             </View>
@@ -264,17 +274,17 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction }) =
                           ]} 
                         />
                       </View>
-                      <Text style={[styles.itemPct, { color: colors.outline }]}>
+                      <Text style={[styles.itemPct, { color: colors.onSurfaceVariant }]}>
                         {item.percentage.toFixed(1)}%
                       </Text>
                     </View>
                     
-                    <Text style={[styles.itemCount, { color: colors.outline }]}>
+                    <Text style={[styles.itemCount, { color: colors.onSurfaceVariant }]}>
                       {item.count} {item.count === 1 ? 'transaction' : 'transactions'}
                     </Text>
                   </View>
                   
-                  <MaterialIcons name="chevron-right" size={24} color={colors.outline} style={{ marginLeft: 8 }} />
+                  <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} style={{ marginLeft: 8 }} />
                 </TouchableOpacity>
               ))}
             </View>

@@ -25,17 +25,7 @@ export interface ColorTheme {
 
 export type ThemeType = 'light' | 'dark';
 
-export type AccentTheme = 
-  | 'slate' 
-  | 'indigo' 
-  | 'emerald' 
-  | 'violet' 
-  | 'teal' 
-  | 'amber' 
-  | 'rose' 
-  | 'nature' 
-  | 'classic' 
-  | 'core_blue';
+export type AccentTheme = 'slate' | 'nature' | 'classic' | 'core_blue';
 
 export interface AccentOption {
   id: AccentTheme;
@@ -46,14 +36,8 @@ export interface AccentOption {
 export const ACCENT_OPTIONS: AccentOption[] = [
   { id: 'nature', name: 'Nature Green', color: '#51B375' },
   { id: 'core_blue', name: 'Core Blue', color: '#2563EB' },
-  { id: 'slate', name: 'Stale Grey', color: '#64748B' },
-  { id: 'amber', name: 'Peach Coral', color: '#FF7A59' },
+  { id: 'slate', name: 'Steel Grey', color: '#64748B' },
   { id: 'classic', name: 'Classic White', color: '#1F2937' },
-  { id: 'indigo', name: 'Indigo', color: '#4F46E5' },
-  { id: 'emerald', name: 'Emerald', color: '#059669' },
-  { id: 'violet', name: 'Violet', color: '#7C3AED' },
-  { id: 'teal', name: 'Sky Blue', color: '#0284C7' },
-  { id: 'rose', name: 'Rose', color: '#E11D48' },
 ];
 
 const ACCENT_CONFIGS: Record<AccentTheme, {
@@ -88,14 +72,6 @@ const ACCENT_CONFIGS: Record<AccentTheme, {
     darkContainer: '#1E293B',
     onDarkContainer: '#F1F5F9',
   },
-  amber: {
-    lightPrimary: '#FF7A59',
-    lightContainer: '#FFF0ED',
-    onLightContainer: '#802613',
-    darkPrimary: '#FFA085',
-    darkContainer: '#802613',
-    onDarkContainer: '#FFF0ED',
-  },
   classic: {
     lightPrimary: '#1F2937',
     lightContainer: '#F3F4F6',
@@ -104,62 +80,16 @@ const ACCENT_CONFIGS: Record<AccentTheme, {
     darkContainer: '#1F2937',
     onDarkContainer: '#FAFAFA',
   },
-  indigo: {
-    lightPrimary: '#4F46E5',
-    lightContainer: '#EEF2FF',
-    onLightContainer: '#312E81',
-    darkPrimary: '#818CF8',
-    darkContainer: '#312E81',
-    onDarkContainer: '#E0E7FF',
-  },
-  emerald: {
-    lightPrimary: '#059669',
-    lightContainer: '#ECFDF5',
-    onLightContainer: '#064E3B',
-    darkPrimary: '#34D399',
-    darkContainer: '#064E3B',
-    onDarkContainer: '#A7F3D0',
-  },
-  violet: {
-    lightPrimary: '#7C3AED',
-    lightContainer: '#F5F3FF',
-    onLightContainer: '#4C1D95',
-    darkPrimary: '#C084FC',
-    darkContainer: '#3B1578',
-    onDarkContainer: '#DDD6FE',
-  },
-  teal: {
-    lightPrimary: '#0284C7',
-    lightContainer: '#E0F2FE',
-    onLightContainer: '#0C4A6E',
-    darkPrimary: '#38BDF8',
-    darkContainer: '#0C4A6E',
-    onDarkContainer: '#E0F2FE',
-  },
-  rose: {
-    lightPrimary: '#E11D48',
-    lightContainer: '#FFF1F2',
-    onLightContainer: '#881337',
-    darkPrimary: '#FB7185',
-    darkContainer: '#5C0D22',
-    onDarkContainer: '#FECDD3',
-  },
 };
 
 export const getTheme = (type: ThemeType, accent: AccentTheme = 'nature'): ColorTheme => {
   const config = ACCENT_CONFIGS[accent] || ACCENT_CONFIGS.nature;
 
   const gradientMap: Record<AccentTheme, [string, string]> = {
-    nature: ['#F3FAF5', '#FFFFFF'],
-    core_blue: ['#F2F7FD', '#FFFFFF'],
-    slate: ['#F5F7FA', '#FFFFFF'],
-    amber: ['#FCF5F3', '#FFFFFF'],
+    nature: ['#F0FDF4', '#FFFFFF'],
+    core_blue: ['#EFF6FF', '#FFFFFF'],
+    slate: ['#F8FAFC', '#FFFFFF'],
     classic: ['#FFFFFF', '#FFFFFF'],
-    indigo: ['#F4F5FB', '#FFFFFF'],
-    emerald: ['#F1FAF5', '#FFFFFF'],
-    violet: ['#F6F4FA', '#FFFFFF'],
-    teal: ['#F1F8FA', '#FFFFFF'],
-    rose: ['#FAF2F4', '#FFFFFF'],
   };
 
   const selectedGradient = gradientMap[accent] || ['#F8FAFC', '#FFFFFF'];
@@ -167,31 +97,30 @@ export const getTheme = (type: ThemeType, accent: AccentTheme = 'nature'): Color
   if (type === 'dark') {
     return {
       primary: config.darkPrimary,
-      onPrimary: '#0B0F19',
+      onPrimary: '#090D16',
       primaryContainer: config.darkContainer,
       onPrimaryContainer: config.onDarkContainer,
       secondary: '#A7F3D0',
-      onSecondary: '#0B0F19',
+      onSecondary: '#090D16',
       secondaryContainer: '#1E293B',
       onSecondaryContainer: '#F8FAFC',
-      background: 'transparent',
+      background: '#090D16',
       onBackground: '#F8FAFC',
-      surface: '#151C2C',
+      surface: '#121824',
       onSurface: '#F8FAFC',
-      surfaceVariant: '#1F293D',
+      surfaceVariant: '#1A2333',
       onSurfaceVariant: '#94A3B8',
-      outline: '#2D394E',
+      outline: '#263147',
       error: '#FB7185',
-      onError: '#0B0F19',
+      onError: '#090D16',
       success: '#34D399',
-      onSuccess: '#0B0F19',
+      onSuccess: '#090D16',
       info: '#38BDF8',
-      onInfo: '#0B0F19',
-      backgroundGradient: ['#0B0F19', '#151C2C'],
+      onInfo: '#090D16',
+      backgroundGradient: ['#090D16', '#121824'],
     };
   }
 
-  // Classic White utilizes a slightly softer, warmer text shade for optimal eye comfort
   const isClassic = accent === 'classic';
   const textColor = isClassic ? '#1F2937' : '#0F172A';
   const textVariantColor = isClassic ? '#4B5563' : '#334155';
@@ -205,7 +134,7 @@ export const getTheme = (type: ThemeType, accent: AccentTheme = 'nature'): Color
     onSecondary: '#FFFFFF',
     secondaryContainer: '#E2E8F0',
     onSecondaryContainer: '#0F172A',
-    background: 'transparent',
+    background: selectedGradient[0],
     onBackground: textColor,
     surface: '#FFFFFF',
     onSurface: textColor,

@@ -202,7 +202,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         </View>
 
         <View style={[styles.amountContainer, { backgroundColor: colors.surface }]}>
-          <Text style={[styles.amountLabel, { color: colors.outline }]}>AMOUNT</Text>
+          <Text style={[styles.amountLabel, { color: colors.onSurfaceVariant }]}>AMOUNT</Text>
           <View style={styles.amountValueWrapper}>
             <Text style={[styles.currencySign, { color: dynamicColor }]}>{currencySymbol}</Text>
             <TextInput

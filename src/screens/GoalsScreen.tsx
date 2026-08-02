@@ -13,7 +13,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { Goal } from '../utils/storage';
 
-export const GoalsScreen: React.FC = () => {
+interface GoalsScreenProps {
+  onBack?: () => void;
+}
+
+export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
   const { goals, colors, currencySymbol, addGoal, updateGoal, deleteGoal, depositToGoal } = useApp();
   const { width } = useWindowDimensions();
 
@@ -113,9 +117,14 @@ export const GoalsScreen: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <View>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={{ marginRight: 12, padding: 4 }}>
+            <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
+          </TouchableOpacity>
+        )}
+        <View style={{ flex: 1 }}>
           <Text style={[styles.pageTitle, { color: colors.onBackground }]}>Savings Goals</Text>
-          <Text style={[styles.subTitle, { color: colors.outline }]}>
+          <Text style={[styles.subTitle, { color: colors.onSurfaceVariant }]}>
             Total Saved: {currencySymbol}{totalSavedSum.toLocaleString('en-IN')} of {currencySymbol}{totalTargetSum.toLocaleString('en-IN')}
           </Text>
         </View>
@@ -127,9 +136,9 @@ export const GoalsScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {goals.length === 0 ? (
           <View style={styles.emptyCard}>
-            <MaterialIcons name="emoji-events" size={48} color={colors.outline} />
+            <MaterialIcons name="emoji-events" size={48} color={colors.onSurfaceVariant} />
             <Text style={[styles.emptyText, { color: colors.onBackground }]}>No savings goals created yet</Text>
-            <Text style={[styles.emptySubText, { color: colors.outline }]}>Create goals like "Emergency Fund", "New Car", or "Vacation" to track progress</Text>
+            <Text style={[styles.emptySubText, { color: colors.onSurfaceVariant }]}>Create goals like "Emergency Fund", "New Car", or "Vacation" to track progress</Text>
           </View>
         ) : (
           <View style={styles.grid}>
@@ -146,11 +155,11 @@ export const GoalsScreen: React.FC = () => {
                       </View>
                       <View style={{ flex: 1, marginLeft: 12 }}>
                         <Text style={[styles.goalName, { color: colors.onSurface }]} numberOfLines={1}>{g.name}</Text>
-                        <Text style={[styles.goalTargetDate, { color: colors.outline }]}>Target: {g.targetDate.split('T')[0]}</Text>
+                        <Text style={[styles.goalTargetDate, { color: colors.onSurfaceVariant }]}>Target: {g.targetDate.split('T')[0]}</Text>
                       </View>
                     </View>
                     <TouchableOpacity onPress={() => openEdit(g)} style={{ padding: 4 }}>
-                      <MaterialIcons name="more-vert" size={20} color={colors.outline} />
+                      <MaterialIcons name="more-vert" size={20} color={colors.onSurfaceVariant} />
                     </TouchableOpacity>
                   </View>
 
@@ -158,14 +167,14 @@ export const GoalsScreen: React.FC = () => {
                     <Text style={[styles.currentAmt, { color: colors.onSurface }]}>
                       {currencySymbol}{g.currentAmount.toLocaleString('en-IN')}
                     </Text>
-                    <Text style={[styles.targetAmt, { color: colors.outline }]}>
+                    <Text style={[styles.targetAmt, { color: colors.onSurfaceVariant }]}>
                       of {currencySymbol}{g.targetAmount.toLocaleString('en-IN')}
                     </Text>
                   </View>
 
                   <View style={styles.progressRow}>
-                    <Text style={[styles.progText, { color: colors.outline }]}>{Math.round(pct)}% Completed</Text>
-                    <Text style={[styles.progText, { color: colors.outline }]}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
+                    <Text style={[styles.progText, { color: colors.onSurfaceVariant }]}>{Math.round(pct)}% Completed</Text>
+                    <Text style={[styles.progText, { color: colors.onSurfaceVariant }]}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
                   </View>
                   <View style={[styles.progressBar, { backgroundColor: `${g.color || colors.primary}20` }]}>
                     <View style={[styles.progressFill, { backgroundColor: g.color || colors.primary, width: `${pct}%` }]} />

@@ -13,7 +13,11 @@ import { useApp } from '../context/AppContext';
 import { Account } from '../utils/storage';
 import { AccountModal } from '../components/AccountModal';
 
-export const AccountsScreen: React.FC = () => {
+interface AccountsScreenProps {
+  onBack?: () => void;
+}
+
+export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
   const { 
     accounts, 
     transactions, 
@@ -52,7 +56,14 @@ export const AccountsScreen: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.pageTitle, { color: colors.onBackground }]}>Accounts</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24, marginTop: Platform.OS === 'ios' ? 24 : 12 }}>
+          {onBack && (
+            <TouchableOpacity onPress={onBack} style={{ marginRight: 12, padding: 4 }}>
+              <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
+            </TouchableOpacity>
+          )}
+          <Text style={[styles.pageTitle, { color: colors.onBackground, marginBottom: 0, marginTop: 0, textAlign: 'left' }]}>Accounts</Text>
+        </View>
         
         <View style={styles.gridContainer}>
           {accounts.map(acc => {

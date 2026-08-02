@@ -67,9 +67,9 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({ onNavigate }) => {
             </View>
             <View style={styles.textWrap}>
               <Text style={[styles.title, { color: colors.onSurface }]}>{item.title}</Text>
-              <Text style={[styles.subtitle, { color: colors.outline }]}>{item.subtitle}</Text>
+              <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>{item.subtitle}</Text>
             </View>
-            <MaterialIcons name="chevron-right" size={24} color={colors.outline} />
+            <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
         ))}
       </View>

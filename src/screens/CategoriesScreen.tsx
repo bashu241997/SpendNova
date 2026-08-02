@@ -258,7 +258,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
                   </View>
                   <View style={styles.catInfo}>
                     <Text style={[styles.catName, { color: colors.onSurface }]}>{cat.name}</Text>
-                    <Text style={[styles.catSubtitle, { color: colors.outline }]}>
+                    <Text style={[styles.catSubtitle, { color: colors.onSurfaceVariant }]}>
                       {cat.type === 'expense' ? 'Expense' : 'Income'} • {getTxCount(cat.id)} transactions
                     </Text>
                   </View>
@@ -321,7 +321,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
                 placeholderTextColor={colors.outline}
               />
 
-              <Text style={[styles.sectionLabel, { color: colors.outline }]}>Color</Text>
+              <Text style={[styles.sectionLabel, { color: colors.onSurfaceVariant }]}>Color</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerScroll}>
                 {AVAILABLE_COLORS.map(c => (
                   <TouchableOpacity
@@ -334,7 +334,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
                 ))}
               </ScrollView>
 
-              <Text style={[styles.sectionLabel, { color: colors.outline }]}>Icon</Text>
+              <Text style={[styles.sectionLabel, { color: colors.onSurfaceVariant }]}>Icon</Text>
               <View style={styles.iconGrid}>
                 {AVAILABLE_ICONS.map(i => {
                   const isSel = selectedSubIcon === i;
@@ -392,7 +392,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
                 placeholderTextColor={colors.outline}
               />
 
-              <Text style={[styles.sectionLabel, { color: colors.outline }]}>Color</Text>
+              <Text style={[styles.sectionLabel, { color: colors.onSurfaceVariant }]}>Color</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pickerScroll}>
                 {AVAILABLE_COLORS.map(c => (
                   <TouchableOpacity
@@ -405,7 +405,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
                 ))}
               </ScrollView>
 
-              <Text style={[styles.sectionLabel, { color: colors.outline }]}>Icon</Text>
+              <Text style={[styles.sectionLabel, { color: colors.onSurfaceVariant }]}>Icon</Text>
               <View style={styles.iconGrid}>
                 {AVAILABLE_ICONS.map(i => {
                   const isSel = selectedIcon === i;
@@ -415,7 +415,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
                       style={[styles.iconSquare, isSel && { backgroundColor: `${colors.primary}20` }]}
                       onPress={() => setSelectedIcon(i)}
                     >
-                      <MaterialIcons name={i as any} size={28} color={isSel ? colors.primary : colors.outline} />
+                      <MaterialIcons name={i as any} size={28} color={isSel ? colors.primary : colors.onSurfaceVariant} />
                     </TouchableOpacity>
                   );
                 })}

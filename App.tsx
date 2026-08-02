@@ -136,19 +136,19 @@ function MainAppContent() {
       case 'budgets':
         return <BudgetsScreen />;
       case 'stats':
-        return <StatsScreen onEditTransaction={handleEditTransaction} />;
+        return <StatsScreen onEditTransaction={handleEditTransaction} onBack={() => setActiveTab('more')} />;
       case 'accounts':
-        return <AccountsScreen />;
+        return <AccountsScreen onBack={() => setActiveTab('more')} />;
       case 'settings':
-        return <SettingsScreen onNavigate={(t) => setActiveTab(t as any)} />;
+        return <SettingsScreen onNavigate={(t) => setActiveTab(t as any)} onBack={() => setActiveTab('more')} />;
       case 'categories':
         return <CategoriesScreen onBack={() => setActiveTab('settings')} />;
       case 'more':
         return <MoreScreen onNavigate={(t) => setActiveTab(t as any)} />;
       case 'recurring':
-        return <RecurringScreen />;
+        return <RecurringScreen onBack={() => setActiveTab('more')} />;
       case 'goals':
-        return <GoalsScreen />;
+        return <GoalsScreen onBack={() => setActiveTab('more')} />;
     }
   };
 

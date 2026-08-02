@@ -8,6 +8,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  Keyboard,
+  InputAccessoryView,
+  Button,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ColorTheme } from '../theme/colors';
@@ -53,6 +57,9 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
   const [includedSubcategories, setIncludedSubcategories] = useState<string[]>([]);
   const [selectedCategoryForSubs, setSelectedCategoryForSubs] = useState<string | null>(null);
 
+  const inputAccessoryViewID = 'budgetKeyboardAccessory';
+  const isDark = colors.onBackground === '#F8FAFC';
+
   useEffect(() => {
     if (budgetToEdit) {
       setName(budgetToEdit.name);
@@ -74,7 +81,15 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
   }, [budgetToEdit, visible]);
 
   const handleSave = async () => {
-    if (!name.trim() || !amount) return;
+    if (!name.trim()) {
+      alert('Please enter a budget name.');
+      return;
+    }
+    const amtNum = parseFloat(amount);
+    if (isNaN(amtNum) || amtNum <= 0) {
+      alert('Please enter a valid budget amount.');
+      return;
+    }
 
     const b = {
       name: name.trim(),
@@ -132,36 +147,39 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
-      <View style={styles.overlay}>
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-          
-          <View style={[styles.header, { borderBottomColor: colors.surfaceVariant }]}>
-            <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
-              <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
-            </TouchableOpacity>
-            <Text style={[styles.title, { color: colors.onBackground }]}>
-              {budgetToEdit ? 'Edit Budget' : 'New Budget'}
-            </Text>
-            {budgetToEdit ? (
-              <TouchableOpacity onPress={() => { onDelete(budgetToEdit.id); onClose(); }} style={styles.iconBtn}>
-                <MaterialIcons name="delete-outline" size={24} color={colors.error} />
-              </TouchableOpacity>
-            ) : (
-              <View style={{ width: 40 }} />
-            )}
-          </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+            <View style={[styles.container, { backgroundColor: colors.background }]}>
+              
+              <View style={[styles.header, { borderBottomColor: colors.surfaceVariant }]}>
+                <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
+                  <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
+                </TouchableOpacity>
+                <Text style={[styles.title, { color: colors.onBackground }]}>
+                  {budgetToEdit ? 'Edit Budget' : 'New Budget'}
+                </Text>
+                {budgetToEdit ? (
+                  <TouchableOpacity onPress={() => { onDelete(budgetToEdit.id); onClose(); }} style={styles.iconBtn}>
+                    <MaterialIcons name="delete-outline" size={24} color={colors.error} />
+                  </TouchableOpacity>
+                ) : (
+                  <View style={{ width: 40 }} />
+                )}
+              </View>
 
-          <ScrollView style={styles.body} contentContainerStyle={{ paddingBottom: 100 }}>
+              <ScrollView style={styles.body} contentContainerStyle={{ paddingBottom: 100 }}>
             <View style={[styles.inputCard, { backgroundColor: colors.surface }]}>
-              <Text style={styles.label}>Budget Name</Text>
+              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Budget Name</Text>
               <TextInput
                 style={[styles.input, { color: colors.onSurface, borderBottomColor: colors.surfaceVariant }]}
                 value={name}
                 onChangeText={setName}
                 placeholder="e.g. Groceries"
-                placeholderTextColor={colors.outline}
+                placeholderTextColor={colors.onSurfaceVariant}
+                inputAccessoryViewID={inputAccessoryViewID}
               />
-              <Text style={[styles.label, { marginTop: 16 }]}>Amount</Text>
+              <Text style={[styles.label, { marginTop: 16, color: colors.onSurfaceVariant }]}>Amount</Text>
               <View style={styles.amountRow}>
                 <Text style={[styles.currency, { color: colors.onSurface }]}>{currencySymbol}</Text>
                 <TextInput
@@ -169,14 +187,15 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                   value={amount}
                   onChangeText={setAmount}
                   placeholder="0.00"
-                  keyboardType="numeric"
-                  placeholderTextColor={colors.outline}
+                  keyboardType="decimal-pad"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  inputAccessoryViewID={inputAccessoryViewID}
                 />
               </View>
             </View>
 
             <View style={[styles.section, { backgroundColor: colors.surface }]}>
-              <Text style={styles.label}>Set Category Spending Limits (Color)</Text>
+              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Set Category Spending Limits (Color)</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.colorScroll}>
                 {BUDGET_COLORS.map(c => (
                   <TouchableOpacity
@@ -191,13 +210,13 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
             </View>
 
             <View style={[styles.section, { backgroundColor: colors.surface }]}>
-              <Text style={styles.label}>Select Accounts</Text>
+              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Select Accounts</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
                 <TouchableOpacity
                   style={[styles.pill, includedAccounts.length === 0 ? { backgroundColor: `${colors.primary}20`, borderColor: colors.primary } : { borderColor: colors.outline }]}
                   onPress={() => setIncludedAccounts([])}
                 >
-                  <Text style={[styles.pillText, { color: includedAccounts.length === 0 ? colors.primary : colors.outline }]}>All Accounts</Text>
+                  <Text style={[styles.pillText, { color: includedAccounts.length === 0 ? colors.primary : colors.onSurfaceVariant }]}>All Accounts</Text>
                 </TouchableOpacity>
                 {accounts.map(acc => {
                   const isSel = includedAccounts.includes(acc.id);
@@ -207,7 +226,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                       style={[styles.pill, isSel ? { backgroundColor: `${acc.color}20`, borderColor: acc.color } : { borderColor: colors.outline }]}
                       onPress={() => toggleAccount(acc.id)}
                     >
-                      <Text style={[styles.pillText, { color: isSel ? acc.color : colors.outline }]}>{acc.name}</Text>
+                      <Text style={[styles.pillText, { color: isSel ? acc.color : colors.onSurfaceVariant }]}>{acc.name}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -215,7 +234,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
             </View>
 
             <View style={[styles.section, { backgroundColor: colors.surface }]}>
-              <Text style={styles.label}>Select Categories to Include</Text>
+              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Select Categories to Include</Text>
               <View style={styles.grid}>
                 {categories.map(cat => {
                   const isSel = includedCategories.includes(cat.id);
@@ -236,7 +255,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
 
               {activeSubs.length > 0 && (
                 <View style={styles.subContainer}>
-                  <Text style={styles.subLabel}>Subcategories for {categories.find(c => c.id === selectedCategoryForSubs)?.name}</Text>
+                  <Text style={[styles.subLabel, { color: colors.onSurfaceVariant }]}>Subcategories for {categories.find(c => c.id === selectedCategoryForSubs)?.name}</Text>
                   <View style={styles.subGrid}>
                     {activeSubs.map(subObj => {
                       const isObj = typeof subObj === 'object';
@@ -249,7 +268,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                           style={[styles.pill, isSel ? { backgroundColor: `${colors.primary}20`, borderColor: colors.primary } : { borderColor: colors.outline }]}
                           onPress={() => toggleSubcategory(subId)}
                         >
-                          <Text style={[styles.pillText, { color: isSel ? colors.primary : colors.outline }]}>{subName}</Text>
+                          <Text style={[styles.pillText, { color: isSel ? colors.primary : colors.onSurfaceVariant }]}>{subName}</Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -259,7 +278,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
             </View>
 
             <View style={[styles.section, { backgroundColor: colors.surface }]}>
-              <Text style={styles.label}>Exclude Categories</Text>
+              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Exclude Categories</Text>
               <View style={styles.grid}>
                 {categories.map(cat => {
                   const isEx = excludedCategories.includes(cat.id);
@@ -288,8 +307,31 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
           </View>
 
         </View>
+      </TouchableWithoutFeedback>
+    </View>
+  </TouchableWithoutFeedback>
+
+  {Platform.OS === 'ios' && (
+    <InputAccessoryView nativeID={inputAccessoryViewID}>
+      <View style={{
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        backgroundColor: isDark ? '#1E293B' : '#F6F6F6',
+        paddingHorizontal: 16,
+        paddingVertical: 4,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: '#A7A7AA',
+      }}>
+        <Button
+          title="Done"
+          onPress={() => Keyboard.dismiss()}
+          color={isDark ? '#38BDF8' : '#007AFF'}
+        />
       </View>
-    </Modal>
+    </InputAccessoryView>
+  )}
+</Modal>
   );
 };
 

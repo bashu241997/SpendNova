@@ -27,9 +27,10 @@ WebBrowser.maybeCompleteAuthSession();
 
 interface SettingsScreenProps {
   onNavigate?: (screen: string) => void;
+  onBack?: () => void;
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) => {
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBack }) => {
   const { width } = useWindowDimensions();
   const isWideLayout = width >= 768;
   const {
@@ -287,6 +288,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate }) =>
       style={[styles.container, { backgroundColor: 'transparent' }]}
       contentContainerStyle={[styles.contentPadding, isWideLayout && styles.desktopContent]}
     >
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24, marginTop: Platform.OS === 'ios' ? 24 : 0 }}>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={{ marginRight: 12, padding: 4 }}>
+            <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
+          </TouchableOpacity>
+        )}
+        <Text style={{ fontSize: 28, fontWeight: '800', color: colors.onBackground }}>Settings</Text>
+      </View>
 
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Google Drive Sync</Text>

@@ -102,7 +102,7 @@ export interface AppData {
 
 export interface AppPreferences {
   themeType: 'light' | 'dark';
-  accentTheme: 'slate' | 'indigo' | 'emerald' | 'violet' | 'teal' | 'amber' | 'rose' | 'nature' | 'classic' | 'core_blue';
+  accentTheme: 'slate' | 'nature' | 'classic' | 'core_blue';
   country: 'US' | 'IN' | 'EU' | 'UK';
 }
 
