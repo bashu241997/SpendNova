@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://spendnova-ledger.web.app/sitemap.xml
