@@ -105,3 +105,19 @@ export const deleteDriveBackup = async (fileId: string, accessToken: string): Pr
     return false;
   }
 };
+
+export const revokeGoogleAccessToken = async (accessToken: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(accessToken)}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('Google token revocation error:', error);
+    return false;
+  }
+};
+

@@ -18,7 +18,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { ColorTheme, ACCENT_OPTIONS, AccentTheme } from '../theme/colors';
 import { useApp } from '../context/AppContext';
-import { exportDataToFile, importDataFromFile, CloudBackup } from '../utils/storage';
+import { exportDataToFile, importDataFromFile, exportSampleTemplate, CloudBackup } from '../utils/storage';
 
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
@@ -117,6 +117,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
 
   const handleGoogleSignOut = async () => {
     await setGoogleAuth(null, null);
+    showAlert('Signed out and cleared Google session successfully.');
   };
 
   const handleCloudBackup = async () => {
@@ -141,6 +142,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
     const success = await exportDataToFile({ transactions, accounts, categories, budgets, recurring: recurringTxs, goals });
     if (success) {
       showAlert('Data exported successfully!');
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    const success = await exportSampleTemplate();
+    if (success) {
+      showAlert('Sample CSV template downloaded successfully!');
     }
   };
 
@@ -500,9 +508,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Local Storage Ledger</Text>
         <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>
-          Export every SpendNova record as a JSON backup, or restore a JSON backup. Legacy transaction CSV files can still be imported.
+          Export every SpendNova record as a CSV/JSON backup, download sample templates for data importing, or restore backups.
         </Text>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
+        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
           <TouchableOpacity
             style={[styles.flexButton, { backgroundColor: colors.primaryContainer }]}
             onPress={handleExport}
@@ -517,8 +525,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
             <MaterialIcons name="file-download" size={18} color={colors.primary} />
             <Text style={[styles.flexButtonText, { color: colors.primary }]}>Import Data</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.flexButton, { backgroundColor: colors.surfaceVariant }]}
+            onPress={handleDownloadTemplate}
+          >
+            <MaterialIcons name="download-for-offline" size={18} color={colors.onSurface} />
+            <Text style={[styles.flexButtonText, { color: colors.onSurface }]}>CSV Template</Text>
+          </TouchableOpacity>
         </View>
 
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 10, borderTopWidth: 0.5, borderTopColor: colors.outline }}>
+          <MaterialIcons name="security" size={16} color={colors.success} />
+          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.success }}>
+            {Platform.OS === 'web' ? 'Web Crypto AES-256 Encrypted Local Storage Active' : 'Secure Hardware Encrypted Storage Active'}
+          </Text>
+        </View>
       </View>
 
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>

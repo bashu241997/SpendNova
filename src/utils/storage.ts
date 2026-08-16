@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SecureStorage } from './secureStorage';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -123,7 +123,7 @@ export const DEFAULT_CATEGORIES: Category[] = [];
 
 export const loadTransactions = async (): Promise<Transaction[]> => {
   try {
-    const raw = await AsyncStorage.getItem(TRANSACTIONS_KEY);
+    const raw = await SecureStorage.getItem(TRANSACTIONS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error('Failed to load transactions', e);
@@ -133,7 +133,7 @@ export const loadTransactions = async (): Promise<Transaction[]> => {
 
 export const saveTransactions = async (txs: Transaction[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(txs));
+    await SecureStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(txs));
   } catch (e) {
     console.error('Failed to save transactions', e);
   }
@@ -141,7 +141,7 @@ export const saveTransactions = async (txs: Transaction[]): Promise<void> => {
 
 export const loadAccounts = async (): Promise<Account[]> => {
   try {
-    const raw = await AsyncStorage.getItem(ACCOUNTS_KEY);
+    const raw = await SecureStorage.getItem(ACCOUNTS_KEY);
     return raw ? JSON.parse(raw) : DEFAULT_ACCOUNTS;
   } catch (e) {
     console.error('Failed to load accounts', e);
@@ -151,7 +151,7 @@ export const loadAccounts = async (): Promise<Account[]> => {
 
 export const saveAccounts = async (accs: Account[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accs));
+    await SecureStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accs));
   } catch (e) {
     console.error('Failed to save accounts', e);
   }
@@ -159,7 +159,7 @@ export const saveAccounts = async (accs: Account[]): Promise<void> => {
 
 export const loadCategories = async (): Promise<Category[]> => {
   try {
-    const raw = await AsyncStorage.getItem(CATEGORIES_KEY);
+    const raw = await SecureStorage.getItem(CATEGORIES_KEY);
     return raw ? JSON.parse(raw) : DEFAULT_CATEGORIES;
   } catch (e) {
     console.error('Failed to load categories', e);
@@ -169,7 +169,7 @@ export const loadCategories = async (): Promise<Category[]> => {
 
 export const saveCategories = async (cats: Category[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(cats));
+    await SecureStorage.setItem(CATEGORIES_KEY, JSON.stringify(cats));
   } catch (e) {
     console.error('Failed to save categories', e);
   }
@@ -177,7 +177,7 @@ export const saveCategories = async (cats: Category[]): Promise<void> => {
 
 export const loadBudgets = async (): Promise<Budget[]> => {
   try {
-    const raw = await AsyncStorage.getItem(BUDGETS_KEY);
+    const raw = await SecureStorage.getItem(BUDGETS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error('Failed to load budgets', e);
@@ -187,7 +187,7 @@ export const loadBudgets = async (): Promise<Budget[]> => {
 
 export const saveBudgets = async (budgets: Budget[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(BUDGETS_KEY, JSON.stringify(budgets));
+    await SecureStorage.setItem(BUDGETS_KEY, JSON.stringify(budgets));
   } catch (e) {
     console.error('Failed to save budgets', e);
   }
@@ -195,7 +195,7 @@ export const saveBudgets = async (budgets: Budget[]): Promise<void> => {
 
 export const loadRecurring = async (): Promise<RecurringTransaction[]> => {
   try {
-    const raw = await AsyncStorage.getItem(RECURRING_KEY);
+    const raw = await SecureStorage.getItem(RECURRING_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error('Failed to load recurring transactions', e);
@@ -205,7 +205,7 @@ export const loadRecurring = async (): Promise<RecurringTransaction[]> => {
 
 export const saveRecurring = async (recurring: RecurringTransaction[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(RECURRING_KEY, JSON.stringify(recurring));
+    await SecureStorage.setItem(RECURRING_KEY, JSON.stringify(recurring));
   } catch (e) {
     console.error('Failed to save recurring transactions', e);
   }
@@ -213,7 +213,7 @@ export const saveRecurring = async (recurring: RecurringTransaction[]): Promise<
 
 export const loadGoals = async (): Promise<Goal[]> => {
   try {
-    const raw = await AsyncStorage.getItem(GOALS_KEY);
+    const raw = await SecureStorage.getItem(GOALS_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error('Failed to load goals', e);
@@ -223,7 +223,7 @@ export const loadGoals = async (): Promise<Goal[]> => {
 
 export const saveGoals = async (goals: Goal[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(GOALS_KEY, JSON.stringify(goals));
+    await SecureStorage.setItem(GOALS_KEY, JSON.stringify(goals));
   } catch (e) {
     console.error('Failed to save goals', e);
   }
@@ -307,6 +307,115 @@ export const exportDataToFile = async (data: AppData): Promise<boolean> => {
   } catch (e) {
     console.error('Export failed', e);
     alert('Failed to export data: ' + (e instanceof Error ? e.message : String(e)));
+    return false;
+  }
+};
+
+export const exportSampleTemplate = async (): Promise<boolean> => {
+  try {
+    const sampleRows = [
+      {
+        Date: new Date().toISOString().slice(0, 10),
+        Type: 'expense',
+        Amount: 45.50,
+        Description: 'Weekly Groceries',
+        CategoryName: 'Food & Dining',
+        CategoryColor: '#EF4444',
+        CategoryIcon: 'restaurant',
+        CategoryType: 'expense',
+        SubcategoryName: 'Groceries',
+        SubcategoryColor: '#EF4444',
+        SubcategoryIcon: 'shopping-cart',
+        AccountName: 'Main Checking',
+        AccountColor: '#3B82F6',
+        AccountIcon: 'account-balance',
+        AccountType: 'savings',
+        ToAccountName: '',
+        ToAccountColor: '',
+        ToAccountIcon: '',
+        ToAccountType: '',
+        Notes: 'Bought fresh produce and groceries'
+      },
+      {
+        Date: new Date().toISOString().slice(0, 10),
+        Type: 'income',
+        Amount: 3500.00,
+        Description: 'Monthly Salary Deposit',
+        CategoryName: 'Salary',
+        CategoryColor: '#10B981',
+        CategoryIcon: 'work',
+        CategoryType: 'income',
+        SubcategoryName: 'Primary Income',
+        SubcategoryColor: '#10B981',
+        SubcategoryIcon: 'attach-money',
+        AccountName: 'Main Checking',
+        AccountColor: '#3B82F6',
+        AccountIcon: 'account-balance',
+        AccountType: 'savings',
+        ToAccountName: '',
+        ToAccountColor: '',
+        ToAccountIcon: '',
+        ToAccountType: '',
+        Notes: 'Direct deposit payroll'
+      },
+      {
+        Date: new Date().toISOString().slice(0, 10),
+        Type: 'transfer',
+        Amount: 500.00,
+        Description: 'Savings Goal Deposit',
+        CategoryName: 'Transfer',
+        CategoryColor: '#6366F1',
+        CategoryIcon: 'swap-horiz',
+        CategoryType: 'expense',
+        SubcategoryName: '',
+        SubcategoryColor: '',
+        SubcategoryIcon: '',
+        AccountName: 'Main Checking',
+        AccountColor: '#3B82F6',
+        AccountIcon: 'account-balance',
+        AccountType: 'savings',
+        ToAccountName: 'Emergency Fund',
+        ToAccountColor: '#10B981',
+        ToAccountIcon: 'savings',
+        ToAccountType: 'savings',
+        Notes: 'Monthly automated transfer'
+      }
+    ];
+
+    const csvString = Papa.unparse(sampleRows);
+    const fileName = `spendnova_sample_template.csv`;
+
+    if (Platform.OS === 'web') {
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      return true;
+    }
+
+    const fileUri = ((FileSystem as any).documentDirectory || '') + fileName;
+    await FileSystem.writeAsStringAsync(fileUri, csvString, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    if (!(await Sharing.isAvailableAsync())) {
+      alert('Sharing is not available on this platform');
+      return false;
+    }
+
+    await Sharing.shareAsync(fileUri, {
+      mimeType: 'text/csv',
+      dialogTitle: 'Download SpendNova CSV Template',
+      UTI: 'public.comma-separated-values-text',
+    });
+
+    return true;
+  } catch (e) {
+    console.error('Template export failed', e);
+    alert('Failed to export sample template: ' + (e instanceof Error ? e.message : String(e)));
     return false;
   }
 };
@@ -491,7 +600,7 @@ export const importDataFromFile = async (): Promise<AppData | null> => {
 
 export const loadCloudBackups = async (): Promise<CloudBackup[]> => {
   try {
-    const rawBackups = await AsyncStorage.getItem(CLOUD_BACKUPS_KEY);
+    const rawBackups = await SecureStorage.getItem(CLOUD_BACKUPS_KEY);
     return rawBackups ? JSON.parse(rawBackups) : [];
   } catch (e) {
     console.error('Failed to load cloud backups', e);
@@ -501,7 +610,7 @@ export const loadCloudBackups = async (): Promise<CloudBackup[]> => {
 
 export const saveCloudBackups = async (backups: CloudBackup[]): Promise<void> => {
   try {
-    await AsyncStorage.setItem(CLOUD_BACKUPS_KEY, JSON.stringify(backups));
+    await SecureStorage.setItem(CLOUD_BACKUPS_KEY, JSON.stringify(backups));
   } catch (e) {
     console.error('Failed to save cloud backups', e);
   }
@@ -529,7 +638,7 @@ export const deleteCloudBackup = async (backupId: string): Promise<void> => {
 
 export const loadTermsAcceptance = async (): Promise<boolean> => {
   try {
-    const val = await AsyncStorage.getItem(TERMS_ACCEPTED_KEY);
+    const val = await SecureStorage.getItem(TERMS_ACCEPTED_KEY);
     return val === 'true';
   } catch {
     return false;
@@ -538,7 +647,7 @@ export const loadTermsAcceptance = async (): Promise<boolean> => {
 
 export const saveTermsAcceptance = async (accepted: boolean): Promise<void> => {
   try {
-    await AsyncStorage.setItem(TERMS_ACCEPTED_KEY, accepted ? 'true' : 'false');
+    await SecureStorage.setItem(TERMS_ACCEPTED_KEY, accepted ? 'true' : 'false');
   } catch (e) {
     console.error(e);
   }
@@ -546,7 +655,7 @@ export const saveTermsAcceptance = async (accepted: boolean): Promise<void> => {
 
 export const loadAppPreferences = async (): Promise<AppPreferences | null> => {
   try {
-    const raw = await AsyncStorage.getItem(PREFERENCES_KEY);
+    const raw = await SecureStorage.getItem(PREFERENCES_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch (e) {
     console.error('Failed to load preferences', e);
@@ -556,7 +665,7 @@ export const loadAppPreferences = async (): Promise<AppPreferences | null> => {
 
 export const saveAppPreferences = async (preferences: AppPreferences): Promise<void> => {
   try {
-    await AsyncStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+    await SecureStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
   } catch (e) {
     console.error('Failed to save preferences', e);
   }

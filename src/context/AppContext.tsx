@@ -35,12 +35,13 @@ import {
 
 } from '../utils/storage';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SecureStorage } from '../utils/secureStorage';
 import { 
   uploadDriveBackup, 
   downloadDriveBackup, 
   listDriveBackups, 
   deleteDriveBackup,
+  revokeGoogleAccessToken,
   DriveFile
 } from '../utils/googleDrive';
 
@@ -65,22 +66,22 @@ const LEGACY_GOOGLE_TOKEN_KEY = 'google_auth_token';
 const GOOGLE_USER_KEY = 'google_auth_user';
 
 const getGoogleToken = async (): Promise<string | null> => {
-  if (Platform.OS === 'web') return AsyncStorage.getItem(GOOGLE_TOKEN_KEY);
+  if (Platform.OS === 'web') return SecureStorage.getItem(GOOGLE_TOKEN_KEY);
 
   const secureToken = await SecureStore.getItemAsync(GOOGLE_TOKEN_KEY);
   if (secureToken) return secureToken;
 
-  const legacyToken = await AsyncStorage.getItem(LEGACY_GOOGLE_TOKEN_KEY);
+  const legacyToken = await SecureStorage.getItem(LEGACY_GOOGLE_TOKEN_KEY);
   if (legacyToken) {
     await SecureStore.setItemAsync(GOOGLE_TOKEN_KEY, legacyToken);
-    await AsyncStorage.removeItem(LEGACY_GOOGLE_TOKEN_KEY);
+    await SecureStorage.removeItem(LEGACY_GOOGLE_TOKEN_KEY);
   }
   return legacyToken;
 };
 
 const saveGoogleToken = async (token: string): Promise<void> => {
   if (Platform.OS === 'web') {
-    await AsyncStorage.setItem(GOOGLE_TOKEN_KEY, token);
+    await SecureStorage.setItem(GOOGLE_TOKEN_KEY, token);
   } else {
     await SecureStore.setItemAsync(GOOGLE_TOKEN_KEY, token);
   }
@@ -88,10 +89,13 @@ const saveGoogleToken = async (token: string): Promise<void> => {
 
 const removeGoogleToken = async (): Promise<void> => {
   if (Platform.OS === 'web') {
-    await AsyncStorage.removeItem(GOOGLE_TOKEN_KEY);
+    await SecureStorage.removeItem(GOOGLE_TOKEN_KEY);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear();
+    }
   } else {
     await SecureStore.deleteItemAsync(GOOGLE_TOKEN_KEY);
-    await AsyncStorage.removeItem(LEGACY_GOOGLE_TOKEN_KEY);
+    await SecureStorage.removeItem(LEGACY_GOOGLE_TOKEN_KEY);
   }
 };
 
@@ -200,7 +204,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const storedToken = await getGoogleToken();
-      const storedUser = await AsyncStorage.getItem(GOOGLE_USER_KEY);
+      const storedUser = await SecureStorage.getItem(GOOGLE_USER_KEY);
       
       if (storedToken && storedUser) {
         setGoogleToken(storedToken);
@@ -381,16 +385,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const setGoogleAuth = async (token: string | null, user: GoogleUser | null) => {
+    if (!token && googleToken) {
+      await revokeGoogleAccessToken(googleToken);
+    }
+
     setGoogleToken(token);
     setGoogleUser(user);
     if (token && user) {
       await saveGoogleToken(token);
-      await AsyncStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(user));
+      await SecureStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(user));
       const backups = await listDriveBackups(token);
       setCloudBackups(backups);
     } else {
       await removeGoogleToken();
-      await AsyncStorage.removeItem(GOOGLE_USER_KEY);
+      await SecureStorage.removeItem(GOOGLE_USER_KEY);
+      if (Platform.OS === 'web' && typeof sessionStorage !== 'undefined') {
+        sessionStorage.clear();
+      }
       setCloudBackups([]);
     }
   };
