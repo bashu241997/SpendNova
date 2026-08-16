@@ -23,7 +23,7 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
   onAddTransaction,
   onEditTransaction,
 }) => {
-  const { transactions, accounts, categories, colors, currencySymbol } = useApp();
+  const { transactions, accounts, categories, goals, colors, currencySymbol } = useApp();
 
   const [currentFilterMonth, setCurrentFilterMonth] = useState(() => {
     const today = new Date();
@@ -102,6 +102,7 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
     const accountInfo = getAccountInfo(item.account);
     const toAccountInfo = item.toAccount ? getAccountInfo(item.toAccount) : undefined;
     const categoryInfo = getCategoryInfo(item.category, item.type);
+    const goalInfo = item.goalId ? goals.find(g => g.id === item.goalId) : undefined;
 
     let amtColor = '#EF4444';
     let amtIcon = 'arrow-drop-down';
@@ -135,6 +136,16 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
               {toAccountInfo && (
                 <View style={[styles.pill, { backgroundColor: toAccountInfo.color ? `${toAccountInfo.color}20` : colors.surfaceVariant }]}>
                   <Text style={[styles.pillText, { color: toAccountInfo.color || colors.onSurfaceVariant }]}>{toAccountInfo.name}</Text>
+                </View>
+              )}
+              {categoryInfo && (
+                <View style={[styles.pill, { backgroundColor: categoryInfo.color ? `${categoryInfo.color}20` : colors.surfaceVariant }]}>
+                  <Text style={[styles.pillText, { color: categoryInfo.color || colors.onSurfaceVariant }]}>{categoryInfo.name}</Text>
+                </View>
+              )}
+              {goalInfo && (
+                <View style={[styles.pill, { backgroundColor: goalInfo.color ? `${goalInfo.color}25` : colors.surfaceVariant }]}>
+                  <Text style={[styles.pillText, { color: goalInfo.color || colors.onSurfaceVariant }]}>🎯 {goalInfo.name}</Text>
                 </View>
               )}
             </View>
@@ -175,6 +186,11 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
             {categoryInfo && (
               <View style={[styles.pill, { backgroundColor: categoryInfo.color ? `${categoryInfo.color}20` : colors.surfaceVariant }]}>
                 <Text style={[styles.pillText, { color: categoryInfo.color || colors.onSurfaceVariant }]}>{categoryInfo.name}</Text>
+              </View>
+            )}
+            {goalInfo && (
+              <View style={[styles.pill, { backgroundColor: goalInfo.color ? `${goalInfo.color}25` : colors.surfaceVariant }]}>
+                <Text style={[styles.pillText, { color: goalInfo.color || colors.onSurfaceVariant }]}>🎯 {goalInfo.name}</Text>
               </View>
             )}
           </View>

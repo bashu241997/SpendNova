@@ -24,7 +24,7 @@ export interface ColorTheme {
 }
 
 export type ThemeType = 'light' | 'dark';
-export type AccentTheme = 'youtube' | 'slate' | 'nature' | 'classic' | 'core_blue';
+export type AccentTheme = 'tonal' | 'slate' | 'nature' | 'classic' | 'core_blue';
 
 export interface AccentOption {
   id: AccentTheme;
@@ -33,12 +33,12 @@ export interface AccentOption {
 }
 
 export const ACCENT_OPTIONS: AccentOption[] = [
-  { id: 'youtube', name: 'YouTube Theme', color: '#606060' },
+  { id: 'tonal', name: 'SpendNova Tonal Theme', color: '#606060' },
 ];
 
-export const getTheme = (type: ThemeType, _accent: AccentTheme = 'youtube'): ColorTheme => {
+export const getTheme = (type: ThemeType, _accent: AccentTheme = 'tonal'): ColorTheme => {
   if (type === 'dark') {
-    // Pure Dark Neutral Tonal System (Zero Blue, Zero harsh white glare, Red & Green ONLY for Loss & Profit):
+    // Pure Dark Neutral Tonal System (Red & Green ONLY for Loss & Profit):
     return {
       primary: '#F1F1F1',           // Soft off-white text & active state
       onPrimary: '#0F0F0F',
@@ -48,7 +48,7 @@ export const getTheme = (type: ThemeType, _accent: AccentTheme = 'youtube'): Col
       onSecondary: '#0F0F0F',
       secondaryContainer: '#272727',// Soft dark grey chip
       onSecondaryContainer: '#F1F1F1',
-      background: '#0F0F0F',        // YouTube Base Dark Background
+      background: '#0F0F0F',        // Base Dark Background
       onBackground: '#F1F1F1',      // Soft off-white text
       surface: '#212121',           // Soft dark grey card surface (#212121)
       onSurface: '#F1F1F1',
@@ -59,17 +59,17 @@ export const getTheme = (type: ThemeType, _accent: AccentTheme = 'youtube'): Col
       onError: '#FFFFFF',
       success: '#2BA640',           // Vibrant Green for Income / Profit
       onSuccess: '#FFFFFF',
-      info: '#AAAAAA',              // Muted Neutral Grey (Zero Blue)
+      info: '#AAAAAA',              // Muted Neutral Grey
       onInfo: '#0F0F0F',
       backgroundGradient: ['#0F0F0F', '#181818'],
     };
   }
 
-  // Pure Light Neutral Tonal System (Zero Blue, Red & Green ONLY for Loss & Profit):
+  // Pure Light Neutral Tonal System (Red & Green ONLY for Loss & Profit):
   return {
     primary: '#0F0F0F',             // Charcoal for active states
     onPrimary: '#FFFFFF',
-    primaryContainer: '#F2F2F2',    // YouTube Soft Light Grey Pill Container ("+ Create")
+    primaryContainer: '#F2F2F2',    // Soft Light Grey Pill Container
     onPrimaryContainer: '#0F0F0F',  // Charcoal text on soft grey container
     secondary: '#606060',           // Medium Grey Text
     onSecondary: '#FFFFFF',
@@ -86,7 +86,7 @@ export const getTheme = (type: ThemeType, _accent: AccentTheme = 'youtube'): Col
     onError: '#FFFFFF',
     success: '#107516',             // Soft Green for Income / Profit
     onSuccess: '#FFFFFF',
-    info: '#606060',                // Neutral Secondary Grey (Zero Blue)
+    info: '#606060',                // Neutral Secondary Grey
     onInfo: '#FFFFFF',
     backgroundGradient: ['#FFFFFF', '#F9F9F9'],
   };

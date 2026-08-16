@@ -193,7 +193,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     if (budgets && budgets.length > 0) {
       return budgets.map(b => {
         const spent = transactions.filter(t => {
-          if (t.type !== 'expense') return false;
+          if (t.type !== 'expense' && t.type !== 'transfer') return false;
           const tDate = new Date(t.date);
           if (tDate.getFullYear() !== currentYear || tDate.getMonth() !== currentMonth) return false;
 
@@ -237,7 +237,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
     return categories.filter(c => c.type === 'expense').map(cat => {
       const spent = monthlyTxs
-        .filter(t => t.type === 'expense' && (t.category === cat.id || t.category === cat.name))
+        .filter(t => (t.type === 'expense' || t.type === 'transfer') && (t.category === cat.id || t.category === cat.name))
         .reduce((sum, t) => sum + t.amount, 0);
 
       const hasBudget = Boolean(cat.budget && cat.budget > 0);

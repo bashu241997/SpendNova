@@ -36,8 +36,8 @@ export const BudgetsScreen: React.FC = () => {
     const currentMonth = now.getMonth();
 
     const spentTxs = transactions.filter(t => {
-      // Only expenses for budgets
-      if (t.type !== 'expense') return false;
+      // Include expenses and category-linked transfers for budgets
+      if (t.type !== 'expense' && t.type !== 'transfer') return false;
       
       const tDate = new Date(t.date);
       if (tDate.getFullYear() !== currentYear || tDate.getMonth() !== currentMonth) return false;

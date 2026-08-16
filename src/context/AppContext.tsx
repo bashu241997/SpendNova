@@ -163,7 +163,7 @@ const AppContext = createContext<AppContextProps | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemScheme = useColorScheme();
   const [themeType, setThemeTypeState] = useState<ThemeType>(systemScheme === 'dark' ? 'dark' : 'light');
-  const [accentTheme, setAccentTheme] = useState<AccentTheme>('youtube' as any);
+  const [accentTheme, setAccentTheme] = useState<AccentTheme>('tonal' as any);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -199,7 +199,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setHasAcceptedTerms(termsAccepted);
       if (preferences) {
         setThemeTypeState(preferences.themeType);
-        setAccentTheme(preferences.accentTheme || 'youtube');
+        setAccentTheme(preferences.accentTheme || 'tonal');
         setCountryState(preferences.country || 'IN');
       } else {
         setCountryState('IN');
@@ -246,6 +246,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const currencySymbol = countryToSymbolMap[country];
 
+  const recalculateGoalsFromTransactions = async (txs: Transaction[]) => {
+    if (!Array.isArray(goals) || goals.length === 0) return;
+
+    let goalsChanged = false;
+    const updatedGoals = goals.map(g => {
+      const linkedTxs = txs.filter(t => t.goalId === g.id);
+      if (linkedTxs.length === 0) return g;
+
+      const totalContributed = linkedTxs.reduce((sum, t) => {
+        if (t.type === 'income' || t.type === 'transfer') return sum + t.amount;
+        if (t.type === 'expense') return sum - t.amount;
+        return sum;
+      }, 0);
+
+      const newCurrent = Math.max(0, totalContributed);
+      if (newCurrent !== g.currentAmount) {
+        goalsChanged = true;
+        return { ...g, currentAmount: newCurrent };
+      }
+      return g;
+    });
+
+    if (goalsChanged) {
+      setGoals(updatedGoals);
+      await saveGoals(updatedGoals);
+    }
+  };
+
   const addTransaction = async (tx: Omit<Transaction, 'id'>) => {
     const newTx: Transaction = {
       ...tx,
@@ -254,18 +282,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = [newTx, ...transactions];
     setTransactions(updated);
     await saveTransactions(updated);
+    await recalculateGoalsFromTransactions(updated);
   };
 
   const updateTransaction = async (updatedTx: Transaction) => {
     const updated = transactions.map(t => t.id === updatedTx.id ? updatedTx : t);
     setTransactions(updated);
     await saveTransactions(updated);
+    await recalculateGoalsFromTransactions(updated);
   };
 
   const deleteTransaction = async (id: string) => {
     const updated = transactions.filter(t => t.id !== id);
     setTransactions(updated);
     await saveTransactions(updated);
+    await recalculateGoalsFromTransactions(updated);
   };
 
   const addAccount = async (acc: Omit<Account, 'id'>) => {
@@ -285,12 +316,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteAccount = async (id: string) => {
-    const updated = accounts.filter(a => a.id !== id);
+    const safeAccs = Array.isArray(accounts) ? accounts : [];
+    if (safeAccs.length <= 1) return;
+
+    const updated = safeAccs.filter(a => a.id !== id);
     setAccounts(updated);
     await saveAccounts(updated);
 
-    const fallbackAccount = updated.length > 0 ? updated[0].id : '';
-    const remappedTxs = transactions.map(t => {
+    const fallbackAccount = updated[0].id;
+    const safeTxs = Array.isArray(transactions) ? transactions : [];
+    const remappedTxs = safeTxs.map(t => {
       let changed = false;
       const patch = { ...t };
       if (t.account === id) {

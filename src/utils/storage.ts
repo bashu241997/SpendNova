@@ -48,6 +48,7 @@ export interface Transaction {
   recurrence?: string;
   labels?: string[];
   isPending?: boolean;
+  goalId?: string;
 }
 
 export interface Budget {
@@ -102,7 +103,7 @@ export interface AppData {
 
 export interface AppPreferences {
   themeType: 'light' | 'dark';
-  accentTheme: 'youtube' | 'slate' | 'nature' | 'classic' | 'core_blue';
+  accentTheme: 'tonal' | 'slate' | 'nature' | 'classic' | 'core_blue';
   country: 'US' | 'IN' | 'EU' | 'UK';
 }
 
@@ -681,10 +682,10 @@ export const loadAppPreferences = async (): Promise<AppPreferences | null> => {
   try {
     const raw = await SecureStorage.getItem(PREFERENCES_KEY);
     if (raw) return JSON.parse(raw);
-    return { themeType: 'dark', accentTheme: 'youtube' as any, country: 'IN' };
+    return { themeType: 'dark', accentTheme: 'tonal' as any, country: 'IN' };
   } catch (e) {
     console.error('Failed to load preferences', e);
-    return { themeType: 'dark', accentTheme: 'youtube' as any, country: 'IN' };
+    return { themeType: 'dark', accentTheme: 'tonal' as any, country: 'IN' };
   }
 };
 

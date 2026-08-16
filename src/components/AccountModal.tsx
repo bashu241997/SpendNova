@@ -110,28 +110,37 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     onClose();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!accountToEdit) return;
     if (accounts.length <= 1) {
-      Alert.alert('Error', 'You must keep at least one account');
+      if (Platform.OS === 'web') alert('You must keep at least one account');
+      else Alert.alert('Error', 'You must keep at least one account');
       return;
     }
 
-    Alert.alert(
-      'Delete Account',
-      `Are you sure you want to delete "${accountToEdit.name}"? Transactions will fallback to another active account.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
-          style: 'destructive',
-          onPress: async () => {
-            await onDeleteAccount?.(accountToEdit.id);
-            onClose();
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(`Are you sure you want to delete "${accountToEdit.name}"? Transactions will fallback to your primary active account.`);
+      if (confirmed) {
+        await onDeleteAccount?.(accountToEdit.id);
+        onClose();
+      }
+    } else {
+      Alert.alert(
+        'Delete Account',
+        `Are you sure you want to delete "${accountToEdit.name}"? Transactions will fallback to another active account.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Delete', 
+            style: 'destructive',
+            onPress: async () => {
+              await onDeleteAccount?.(accountToEdit.id);
+              onClose();
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
   return (

@@ -11,6 +11,7 @@ import {
   Keyboard,
   InputAccessoryView,
   Button,
+  Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ColorTheme } from '../theme/colors';
@@ -40,7 +41,8 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
     addAccount,
     addCategory,
     currencySymbol,
-    themeType
+    themeType,
+    goals
   } = useApp();
 
   const inputAccessoryViewID = 'amountKeyboardAccessory';
@@ -93,9 +95,11 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
 
   const [subcategory, setSubcategory] = useState<string>(transactionToEdit?.subcategory || '');
   const [description, setDescription] = useState(transactionToEdit?.description || '');
+  const [selectedGoalId, setSelectedGoalId] = useState<string | undefined>(transactionToEdit?.goalId);
   const [accountModalVisible, setAccountModalVisible] = useState(false);
   const [toAccountModalVisible, setToAccountModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [goalModalVisible, setGoalModalVisible] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
 
   const activeAccount = account || accounts[0] || { id: 'acc_def', name: 'Cash', color: colors.primary, icon: 'account-balance-wallet', type: 'cash' };
@@ -114,8 +118,10 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
       type,
       account: activeAccount.id,
       toAccount: type === 'transfer' ? activeToAccount.id : undefined,
-      category: type === 'transfer' ? 'Transfer' : activeCategory.id,
-      description,
+      category: type === 'transfer' ? 'cat_transfer' : activeCategory.id,
+      subcategory: subcategory.trim() || undefined,
+      description: description.trim() || (type === 'transfer' ? `Transfer to ${activeToAccount.name}` : activeCategory.name),
+      goalId: selectedGoalId || undefined,
     };
 
     if (transactionToEdit) {
@@ -130,10 +136,31 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
     onBack();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!transactionToEdit) return;
-    deleteTransaction(transactionToEdit.id);
-    onBack();
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to delete this transaction record?');
+      if (confirmed) {
+        await deleteTransaction(transactionToEdit.id);
+        onBack();
+      }
+    } else {
+      Alert.alert(
+        'Delete Transaction',
+        'Are you sure you want to delete this transaction record?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              await deleteTransaction(transactionToEdit.id);
+              onBack();
+            }
+          }
+        ]
+      );
+    }
   };
 
   const handleDateChange = (daysOffset: number) => {
@@ -292,6 +319,23 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           </View>
         )}
 
+        {/* Savings Goal Picker Row */}
+        {goals && goals.length > 0 && (
+          <View style={styles.formRow}>
+            <MaterialIcons name="emoji-events" size={24} color={colors.outline} style={styles.fieldIcon} />
+            <TouchableOpacity
+              onPress={() => setGoalModalVisible(true)}
+              style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
+            >
+              <View style={[styles.selectedIndicator, { backgroundColor: selectedGoalId ? (goals.find(g => g.id === selectedGoalId)?.color || colors.primary) : colors.outline }]} />
+              <Text style={[styles.pickerText, { color: colors.onSurfaceVariant }]}>
+                {selectedGoalId ? `Goal: ${goals.find(g => g.id === selectedGoalId)?.name}` : 'Link Savings Goal (Optional)'}
+              </Text>
+              <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.formRow}>
           <MaterialIcons name="description" size={24} color={colors.outline} style={styles.fieldIcon} />
           <TextInput
@@ -359,6 +403,58 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           }
         }}
       />
+
+      <Modal
+        visible={goalModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setGoalModalVisible(false)}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setGoalModalVisible(false)}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface, width: '90%', maxWidth: 420 }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.surfaceVariant }]}>
+              <Text style={[styles.modalTitle, { color: colors.onSurface }]}>Link Savings Goal</Text>
+              <TouchableOpacity onPress={() => setGoalModalVisible(false)} style={{ padding: 4 }}>
+                <MaterialIcons name="close" size={24} color={colors.onSurface} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 300, paddingVertical: 8 }}>
+              <TouchableOpacity
+                style={[
+                  { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8 },
+                  !selectedGoalId ? { backgroundColor: colors.primaryContainer } : { backgroundColor: colors.surfaceVariant }
+                ]}
+                onPress={() => {
+                  setSelectedGoalId(undefined);
+                  setGoalModalVisible(false);
+                }}
+              >
+                <MaterialIcons name="do-not-disturb-alt" size={20} color={colors.onSurfaceVariant} style={{ marginRight: 10 }} />
+                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.onSurface }}>No Goal (Unlinked)</Text>
+              </TouchableOpacity>
+              {(goals || []).map(g => (
+                <TouchableOpacity
+                  key={g.id}
+                  style={[
+                    { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8 },
+                    selectedGoalId === g.id ? { backgroundColor: colors.primaryContainer } : { backgroundColor: colors.surfaceVariant }
+                  ]}
+                  onPress={() => {
+                    setSelectedGoalId(g.id);
+                    setGoalModalVisible(false);
+                  }}
+                >
+                  <View style={[styles.selectedIndicator, { backgroundColor: g.color || colors.primary, marginRight: 10 }]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.onSurface }}>{g.name}</Text>
+                    <Text style={{ fontSize: 11, color: colors.onSurfaceVariant }}>Target: {currencySymbol}{g.targetAmount.toLocaleString()}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       <Modal
         visible={showCalendarModal}
