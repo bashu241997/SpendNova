@@ -12,6 +12,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { Goal } from '../utils/storage';
+import { ParallaxCard } from '../components/ParallaxCard';
 
 interface GoalsScreenProps {
   onBack?: () => void;
@@ -145,9 +146,8 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             {goals.map(g => {
               const pct = g.targetAmount > 0 ? Math.min((g.currentAmount / g.targetAmount) * 100, 100) : 0;
               const remaining = Math.max(g.targetAmount - g.currentAmount, 0);
-
               return (
-                <View key={g.id} style={[styles.goalCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}>
+                <ParallaxCard key={g.id} style={[styles.goalCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}>
                   <View style={styles.cardTop}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                       <View style={[styles.iconCircle, { backgroundColor: `${g.color || colors.primary}20` }]}>
@@ -184,7 +184,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
                     <MaterialIcons name="add-circle-outline" size={18} color={g.color || colors.primary} />
                     <Text style={[styles.depositBtnText, { color: g.color || colors.primary }]}>Deposit / Add Savings</Text>
                   </TouchableOpacity>
-                </View>
+                </ParallaxCard>
               );
             })}
           </View>

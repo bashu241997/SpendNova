@@ -11,6 +11,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { Transaction } from '../utils/storage';
+import { ParallaxCard } from '../components/ParallaxCard';
 
 interface HomeScreenProps {
   onAddTransaction: (type?: 'income' | 'expense' | 'transfer') => void;
@@ -311,7 +312,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 const isPos = acc.balance >= 0;
                 const dotColor = isPos ? colors.success : colors.error;
                 return (
-                  <TouchableOpacity 
+                  <ParallaxCard 
                     key={acc.id} 
                     style={[styles.accountCard, { width: isLargeScreen ? 172 : 145, backgroundColor: colors.surface }]}
                     onPress={() => onNavigateTab('accounts')}
@@ -324,7 +325,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       {isPos ? '' : '-'}{currencySymbol}{Math.abs(acc.balance).toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
                     </Text>
                     <Text style={[styles.accTxCount, { color: colors.onSurfaceVariant }]}>{acc.txCount} transactions</Text>
-                  </TouchableOpacity>
+                  </ParallaxCard>
                 );
               })}
             </ScrollView>
@@ -338,12 +339,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          <View 
+          <ParallaxCard 
             style={[styles.analyticsCard, { backgroundColor: colors.surface }]}
-            onLayout={(e) => {
-              const w = e.nativeEvent.layout.width;
-              if (w > 0) setContainerWidth(w);
-            }}
           >
             <Text style={[styles.heatmapTitle, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>Transaction Activity (Last 18 Weeks)</Text>
             
@@ -407,7 +404,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: '#757575' }]} />
               <Text style={[styles.legendText, { color: colors.onSurfaceVariant }]}>More</Text>
             </View>
-          </View>
+          </ParallaxCard>
 
           {/* HORIZONTAL BUDGETS CAROUSEL */}
           <View style={styles.sectionHeaderRow}>
@@ -448,14 +445,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 const endDateStr = `${monthName} ${totalDaysInMonth}`;
 
                 return (
-                  <TouchableOpacity 
+                  <ParallaxCard 
                     key={b.id} 
                     style={[
                       styles.horizontalBudgetCard,
                       { width: desktopFeatureCardWidth, backgroundColor: colors.surface }
                     ]}
                     onPress={() => onNavigateTab('budgets')}
-                    activeOpacity={0.85}
                   >
                     {/* SOFT TINTED TOP HEADER BAND */}
                     <View style={[styles.bCardHeaderBand, { backgroundColor: `${b.color}12` }]}>
@@ -508,7 +504,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         </View>
                       )}
                     </View>
-                  </TouchableOpacity>
+                  </ParallaxCard>
                 );
               })}
             </ScrollView>
@@ -547,11 +543,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   const remaining = Math.max(g.targetAmount - g.currentAmount, 0);
 
                   return (
-                    <TouchableOpacity 
+                    <ParallaxCard 
                       key={g.id} 
                       style={[styles.goalCardHorizontal, { width: desktopFeatureCardWidth, backgroundColor: colors.surface }]}
                       onPress={() => onNavigateTab('goals')}
-                      activeOpacity={0.85}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                         <View style={[styles.bIconWrap, { backgroundColor: `${g.color || colors.primary}12`, marginRight: 10, width: 34, height: 34, borderRadius: 17 }]}>
@@ -579,7 +574,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         <Text style={{ fontSize: 12, fontWeight: '500', color: colors.onSurfaceVariant }}>{Math.round(pct)}% saved</Text>
                         <Text style={{ fontSize: 12, fontWeight: '500', color: colors.onSurfaceVariant }}>{currencySymbol}{remaining.toLocaleString('en-IN')} left</Text>
                       </View>
-                    </TouchableOpacity>
+                    </ParallaxCard>
                   );
                 })}
               </ScrollView>
@@ -661,7 +656,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 }
 
                 return (
-                  <TouchableOpacity 
+                  <ParallaxCard 
                     key={tx.id} 
                     style={[styles.txItem, { backgroundColor: colors.surface }]}
                     onPress={() => onEditTransaction(tx)}
@@ -673,28 +668,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     </View>
                     
                     <View style={styles.txMid}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
-                        <Text style={[styles.txTitle, { color: colors.onSurface }]}>
-                          {tx.description || cat?.name || 'Transaction'}
-                        </Text>
-                        {subObj && (
-                          <View style={[styles.subPill, { backgroundColor: `${subObj.color}15` }]}>
-                            <MaterialIcons name={subObj.icon} size={12} color={subObj.color} style={{ marginRight: 4 }} />
-                            <Text style={[styles.subPillText, { color: colors.onSurface }]}>{subObj.name}</Text>
-                          </View>
-                        )}
-                      </View>
+                      <Text style={[styles.txTitle, { color: colors.onSurface }]} numberOfLines={1}>
+                        {cat?.name || tx.category || 'Uncategorized'}
+                        {subObj?.name ? ` • ${subObj.name}` : ''}
+                      </Text>
                       
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        {tx.type === 'transfer' ? (
-                          <>
-                            <Text style={[styles.txSub, { color: colors.onSurfaceVariant }]}>{acc?.name || 'Unknown'}</Text>
-                            <MaterialIcons name="arrow-forward" size={12} color={colors.onSurfaceVariant} style={{ marginHorizontal: 4 }} />
-                            <Text style={[styles.txSub, { color: colors.onSurfaceVariant }]}>{toAcc?.name || 'Unknown'}</Text>
-                          </>
-                        ) : (
-                          <Text style={[styles.txSub, { color: colors.onSurfaceVariant }]}>{acc?.name || 'Unknown'}</Text>
-                        )}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                        <Text style={[styles.txSub, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
+                          {tx.type === 'transfer' ? `${acc?.name || 'Account'} ➔ ${toAcc?.name || 'Account'}` : (acc?.name || 'Cash')}
+                        </Text>
+                        {tx.notes ? (
+                          <Text style={[styles.txSub, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
+                            • "{tx.notes}"
+                          </Text>
+                        ) : null}
                       </View>
                     </View>
                     
@@ -704,7 +691,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       </Text>
                       <Text style={[styles.txTime, { color: colors.onSurfaceVariant }]}>{formatTime(tx.date)}</Text>
                     </View>
-                  </TouchableOpacity>
+                  </ParallaxCard>
                 );
               })}
             </View>

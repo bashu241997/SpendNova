@@ -12,6 +12,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { Account } from '../utils/storage';
 import { AccountModal } from '../components/AccountModal';
+import { ParallaxCard } from '../components/ParallaxCard';
 
 interface AccountsScreenProps {
   onBack?: () => void;
@@ -69,9 +70,8 @@ export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
           {accounts.map(acc => {
             const balance = getAccountBalance(acc.id);
             const txCount = getTxCount(acc.id);
-
             return (
-              <TouchableOpacity 
+              <ParallaxCard 
                 key={acc.id} 
                 style={[
                   styles.accountCard, 
@@ -110,7 +110,7 @@ export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
                     </Text>
                   </View>
                 </View>
-              </TouchableOpacity>
+              </ParallaxCard>
             );
           })}
 

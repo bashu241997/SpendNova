@@ -27,6 +27,8 @@ import { GoalsScreen } from './src/screens/GoalsScreen';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { OnboardingSlideshow } from './src/components/OnboardingSlideshow';
+import { GuidedTourModal } from './src/components/GuidedTourModal';
+import { SecureStorage } from './src/utils/secureStorage';
 import { Transaction } from './src/utils/storage';
 
 type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings' | 'categories' | 'more' | 'recurring' | 'goals';
@@ -36,7 +38,23 @@ function MainAppContent() {
   const [activeTab, setActiveTab] = useState<MainTab>('home');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
   const [isAddMode, setIsAddMode] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
   const { width } = useWindowDimensions();
+
+  useEffect(() => {
+    if (!loading && hasAcceptedTerms) {
+      SecureStorage.getItem('spendnova_tour_completed').then(completed => {
+        if (!completed) {
+          setIsTourOpen(true);
+        }
+      });
+    }
+  }, [loading, hasAcceptedTerms]);
+
+  const handleCloseTour = () => {
+    setIsTourOpen(false);
+    SecureStorage.setItem('spendnova_tour_completed', 'true');
+  };
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -181,110 +199,128 @@ function MainAppContent() {
 
   if (isDesktop) {
     return (
-      <LinearGradient colors={colors.backgroundGradient as [string, string]} style={{ flex: 1, flexDirection: 'row' }}>
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent', flexDirection: 'row', flex: 1 }]}>
+      <LinearGradient colors={colors.backgroundGradient as [string, string]} style={{ flex: 1 }}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background, flexDirection: 'row', flex: 1, width: '100%', height: '100%' }]}>
           <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
 
+          <View style={glassSidebarStyle}>
+            <Text style={[styles.sidebarLogo, { color: colors.primary, paddingHorizontal: 16, paddingTop: 20, paddingBottom: 16 }]}>SpendNova</Text>
 
-        <View style={glassSidebarStyle}>
-          <Text style={[styles.sidebarLogo, { color: colors.primary }]}>SpendNova</Text>
+            <View style={styles.sidebarMenu}>
+              {(['home', 'transactions', 'accounts', 'budgets', 'goals', 'recurring', 'stats', 'settings'] as MainTab[]).map(tab => {
+                const active = activeTab === tab;
+                let icon = 'dashboard';
+                let label = 'Home';
 
-          <View style={styles.sidebarMenu}>
-            {(['home', 'transactions', 'accounts', 'budgets', 'goals', 'recurring', 'stats', 'settings'] as MainTab[]).map(tab => {
-              const active = activeTab === tab;
-              let icon = 'dashboard';
-              let label = 'Home';
+                if (tab === 'home') {
+                  icon = 'dashboard';
+                  label = 'Home';
+                } else if (tab === 'transactions') {
+                  icon = 'receipt';
+                  label = 'Transactions';
+                } else if (tab === 'accounts') {
+                  icon = 'account-balance-wallet';
+                  label = 'Accounts';
+                } else if (tab === 'budgets') {
+                  icon = 'pie-chart';
+                  label = 'Budgets';
+                } else if (tab === 'goals') {
+                  icon = 'emoji-events';
+                  label = 'Savings Goals';
+                } else if (tab === 'recurring') {
+                  icon = 'event-repeat';
+                  label = 'Subscriptions & EMIs';
+                } else if (tab === 'stats') {
+                  icon = 'bar-chart';
+                  label = 'Analytics';
+                } else if (tab === 'settings') {
+                  icon = 'settings';
+                  label = 'Settings';
+                }
 
-              if (tab === 'home') {
-                icon = 'dashboard';
-                label = 'Home';
-              } else if (tab === 'transactions') {
-                icon = 'receipt';
-                label = 'Transactions';
-              } else if (tab === 'accounts') {
-                icon = 'account-balance-wallet';
-                label = 'Accounts';
-              } else if (tab === 'budgets') {
-                icon = 'pie-chart';
-                label = 'Budgets';
-              } else if (tab === 'goals') {
-                icon = 'emoji-events';
-                label = 'Savings Goals';
-              } else if (tab === 'recurring') {
-                icon = 'event-repeat';
-                label = 'Subscriptions & EMIs';
-              } else if (tab === 'stats') {
-                icon = 'bar-chart';
-                label = 'Analytics';
-              } else if (tab === 'settings') {
-                icon = 'settings';
-                label = 'Settings';
-              }
+                return (
+                  <TouchableOpacity
+                    key={tab}
+                    onPress={() => setActiveTab(tab)}
+                    style={[
+                      styles.sidebarMenuItem,
+                      active && { backgroundColor: colors.primaryContainer }
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <MaterialIcons
+                      name={icon as any}
+                      size={22}
+                      color={active ? colors.onPrimaryContainer : colors.onSurfaceVariant}
+                      style={{ marginRight: 12 }}
+                    />
+                    <Text style={[
+                      styles.sidebarMenuItemText,
+                      { color: active ? colors.onPrimaryContainer : colors.onSurfaceVariant },
+                      active && { fontWeight: '700' }
+                    ]}>
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
-              return (
-                <TouchableOpacity
-                  key={tab}
-                  onPress={() => setActiveTab(tab)}
-                  style={[
-                    styles.sidebarMenuItem,
-                    active && { backgroundColor: colors.primaryContainer }
-                  ]}
-                  activeOpacity={0.8}
-                >
-                  <MaterialIcons
-                    name={icon as any}
-                    size={22}
-                    color={active ? colors.onPrimaryContainer : colors.onSurfaceVariant}
-                    style={{ marginRight: 12 }}
-                  />
-                  <Text style={[
-                    styles.sidebarMenuItemText,
-                    { color: active ? colors.onPrimaryContainer : colors.onSurfaceVariant },
-                    active && { fontWeight: '700' }
-                  ]}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            <TouchableOpacity
+              style={[styles.sidebarAddBtn, { backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}
+              onPress={() => setIsAddMode(true)}
+              activeOpacity={0.85}
+            >
+              <MaterialIcons name="add" size={20} color={colors.onPrimaryContainer} style={{ marginRight: 8 }} />
+              <Text style={[styles.sidebarAddText, { color: colors.onPrimaryContainer }]}>Add Entry</Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={[styles.sidebarAddBtn, { backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}
-            onPress={() => setIsAddMode(true)}
-            activeOpacity={0.85}
-          >
-            <MaterialIcons name="add" size={20} color={colors.onPrimaryContainer} style={{ marginRight: 8 }} />
-            <Text style={[styles.sidebarAddText, { color: colors.onPrimaryContainer }]}>Add Entry</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={[styles.desktopMain, { backgroundColor: 'transparent' }]}>
+            <View style={[styles.mainHeader, { borderBottomColor: colors.outline, backgroundColor: colors.surface, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 20 }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: colors.onSurfaceVariant }}>Vault: Encrypted</Text>
+                </View>
+                <Text style={[styles.mainHeaderTitle, { color: colors.onSurface }]}>
+                  {getHeaderTitle()}
+                </Text>
+              </View>
 
-        <View style={[styles.desktopMain, { backgroundColor: 'transparent' }]}>
-          <View style={[styles.mainHeader, { borderBottomColor: colors.outline, backgroundColor: colors.surface }]}>
-            <Text style={[styles.mainHeaderTitle, { color: colors.onSurface }]}>
-              {getHeaderTitle()}
-            </Text>
-          </View>
+              <TouchableOpacity 
+                onPress={() => setIsTourOpen(true)}
+                style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}
+                activeOpacity={0.8}
+              >
+                <MaterialIcons name="explore" size={18} color={colors.onPrimaryContainer} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 13, fontWeight: '700', color: colors.onPrimaryContainer }}>Take App Tour</Text>
+              </TouchableOpacity>
+            </View>
 
-          <View style={[{ flex: 1 }, Platform.OS === 'web' && { maxWidth: 1350, width: '100%', alignSelf: 'center' }]}>
-            {renderActiveScreen()}
-          </View>
-        </View>
-
-        {isAddMode && (
-          <View style={styles.desktopModalOverlay}>
-            <View style={[styles.desktopModalContainer, { backgroundColor: colors.background, shadowColor: '#000', borderColor: colors.surfaceVariant }]}>
-              <AddTransactionScreen
-                onBack={handleCloseAddMode}
-                transactionToEdit={editingTransaction}
-              />
+            <View style={[{ flex: 1 }, Platform.OS === 'web' && { width: '100%', alignSelf: 'center' }]}>
+              {renderActiveScreen()}
             </View>
           </View>
-        )}
-      </SafeAreaView>
-    </LinearGradient>
-  );
-}
+
+          {isAddMode && (
+            <View style={styles.desktopModalOverlay}>
+              <View style={[styles.desktopModalContainer, { backgroundColor: colors.background, shadowColor: '#000', borderColor: colors.surfaceVariant }]}>
+                <AddTransactionScreen
+                  onBack={handleCloseAddMode}
+                  transactionToEdit={editingTransaction}
+                />
+              </View>
+            </View>
+          )}
+
+          <GuidedTourModal
+            visible={isTourOpen}
+            onClose={handleCloseTour}
+          />
+        </SafeAreaView>
+      </LinearGradient>
+    );
+  }
 
   if (isAddMode) {
     return (

@@ -11,6 +11,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { BudgetModal } from '../components/BudgetModal';
 import { Budget } from '../utils/storage';
+import { ParallaxCard } from '../components/ParallaxCard';
 
 export const BudgetsScreen: React.FC = () => {
   const { 
@@ -108,11 +109,10 @@ export const BudgetsScreen: React.FC = () => {
             const remaining = b.amount - spent;
             const percent = b.amount > 0 ? (spent / b.amount) * 100 : 0;
             const clampedPercent = Math.min(Math.max(percent, 0), 100);
-            
             const dailyAvailable = remaining > 0 ? remaining / daysInfo.daysRemaining : 0;
-
+            
             return (
-              <View key={b.id} style={[styles.budgetCard, { width: cardWidth as any }]}>
+              <ParallaxCard key={b.id} style={[styles.budgetCard, { width: cardWidth as any }]}>
                 {/* Top Half */}
                 <View style={[styles.cardTop, { backgroundColor: `${b.color}30` }]}>
                   <View style={styles.cardHeaderRow}>
@@ -153,7 +153,7 @@ export const BudgetsScreen: React.FC = () => {
                     You can spend {currencySymbol}{dailyAvailable.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}/day for {daysInfo.daysRemaining} more days
                   </Text>
                 </View>
-              </View>
+              </ParallaxCard>
             );
           })}
 
