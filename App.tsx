@@ -26,6 +26,7 @@ import { RecurringScreen } from './src/screens/RecurringScreen';
 import { GoalsScreen } from './src/screens/GoalsScreen';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { OnboardingSlideshow } from './src/components/OnboardingSlideshow';
 import { Transaction } from './src/utils/storage';
 
 type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings' | 'categories' | 'more' | 'recurring' | 'goals';
@@ -85,46 +86,8 @@ function MainAppContent() {
       </View>
     );
   }
-
   if (!hasAcceptedTerms) {
-    return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
-        <View style={{ backgroundColor: colors.surface, borderColor: colors.outline, borderWidth: 1, borderRadius: 24, padding: 32, gap: 20, maxWidth: 480, width: '100%', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 }}>
-          <Text style={{ color: colors.primary, fontSize: 32, fontWeight: '900', textAlign: 'center', letterSpacing: 0.5 }}>SpendNova</Text>
-          <Text style={{ color: colors.onSurface, fontSize: 20, fontWeight: '700', textAlign: 'center', marginTop: -8 }}>Personal Finance Tracker</Text>
-          
-          <Text style={{ color: colors.onSurfaceVariant, fontSize: 14, lineHeight: 22, textAlign: 'center', marginBottom: 8 }}>
-            Welcome to SpendNova, a secure and beautiful money manager app. Take control of your personal finances, track daily expenses, plan monthly budgets, and set custom savings goals.
-          </Text>
-
-          <View style={{ gap: 12, marginVertical: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <MaterialIcons name="account-balance-wallet" size={20} color={colors.primary} />
-              <Text style={{ color: colors.onSurface, fontSize: 14, fontWeight: '600' }}>Expense & Income Tracking</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <MaterialIcons name="pie-chart" size={20} color={colors.primary} />
-              <Text style={{ color: colors.onSurface, fontSize: 14, fontWeight: '600' }}>Monthly Budget Planning</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <MaterialIcons name="cloud-sync" size={20} color={colors.primary} />
-              <Text style={{ color: colors.onSurface, fontSize: 14, fontWeight: '600' }}>Google Drive Sync & Backup</Text>
-            </View>
-          </View>
-
-          <Text style={{ color: colors.onSurfaceVariant, fontSize: 12, lineHeight: 18, borderTopWidth: 0.5, borderTopColor: colors.outline, paddingTop: 16, marginTop: 8 }}>
-            Important Notice: SpendNova stores financial records locally on this device. By continuing, you agree that this is a personal tracking tool and does not constitute financial, tax, or investment advice.
-          </Text>
-
-          <TouchableOpacity
-            onPress={() => void acceptTerms()}
-            style={{ backgroundColor: colors.primary, alignItems: 'center', borderRadius: 16, paddingVertical: 14, marginTop: 12 }}
-          >
-            <Text style={{ color: colors.onPrimary, fontSize: 16, fontWeight: '700' }}>Get Started & Accept Terms</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
+    return <OnboardingSlideshow onAcceptTerms={() => void acceptTerms()} />;
   }
 
   const handleEditTransaction = (tx: Transaction) => {

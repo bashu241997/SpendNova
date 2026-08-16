@@ -430,27 +430,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
         </View>
       </View>
 
-      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
-        <Text style={[styles.bentoHeader, { color: colors.primary }]}>Theme Palette & Visuals</Text>
-        <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>
-          SpendNova Minimalist Tonal Dark & Light Theme with vibrant Green for Income and Red for Expenses.
-        </Text>
 
-        <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: colors.surfaceVariant }}>
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary, marginRight: 8 }} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.onSurface }}>SpendNova Tonal Theme</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: `${colors.success}15` }}>
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.success, marginRight: 8 }} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.success }}>Green Income</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: `${colors.error}15` }}>
-            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.error, marginRight: 8 }} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.error }}>Red Expense</Text>
-          </View>
-        </View>
-      </View>
 
       <View style={styles.bentoRow}>
         <View style={[styles.bentoSquareCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
