@@ -13,9 +13,11 @@
       "backgroundColor": "#F6F5F0"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.spendnova.ledger"
     },
     "android": {
+      "package": "com.spendnova.ledger",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
