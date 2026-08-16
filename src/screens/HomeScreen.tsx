@@ -85,7 +85,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       const d = new Date(startOfWeek);
       d.setDate(startOfWeek.getDate() + i);
       
-      const dayTxs = transactions.filter(t => {
+      const safeTxsList = Array.isArray(transactions) ? transactions : [];
+      const dayTxs = safeTxsList.filter(t => {
         const txDate = new Date(t.date);
         return txDate.getFullYear() === d.getFullYear() &&
                txDate.getMonth() === d.getMonth() &&

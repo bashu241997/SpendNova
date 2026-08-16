@@ -102,7 +102,7 @@ export interface AppData {
 
 export interface AppPreferences {
   themeType: 'light' | 'dark';
-  accentTheme: 'slate' | 'nature' | 'classic' | 'core_blue';
+  accentTheme: 'youtube' | 'slate' | 'nature' | 'classic' | 'core_blue';
   country: 'US' | 'IN' | 'EU' | 'UK';
 }
 
@@ -124,7 +124,11 @@ export const DEFAULT_CATEGORIES: Category[] = [];
 export const loadTransactions = async (): Promise<Transaction[]> => {
   try {
     const raw = await SecureStorage.getItem(TRANSACTIONS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && Array.isArray(parsed.transactions)) return parsed.transactions;
+    return [];
   } catch (e) {
     console.error('Failed to load transactions', e);
     return [];
@@ -142,7 +146,11 @@ export const saveTransactions = async (txs: Transaction[]): Promise<void> => {
 export const loadAccounts = async (): Promise<Account[]> => {
   try {
     const raw = await SecureStorage.getItem(ACCOUNTS_KEY);
-    return raw ? JSON.parse(raw) : DEFAULT_ACCOUNTS;
+    if (!raw) return DEFAULT_ACCOUNTS;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && Array.isArray(parsed.accounts)) return parsed.accounts;
+    return DEFAULT_ACCOUNTS;
   } catch (e) {
     console.error('Failed to load accounts', e);
     return DEFAULT_ACCOUNTS;
@@ -160,7 +168,11 @@ export const saveAccounts = async (accs: Account[]): Promise<void> => {
 export const loadCategories = async (): Promise<Category[]> => {
   try {
     const raw = await SecureStorage.getItem(CATEGORIES_KEY);
-    return raw ? JSON.parse(raw) : DEFAULT_CATEGORIES;
+    if (!raw) return DEFAULT_CATEGORIES;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && Array.isArray(parsed.categories)) return parsed.categories;
+    return DEFAULT_CATEGORIES;
   } catch (e) {
     console.error('Failed to load categories', e);
     return DEFAULT_CATEGORIES;
@@ -178,7 +190,11 @@ export const saveCategories = async (cats: Category[]): Promise<void> => {
 export const loadBudgets = async (): Promise<Budget[]> => {
   try {
     const raw = await SecureStorage.getItem(BUDGETS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && Array.isArray(parsed.budgets)) return parsed.budgets;
+    return [];
   } catch (e) {
     console.error('Failed to load budgets', e);
     return [];
@@ -196,7 +212,11 @@ export const saveBudgets = async (budgets: Budget[]): Promise<void> => {
 export const loadRecurring = async (): Promise<RecurringTransaction[]> => {
   try {
     const raw = await SecureStorage.getItem(RECURRING_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && Array.isArray(parsed.recurring)) return parsed.recurring;
+    return [];
   } catch (e) {
     console.error('Failed to load recurring transactions', e);
     return [];
@@ -214,7 +234,11 @@ export const saveRecurring = async (recurring: RecurringTransaction[]): Promise<
 export const loadGoals = async (): Promise<Goal[]> => {
   try {
     const raw = await SecureStorage.getItem(GOALS_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && Array.isArray(parsed.goals)) return parsed.goals;
+    return [];
   } catch (e) {
     console.error('Failed to load goals', e);
     return [];
@@ -656,10 +680,11 @@ export const saveTermsAcceptance = async (accepted: boolean): Promise<void> => {
 export const loadAppPreferences = async (): Promise<AppPreferences | null> => {
   try {
     const raw = await SecureStorage.getItem(PREFERENCES_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (raw) return JSON.parse(raw);
+    return { themeType: 'dark', accentTheme: 'youtube' as any, country: 'IN' };
   } catch (e) {
     console.error('Failed to load preferences', e);
-    return null;
+    return { themeType: 'dark', accentTheme: 'youtube' as any, country: 'IN' };
   }
 };
 

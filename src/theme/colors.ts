@@ -24,8 +24,7 @@ export interface ColorTheme {
 }
 
 export type ThemeType = 'light' | 'dark';
-
-export type AccentTheme = 'slate' | 'nature' | 'classic' | 'core_blue';
+export type AccentTheme = 'youtube' | 'slate' | 'nature' | 'classic' | 'core_blue';
 
 export interface AccentOption {
   id: AccentTheme;
@@ -34,122 +33,64 @@ export interface AccentOption {
 }
 
 export const ACCENT_OPTIONS: AccentOption[] = [
-  { id: 'nature', name: 'Nature Green', color: '#51B375' },
-  { id: 'core_blue', name: 'Core Blue', color: '#2563EB' },
-  { id: 'slate', name: 'Steel Grey', color: '#64748B' },
-  { id: 'classic', name: 'Classic White', color: '#1F2937' },
+  { id: 'youtube', name: 'YouTube Theme', color: '#0F0F0F' },
 ];
 
-const ACCENT_CONFIGS: Record<AccentTheme, {
-  lightPrimary: string;
-  lightContainer: string;
-  onLightContainer: string;
-  darkPrimary: string;
-  darkContainer: string;
-  onDarkContainer: string;
-}> = {
-  nature: {
-    lightPrimary: '#51B375',
-    lightContainer: '#EAF6EE',
-    onLightContainer: '#1F5335',
-    darkPrimary: '#73D097',
-    darkContainer: '#1F5335',
-    onDarkContainer: '#EAF6EE',
-  },
-  core_blue: {
-    lightPrimary: '#2563EB',
-    lightContainer: '#DBEAFE',
-    onLightContainer: '#1E3A8A',
-    darkPrimary: '#60A5FA',
-    darkContainer: '#1E3A8A',
-    onDarkContainer: '#DBEAFE',
-  },
-  slate: {
-    lightPrimary: '#64748B',
-    lightContainer: '#F1F5F9',
-    onLightContainer: '#1E293B',
-    darkPrimary: '#94A3B8',
-    darkContainer: '#1E293B',
-    onDarkContainer: '#F1F5F9',
-  },
-  classic: {
-    lightPrimary: '#1F2937',
-    lightContainer: '#F3F4F6',
-    onLightContainer: '#111827',
-    darkPrimary: '#FAFAFA',
-    darkContainer: '#1F2937',
-    onDarkContainer: '#FAFAFA',
-  },
-};
-
-export const getTheme = (type: ThemeType, accent: AccentTheme = 'nature'): ColorTheme => {
-  const config = ACCENT_CONFIGS[accent] || ACCENT_CONFIGS.nature;
-
-  const gradientMap: Record<AccentTheme, [string, string]> = {
-    nature: ['#F0FDF4', '#FFFFFF'],
-    core_blue: ['#EFF6FF', '#FFFFFF'],
-    slate: ['#F8FAFC', '#FFFFFF'],
-    classic: ['#FFFFFF', '#FFFFFF'],
-  };
-
-  const selectedGradient = gradientMap[accent] || ['#F8FAFC', '#FFFFFF'];
-
+export const getTheme = (type: ThemeType, _accent: AccentTheme = 'youtube'): ColorTheme => {
   if (type === 'dark') {
+    // Official YouTube Dark Theme with sleek Black/White primary accent:
     return {
-      primary: config.darkPrimary,
-      onPrimary: '#090D16',
-      primaryContainer: config.darkContainer,
-      onPrimaryContainer: config.onDarkContainer,
-      secondary: '#A7F3D0',
-      onSecondary: '#090D16',
-      secondaryContainer: '#1E293B',
-      onSecondaryContainer: '#F8FAFC',
-      background: '#090D16',
-      onBackground: '#F8FAFC',
-      surface: '#121824',
-      onSurface: '#F8FAFC',
-      surfaceVariant: '#1A2333',
-      onSurfaceVariant: '#94A3B8',
-      outline: '#263147',
-      error: '#FB7185',
-      onError: '#090D16',
-      success: '#34D399',
-      onSuccess: '#090D16',
-      info: '#38BDF8',
-      onInfo: '#090D16',
-      backgroundGradient: ['#090D16', '#121824'],
+      primary: '#FFFFFF',           // Sleek White Primary Text/Accent for Dark Mode
+      onPrimary: '#0F0F0F',
+      primaryContainer: '#272727',  // YouTube Surface Container
+      onPrimaryContainer: '#FFFFFF',
+      secondary: '#3EA6FF',         // YouTube Action Blue
+      onSecondary: '#0F0F0F',
+      secondaryContainer: 'rgba(255,255,255,0.1)',
+      onSecondaryContainer: '#FFFFFF',
+      background: '#0F0F0F',        // YouTube Pure Dark Background
+      onBackground: '#FFFFFF',      // YouTube Primary Text
+      surface: '#212121',           // YouTube Card Surface
+      onSurface: '#FFFFFF',
+      surfaceVariant: '#282828',    // YouTube Variant Surface
+      onSurfaceVariant: '#AAAAAA',  // YouTube Secondary Text
+      outline: '#3F3F3F',           // YouTube Divider Border
+      error: '#FF4E45',             // YouTube Red for Expenses
+      onError: '#FFFFFF',
+      success: '#2BA640',           // YouTube Green for Income
+      onSuccess: '#FFFFFF',
+      info: '#3EA6FF',
+      onInfo: '#FFFFFF',
+      backgroundGradient: ['#0F0F0F', '#181818'],
     };
   }
 
-  const isClassic = accent === 'classic';
-  const textColor = isClassic ? '#1F2937' : '#0F172A';
-  const textVariantColor = isClassic ? '#4B5563' : '#334155';
-
+  // Official YouTube Light Theme with sleek Black primary accent:
   return {
-    primary: config.lightPrimary,
+    primary: '#0F0F0F',             // Sleek Black Primary Accent for Light Mode
     onPrimary: '#FFFFFF',
-    primaryContainer: config.lightContainer,
-    onPrimaryContainer: config.onLightContainer,
-    secondary: '#334155',
+    primaryContainer: '#F2F2F2',    // YouTube Light Surface Container
+    onPrimaryContainer: '#0F0F0F',
+    secondary: '#065FD4',           // YouTube Light Blue Link Accent
     onSecondary: '#FFFFFF',
-    secondaryContainer: '#E2E8F0',
-    onSecondaryContainer: '#0F172A',
-    background: selectedGradient[0],
-    onBackground: textColor,
-    surface: '#FFFFFF',
-    onSurface: textColor,
-    surfaceVariant: '#F1F5F9',
-    onSurfaceVariant: textVariantColor,
-    outline: '#E2E8F0',
-    error: '#E11D48',
+    secondaryContainer: '#E5E5E5',
+    onSecondaryContainer: '#0F0F0F',
+    background: '#FFFFFF',          // YouTube Base Light Background
+    onBackground: '#0F0F0F',        // YouTube Dark Primary Text
+    surface: '#FFFFFF',             // YouTube Raised Background
+    onSurface: '#0F0F0F',
+    surfaceVariant: '#F9F9F9',      // YouTube Light Card Surface
+    onSurfaceVariant: '#606060',    // YouTube Light Secondary Text
+    outline: '#E5E5E5',             // YouTube Light Border
+    error: '#E1002D',               // YouTube Red for Expenses
     onError: '#FFFFFF',
-    success: '#059669',
+    success: '#107516',             // YouTube Green for Income
     onSuccess: '#FFFFFF',
-    info: '#0284C7',
+    info: '#065FD4',
     onInfo: '#FFFFFF',
-    backgroundGradient: selectedGradient,
+    backgroundGradient: ['#FFFFFF', '#F9F9F9'],
   };
 };
 
-export const lightTheme = getTheme('light', 'nature');
-export const darkTheme = getTheme('dark', 'nature');
+export const lightTheme = getTheme('light');
+export const darkTheme = getTheme('dark');

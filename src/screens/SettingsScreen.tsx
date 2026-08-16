@@ -66,6 +66,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
   const [legalModalType, setLegalModalType] = useState<'terms' | 'privacy' | 'about' | 'contact' | null>(null);
 
   const [activeView, setActiveView] = useState<'main' | 'data_sync' | 'legal' | 'danger'>('main');
+  const [showWipeConfirm, setShowWipeConfirm] = useState(false);
 
   const googleClientIds = {
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
@@ -162,29 +163,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
 
 
 
+  const performWipeData = async () => {
+    setShowWipeConfirm(false);
+    await importBackupData({
+      transactions: [],
+      accounts: [],
+      categories: [],
+      budgets: [],
+      recurring: [],
+      goals: [],
+    });
+    showAlert('Database wiped successfully! All local data cleared.');
+  };
+
   const handleResetData = () => {
-    Alert.alert(
-      'Reset Data',
-      'This will permanently delete every transaction, account, category, budget, recurring payment, and savings goal. This action is irreversible.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset Everything',
-          style: 'destructive',
-          onPress: async () => {
-            await importBackupData({
-              transactions: [],
-              accounts: [],
-              categories: [],
-              budgets: [],
-              recurring: [],
-              goals: [],
-            });
-            alert('Database reset successfully!');
-          }
-        }
-      ]
-    );
+    setShowWipeConfirm(true);
   };
 
   const renderLegalContent = () => {
@@ -438,39 +431,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
       </View>
 
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
-        <Text style={[styles.bentoHeader, { color: colors.primary }]}>Theme Accent Palette</Text>
+        <Text style={[styles.bentoHeader, { color: colors.primary }]}>Theme Palette & Visuals</Text>
         <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>
-          Choose the accent color used for actions and highlights.
+          YouTube Dark & Light Theme styling with vibrant Green for Income and Red for Expenses.
         </Text>
 
         <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-          {ACCENT_OPTIONS.map((opt) => {
-            const active = accentTheme === opt.id;
-            return (
-              <TouchableOpacity
-                key={opt.id}
-                onPress={() => setAccentTheme(opt.id)}
-                style={[
-                  {
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: 14,
-                    paddingVertical: 10,
-                    borderRadius: 16,
-                    backgroundColor: active ? `${opt.color}18` : colors.surfaceVariant,
-                    borderWidth: active ? 1.5 : 1,
-                    borderColor: active ? opt.color : 'transparent',
-                  }
-                ]}
-                activeOpacity={0.8}
-              >
-                <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: opt.color, marginRight: 8 }} />
-                <Text style={[{ fontSize: 13, fontWeight: active ? '800' : '600', color: colors.onSurface }]}>
-                  {opt.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: colors.surfaceVariant }}>
+            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary, marginRight: 8 }} />
+            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.onSurface }}>YouTube Theme Active</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: `${colors.success}15` }}>
+            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.success, marginRight: 8 }} />
+            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.success }}>Green Income</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 16, backgroundColor: `${colors.error}15` }}>
+            <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: colors.error, marginRight: 8 }} />
+            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.error }}>Red Expense</Text>
+          </View>
         </View>
       </View>
 
@@ -594,6 +572,40 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
             </View>
 
             {renderLegalContent()}
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showWipeConfirm}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowWipeConfirm(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <View style={{ width: '100%', maxWidth: 420, backgroundColor: colors.surface, borderRadius: 20, padding: 24, borderWidth: 1, borderColor: colors.outline }}>
+            <MaterialIcons name="warning" size={44} color={colors.error} style={{ alignSelf: 'center', marginBottom: 14 }} />
+            <Text style={{ fontSize: 18, fontWeight: '800', color: colors.onSurface, textAlign: 'center', marginBottom: 8 }}>
+              Wipe All Local Data?
+            </Text>
+            <Text style={{ fontSize: 13, lineHeight: 20, color: colors.onSurfaceVariant, textAlign: 'center', marginBottom: 24 }}>
+              This action will permanently erase every transaction, account, category, budget, recurring payment, and savings goal. This action cannot be undone.
+            </Text>
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: colors.surfaceVariant, paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
+                onPress={() => setShowWipeConfirm(false)}
+              >
+                <Text style={{ color: colors.onSurface, fontWeight: '700', fontSize: 14 }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: colors.error, paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
+                onPress={performWipeData}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>Wipe Everything</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>

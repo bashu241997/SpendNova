@@ -163,7 +163,7 @@ const AppContext = createContext<AppContextProps | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemScheme = useColorScheme();
   const [themeType, setThemeTypeState] = useState<ThemeType>(systemScheme === 'dark' ? 'dark' : 'light');
-  const [accentTheme, setAccentTheme] = useState<AccentTheme>('slate');
+  const [accentTheme, setAccentTheme] = useState<AccentTheme>('youtube' as any);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -199,8 +199,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setHasAcceptedTerms(termsAccepted);
       if (preferences) {
         setThemeTypeState(preferences.themeType);
-        setAccentTheme(preferences.accentTheme);
-        setCountryState(preferences.country);
+        setAccentTheme(preferences.accentTheme || 'youtube');
+        setCountryState(preferences.country || 'IN');
+      } else {
+        setCountryState('IN');
       }
 
       const storedToken = await getGoogleToken();
