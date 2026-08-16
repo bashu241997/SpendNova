@@ -406,21 +406,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
                 onPress={() => setCountry(cnt)}
                 style={[
                   styles.currencyPill,
-                  { backgroundColor: colors.surfaceVariant },
-                  active && { backgroundColor: colors.primary }
+                  { backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: 'transparent' },
+                  active && { backgroundColor: colors.primaryContainer, borderColor: colors.outline }
                 ]}
               >
                 <Text style={[
                   styles.currencyPillSymbol,
                   { color: colors.onSurfaceVariant },
-                  active && { color: colors.onPrimary }
+                  active && { color: colors.onPrimaryContainer, fontWeight: '800' }
                 ]}>
                   {symbol}
                 </Text>
                 <Text style={[
                   styles.currencyPillLabel,
                   { color: colors.onSurfaceVariant },
-                  active && { color: colors.onPrimary, fontWeight: '700' }
+                  active && { color: colors.onPrimaryContainer, fontWeight: '800' }
                 ]}>
                   {cnt}
                 </Text>

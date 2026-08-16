@@ -271,12 +271,12 @@ function MainAppContent() {
                   <MaterialIcons
                     name={icon as any}
                     size={22}
-                    color={active ? colors.primary : colors.onSurfaceVariant}
+                    color={active ? colors.onPrimaryContainer : colors.onSurfaceVariant}
                     style={{ marginRight: 12 }}
                   />
                   <Text style={[
                     styles.sidebarMenuItemText,
-                    { color: active ? colors.primary : colors.onSurface },
+                    { color: active ? colors.onPrimaryContainer : colors.onSurfaceVariant },
                     active && { fontWeight: '700' }
                   ]}>
                     {label}
@@ -287,11 +287,12 @@ function MainAppContent() {
           </View>
 
           <TouchableOpacity
-            style={[styles.sidebarAddBtn, { backgroundColor: colors.primary }]}
+            style={[styles.sidebarAddBtn, { backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}
             onPress={() => setIsAddMode(true)}
+            activeOpacity={0.85}
           >
-            <MaterialIcons name="add" size={20} color={colors.onPrimary} style={{ marginRight: 8 }} />
-            <Text style={[styles.sidebarAddText, { color: colors.onPrimary }]}>Add Entry</Text>
+            <MaterialIcons name="add" size={20} color={colors.onPrimaryContainer} style={{ marginRight: 8 }} />
+            <Text style={[styles.sidebarAddText, { color: colors.onPrimaryContainer }]}>Add Entry</Text>
           </TouchableOpacity>
         </View>
 

@@ -33,60 +33,60 @@ export interface AccentOption {
 }
 
 export const ACCENT_OPTIONS: AccentOption[] = [
-  { id: 'youtube', name: 'YouTube Theme', color: '#0F0F0F' },
+  { id: 'youtube', name: 'YouTube Theme', color: '#606060' },
 ];
 
 export const getTheme = (type: ThemeType, _accent: AccentTheme = 'youtube'): ColorTheme => {
   if (type === 'dark') {
-    // Official YouTube Dark Theme with sleek Black/White primary accent:
+    // Pure Dark Neutral Tonal System (Zero Blue, Zero harsh white glare, Red & Green ONLY for Loss & Profit):
     return {
-      primary: '#FFFFFF',           // Sleek White Primary Text/Accent for Dark Mode
+      primary: '#F1F1F1',           // Soft off-white text & active state
       onPrimary: '#0F0F0F',
-      primaryContainer: '#272727',  // YouTube Surface Container
-      onPrimaryContainer: '#FFFFFF',
-      secondary: '#3EA6FF',         // YouTube Action Blue
+      primaryContainer: '#272727',  // Soft dark grey container (#272727)
+      onPrimaryContainer: '#F1F1F1',// Soft off-white text on container
+      secondary: '#AAAAAA',         // Soft muted grey text
       onSecondary: '#0F0F0F',
-      secondaryContainer: 'rgba(255,255,255,0.1)',
-      onSecondaryContainer: '#FFFFFF',
-      background: '#0F0F0F',        // YouTube Pure Dark Background
-      onBackground: '#FFFFFF',      // YouTube Primary Text
-      surface: '#212121',           // YouTube Card Surface
-      onSurface: '#FFFFFF',
-      surfaceVariant: '#282828',    // YouTube Variant Surface
-      onSurfaceVariant: '#AAAAAA',  // YouTube Secondary Text
-      outline: '#3F3F3F',           // YouTube Divider Border
-      error: '#FF4E45',             // YouTube Red for Expenses
+      secondaryContainer: '#272727',// Soft dark grey chip
+      onSecondaryContainer: '#F1F1F1',
+      background: '#0F0F0F',        // YouTube Base Dark Background
+      onBackground: '#F1F1F1',      // Soft off-white text
+      surface: '#212121',           // Soft dark grey card surface (#212121)
+      onSurface: '#F1F1F1',
+      surfaceVariant: '#282828',    // Soft dark grey variant surface (#282828)
+      onSurfaceVariant: '#AAAAAA',  // Muted secondary text
+      outline: '#383838',           // Soft muted dark grey border (#383838)
+      error: '#FF4E45',             // Vibrant Red for Expense / Loss
       onError: '#FFFFFF',
-      success: '#2BA640',           // YouTube Green for Income
+      success: '#2BA640',           // Vibrant Green for Income / Profit
       onSuccess: '#FFFFFF',
-      info: '#3EA6FF',
-      onInfo: '#FFFFFF',
+      info: '#AAAAAA',              // Muted Neutral Grey (Zero Blue)
+      onInfo: '#0F0F0F',
       backgroundGradient: ['#0F0F0F', '#181818'],
     };
   }
 
-  // Official YouTube Light Theme with sleek Black primary accent:
+  // Pure Light Neutral Tonal System (Zero Blue, Red & Green ONLY for Loss & Profit):
   return {
-    primary: '#0F0F0F',             // Sleek Black Primary Accent for Light Mode
+    primary: '#0F0F0F',             // Charcoal for active states
     onPrimary: '#FFFFFF',
-    primaryContainer: '#F2F2F2',    // YouTube Light Surface Container
-    onPrimaryContainer: '#0F0F0F',
-    secondary: '#065FD4',           // YouTube Light Blue Link Accent
+    primaryContainer: '#F2F2F2',    // YouTube Soft Light Grey Pill Container ("+ Create")
+    onPrimaryContainer: '#0F0F0F',  // Charcoal text on soft grey container
+    secondary: '#606060',           // Medium Grey Text
     onSecondary: '#FFFFFF',
-    secondaryContainer: '#E5E5E5',
+    secondaryContainer: '#F2F2F2',  // Soft Chip Background
     onSecondaryContainer: '#0F0F0F',
-    background: '#FFFFFF',          // YouTube Base Light Background
-    onBackground: '#0F0F0F',        // YouTube Dark Primary Text
-    surface: '#FFFFFF',             // YouTube Raised Background
+    background: '#FFFFFF',          // Pure White Base Canvas
+    onBackground: '#0F0F0F',        // Primary Charcoal Text
+    surface: '#FFFFFF',             // Raised White Card Surface
     onSurface: '#0F0F0F',
-    surfaceVariant: '#F9F9F9',      // YouTube Light Card Surface
-    onSurfaceVariant: '#606060',    // YouTube Light Secondary Text
-    outline: '#E5E5E5',             // YouTube Light Border
-    error: '#E1002D',               // YouTube Red for Expenses
+    surfaceVariant: '#F9F9F9',      // Soft Variant Surface
+    onSurfaceVariant: '#606060',    // Secondary Grey Text
+    outline: '#E5E5E5',             // Soft Light Grey Border
+    error: '#C30027',               // Soft Red for Expense / Loss
     onError: '#FFFFFF',
-    success: '#107516',             // YouTube Green for Income
+    success: '#107516',             // Soft Green for Income / Profit
     onSuccess: '#FFFFFF',
-    info: '#065FD4',
+    info: '#606060',                // Neutral Secondary Grey (Zero Blue)
     onInfo: '#FFFFFF',
     backgroundGradient: ['#FFFFFF', '#F9F9F9'],
   };

@@ -273,13 +273,20 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
         renderSectionHeader={renderSectionHeader}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        stickySectionHeadersEnabled={false}
         ListEmptyComponent={
           <View style={styles.emptyView}>
             <Text style={{ color: colors.onSurfaceVariant }}>No transactions in {MONTHS[filterMonth - 1]}</Text>
           </View>
         }
       />
+
+      <TouchableOpacity 
+        style={[styles.fab, { backgroundColor: colors.primaryContainer, borderColor: colors.outline }]}
+        onPress={onAddTransaction}
+        activeOpacity={0.8}
+      >
+        <MaterialIcons name="add" size={28} color={colors.onPrimaryContainer} />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -429,13 +436,13 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#374151',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
+    borderWidth: 1,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
   }
 });

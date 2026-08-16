@@ -334,7 +334,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.sectionHeaderRow}>
             <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Spending Flow</Text>
             <TouchableOpacity onPress={() => onNavigateTab('stats')}>
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>View Details</Text>
+              <Text style={[styles.seeAllText, { color: colors.onSurfaceVariant }]}>View Details</Text>
             </TouchableOpacity>
           </View>
 
@@ -366,9 +366,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       {week.map((day, dIdx) => {
                         let bg = colors.surfaceVariant;
                         if (day.count > 0) {
-                          if (day.count === 1) bg = `${colors.primary}33`;
-                          else if (day.count === 2) bg = `${colors.primary}77`;
-                          else bg = colors.primary;
+                          if (day.count === 1) bg = colors.outline;
+                          else if (day.count === 2) bg = '#B0B0B0';
+                          else bg = '#757575';
                         }
                         return (
                           <View 
@@ -402,9 +402,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <View style={[styles.legendRow, { borderTopColor: colors.surfaceVariant }]}>
               <Text style={[styles.legendText, { color: colors.onSurfaceVariant }]}>Less</Text>
               <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: colors.surfaceVariant }]} />
-              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: `${colors.primary}33` }]} />
-              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: `${colors.primary}77` }]} />
-              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: colors.primary }]} />
+              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: colors.outline }]} />
+              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: '#B0B0B0' }]} />
+              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: '#757575' }]} />
               <Text style={[styles.legendText, { color: colors.onSurfaceVariant }]}>More</Text>
             </View>
           </View>
@@ -413,14 +413,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.sectionHeaderRow}>
             <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Active Budgets</Text>
             <TouchableOpacity onPress={() => onNavigateTab('budgets')}>
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({userBudgetStats.length})</Text>
+              <Text style={[styles.seeAllText, { color: colors.onSurfaceVariant }]}>View All ({userBudgetStats.length})</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.carouselContainer}>
             {(!budgets || budgets.length === 0) ? (
               <TouchableOpacity
-                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: colors.primaryContainer, borderColor: colors.primary }]}
+                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: colors.primaryContainer, borderColor: colors.outline }]}
                 onPress={() => onNavigateTab('budgets')}
               >
                 <View style={[styles.emptyGoalIcon, { backgroundColor: colors.surface }]}>
@@ -430,8 +430,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <Text style={[styles.emptyGoalTitle, { color: colors.onPrimaryContainer }]}>Create a budget</Text>
                   <Text style={[styles.emptyGoalDescription, { color: colors.onPrimaryContainer }]}>Set spending limits and track where your money goes.</Text>
                 </View>
-                <View style={[styles.emptyGoalAction, { backgroundColor: colors.primary }]}>
-                  <MaterialIcons name="add" size={18} color={colors.onPrimary} />
+                <View style={[styles.emptyGoalAction, { backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}>
+                  <MaterialIcons name="add" size={18} color={colors.onPrimaryContainer} />
                 </View>
               </TouchableOpacity>
             ) : (
@@ -519,14 +519,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.sectionHeaderRow}>
             <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Savings Goals</Text>
             <TouchableOpacity onPress={() => onNavigateTab('goals')}>
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({(goals || []).length})</Text>
+              <Text style={[styles.seeAllText, { color: colors.onSurfaceVariant }]}>View All ({(goals || []).length})</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.carouselContainer}>
             {(!goals || goals.length === 0) ? (
               <TouchableOpacity
-                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: colors.primaryContainer, borderColor: colors.primary }]}
+                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: colors.primaryContainer, borderColor: colors.outline }]}
                 onPress={() => onNavigateTab('goals')}
               >
                 <View style={[styles.emptyGoalIcon, { backgroundColor: colors.surface }]}>
@@ -536,8 +536,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <Text style={[styles.emptyGoalTitle, { color: colors.onPrimaryContainer }]}>Start a savings goal</Text>
                   <Text style={[styles.emptyGoalDescription, { color: colors.onPrimaryContainer }]}>Plan for an emergency fund, trip, or big purchase.</Text>
                 </View>
-                <View style={[styles.emptyGoalAction, { backgroundColor: colors.primary }]}>
-                  <MaterialIcons name="add" size={18} color={colors.onPrimary} />
+                <View style={[styles.emptyGoalAction, { backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}>
+                  <MaterialIcons name="add" size={18} color={colors.onPrimaryContainer} />
                 </View>
               </TouchableOpacity>
             ) : (
