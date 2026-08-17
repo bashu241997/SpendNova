@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,7 +15,7 @@ const SLIDES = [
     icon: 'security',
     title: 'Web Crypto AES-256 Encrypted Ledger',
     subtitle: 'Zero Servers. Zero Tracking. Complete Data Ownership.',
-    description: 'Every record is encrypted directly in your browser using 256-bit AES-GCM cryptography. Your keys stay in IndexedDB — no third-party database ever sees your money.',
+    description: 'Every record is encrypted directly in your browser using 256-bit AES-GCM cryptography. Your keys stay in local IndexedDB — no third-party database ever sees your money.',
     floatingChip1: '🔒 AES-256 Active',
     floatingChip2: '⚡ IndexedDB Key',
     visualType: 'security_vault'
@@ -27,8 +27,8 @@ const SLIDES = [
     title: 'Upward Cashflow Graph & Activity Grid',
     subtitle: 'Visualize Net Worth Growth & Spending Trends',
     description: 'Spot spending patterns instantly with an activity intensity grid, track net daily deltas, and watch your upward cashflow trajectory across all your bank accounts & cards.',
-    floatingChip1: '📈 Upward Graph',
-    floatingChip2: '₹25,506.02 Cashflow',
+    floatingChip1: '📈 Upward Cashflow',
+    floatingChip2: '₹25,506.02 Growth',
     visualType: 'upward_graph'
   },
   {
@@ -66,33 +66,86 @@ const SLIDES = [
   }
 ];
 
+const AUTO_PLAY_INTERVAL = 3800; // 3.8s auto advance
+
 export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcceptTerms }) => {
   const { colors } = useApp();
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [hasAgreed, setHasAgreed] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [pulseAnim] = useState(new Animated.Value(1));
+  
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const autoOscillateAnim = useRef(new Animated.Value(0)).current;
 
-  // Pulse animation for graph & elements
+  // Pulse animation for visual elements
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.08,
-          duration: 1200,
+          toValue: 1.06,
+          duration: 1400,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 1200,
+          duration: 1400,
           useNativeDriver: true,
         })
       ])
     ).start();
   }, [pulseAnim]);
 
+  // Mobile/Ambient 3D Oscillation loop so mobile users see live 3D parallax without mouse move
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(autoOscillateAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(autoOscillateAnim, {
+          toValue: -1,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(autoOscillateAnim, {
+          toValue: 0,
+          duration: 3000,
+          useNativeDriver: true,
+        })
+      ])
+    ).start();
+  }, [autoOscillateAnim]);
+
+  // Automated Slideshow Progress Timer (No manual button clicks required)
+  useEffect(() => {
+    if (isPaused) {
+      progressAnim.stopAnimation();
+      return;
+    }
+
+    progressAnim.setValue(0);
+    const anim = Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: AUTO_PLAY_INTERVAL,
+      useNativeDriver: false,
+    });
+
+    anim.start(({ finished }) => {
+      if (finished) {
+        setCurrentSlideIndex(prev => (prev + 1) % SLIDES.length);
+      }
+    });
+
+    return () => {
+      anim.stop();
+    };
+  }, [currentSlideIndex, isPaused, progressAnim]);
+
   const slide = SLIDES[currentSlideIndex];
-  const isFirst = currentSlideIndex === 0;
   const isLast = currentSlideIndex === SLIDES.length - 1;
 
   // Track mouse movement for 3D Apple Parallax tilt effect on web
@@ -101,59 +154,100 @@ export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcce
       const { innerWidth, innerHeight } = window;
       const x = (e.clientX - innerWidth / 2) / (innerWidth / 2);
       const y = (e.clientY - innerHeight / 2) / (innerHeight / 2);
-      setMousePos({ x: x * 15, y: y * 15 });
+      setMousePos({ x: x * 18, y: y * 18 });
     }
   };
 
-  const handleNext = () => {
-    if (isLast) {
-      onAcceptTerms();
-    } else {
-      setCurrentSlideIndex(prev => prev + 1);
-    }
-  };
+  // 3D Spatial Parallax transforms
+  const slideParallaxX = (currentSlideIndex - (SLIDES.length - 1) / 2) * 30;
 
-  const handlePrev = () => {
-    if (!isFirst) {
-      setCurrentSlideIndex(prev => prev - 1);
-    }
-  };
-
-  // Parallax offsets based on slide index and mouse position
-  const slideParallaxX = (currentSlideIndex - (SLIDES.length - 1) / 2) * 35;
+  // Multi-layer 3D tilt styles
   const cardTiltStyle = Platform.OS === 'web' ? ({
-    transform: `perspective(1000px) rotateY(${mousePos.x * 0.4}deg) rotateX(${-mousePos.y * 0.4}deg) translateX(${-slideParallaxX * 0.2}px)`,
-    transition: 'transform 0.15s ease-out'
+    transform: `perspective(1200px) rotateY(${mousePos.x * 0.45}deg) rotateX(${-mousePos.y * 0.45}deg) translateX(${-slideParallaxX * 0.25}px) translateZ(0px)`,
+    transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+    transformStyle: 'preserve-3d',
+  } as any) : {};
+
+  const illustrationDepthStyle = Platform.OS === 'web' ? ({
+    transform: `perspective(1200px) translateZ(45px) rotateY(${mousePos.x * 0.2}deg)`,
+    transition: 'transform 0.25s ease-out',
   } as any) : {};
 
   const foregroundParallaxStyle = Platform.OS === 'web' ? ({
-    transform: `translateX(${slideParallaxX * 0.6 + mousePos.x * 0.8}px) translateY(${mousePos.y * 0.8}px)`,
-    transition: 'transform 0.2s ease-out'
+    transform: `perspective(1200px) translateZ(85px) translateX(${slideParallaxX * 0.6 + mousePos.x * 0.9}px) translateY(${mousePos.y * 0.9}px)`,
+    transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
   } as any) : {};
 
   return (
-    <View style={styles.outerContainer} {...(Platform.OS === 'web' ? { onMouseMove: handleMouseMove } as any : {})}>
+    <View
+      style={styles.outerContainer}
+      {...(Platform.OS === 'web' ? {
+        onMouseMove: handleMouseMove,
+        onMouseEnter: () => setIsPaused(true),
+        onMouseLeave: () => setIsPaused(false),
+      } as any : {
+        onTouchStart: () => setIsPaused(true),
+        onTouchEnd: () => setIsPaused(false),
+      })}
+    >
       <LinearGradient colors={colors.backgroundGradient as [string, string]} style={styles.gradientContainer}>
         
         {/* Layer 1: Background Parallax Floating Mesh Orbs */}
-        <View style={[styles.bgOrb1, { transform: [{ translateX: -slideParallaxX * 1.2 }, { translateY: slideParallaxX * 0.5 }] }]} />
-        <View style={[styles.bgOrb2, { transform: [{ translateX: slideParallaxX * 1.5 }, { translateY: -slideParallaxX * 0.6 }] }]} />
+        <View style={[styles.bgOrb1, { transform: [{ translateX: -slideParallaxX * 1.4 }, { translateY: slideParallaxX * 0.6 }] }]} />
+        <View style={[styles.bgOrb2, { transform: [{ translateX: slideParallaxX * 1.6 }, { translateY: -slideParallaxX * 0.7 }] }]} />
 
         {/* Top Header */}
         <View style={styles.topHeader}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <Text style={[styles.logoText, { color: colors.onSurface }]}>SpendNova</Text>
             <View style={[styles.versionPill, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline }]}>
-              <Text style={[styles.versionText, { color: colors.onSurfaceVariant }]}>Encrypted Ledger</Text>
+              <Text style={[styles.versionText, { color: colors.onSurfaceVariant }]}>3D Spatial Ledger</Text>
             </View>
           </View>
 
-          {!isLast && (
-            <TouchableOpacity onPress={() => setCurrentSlideIndex(SLIDES.length - 1)} style={styles.skipBtn}>
-              <Text style={[styles.skipText, { color: colors.onSurfaceVariant }]}>Skip to Accept Terms</Text>
-              <MaterialIcons name="chevron-right" size={18} color={colors.onSurfaceVariant} />
-            </TouchableOpacity>
-          )}
+          {/* Pause / Auto-play status badge */}
+          <View style={[styles.statusPill, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline }]}>
+            <View style={[styles.liveDot, { backgroundColor: isPaused ? '#FFBD2E' : colors.success }]} />
+            <Text style={[styles.statusText, { color: colors.onSurfaceVariant }]}>
+              {isPaused ? 'Paused (Hovering)' : 'Auto-Revealing'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Automated Progress Bar Meter */}
+        <View style={styles.topProgressTrack}>
+          {SLIDES.map((_, idx) => {
+            const isActive = idx === currentSlideIndex;
+            const isCompleted = idx < currentSlideIndex;
+
+            let fillWidth: any = '0%';
+            if (isCompleted) fillWidth = '100%';
+            else if (isActive) {
+              fillWidth = progressAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0%', '100%']
+              });
+            }
+
+            return (
+              <TouchableOpacity
+                key={idx}
+                onPress={() => setCurrentSlideIndex(idx)}
+                style={[styles.progressSegmentBg, { backgroundColor: `${colors.outline}40` }]}
+                activeOpacity={0.8}
+              >
+                <Animated.View
+                  style={[
+                    styles.progressSegmentFill,
+                    {
+                      width: fillWidth,
+                      backgroundColor: colors.primary
+                    }
+                  ]}
+                />
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Main 2-Column Parallax Stage */}
@@ -170,11 +264,11 @@ export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcce
                   <View style={[styles.windowDot, { backgroundColor: '#FFBD2E' }]} />
                   <View style={[styles.windowDot, { backgroundColor: '#27C93F' }]} />
                 </View>
-                <Text style={[styles.appFrameTitle, { color: colors.onSurfaceVariant }]}>SpendNova Feature Reveal</Text>
+                <Text style={[styles.appFrameTitle, { color: colors.onSurfaceVariant }]}>SpendNova Spatial Preview</Text>
               </View>
 
               {/* ILLUSTRATION CONTENT SLIDE CARDS */}
-              <View style={styles.appFrameBody}>
+              <View style={[styles.appFrameBody, illustrationDepthStyle]}>
                 
                 {/* SLIDE 1 ILLUSTRATION: SECURITY VAULT */}
                 {slide.visualType === 'security_vault' && (
@@ -185,7 +279,7 @@ export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcce
                     <Text style={[styles.mockupHeading, { color: colors.onSurface }]}>AES-256 Web Crypto Engine</Text>
                     <View style={[styles.vaultKeyPill, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline }]}>
                       <MaterialIcons name="vpn-key" size={16} color={colors.onSurfaceVariant} style={{ marginRight: 6 }} />
-                      <Text style={[styles.vaultKeyText, { color: colors.onSurfaceVariant }]}>PBKDF2-HMAC-SHA256 Master Key</Text>
+                      <Text style={[styles.vaultKeyText, { color: colors.onSurfaceVariant }]}>PBKDF2 Master Key</Text>
                     </View>
                     <View style={styles.mockupStatRow}>
                       <View style={[styles.mockupMiniCard, { backgroundColor: colors.primaryContainer }]}>
@@ -216,7 +310,6 @@ export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcce
 
                     {/* UPWARD GRAPH WAVE ILLUSTRATION */}
                     <View style={styles.graphWaveContainer}>
-                      {/* Bars forming an upward trend */}
                       {[25, 38, 30, 52, 45, 68, 85, 78, 100].map((h, i) => (
                         <View key={i} style={styles.barCol}>
                           <Animated.View
@@ -281,7 +374,7 @@ export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcce
 
                       <View style={[styles.savedSuccessBadge, { backgroundColor: `${colors.success}15` }]}>
                         <MaterialIcons name="check-circle" size={14} color={colors.success} style={{ marginRight: 6 }} />
-                        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.success }}>Transaction Saved & Budget Updated!</Text>
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.success }}>Saved & Budget Updated!</Text>
                       </View>
                     </View>
                   </View>
@@ -298,6 +391,7 @@ export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcce
                         </View>
                         <Text style={{ fontSize: 13, fontWeight: '900', color: colors.success }}>85% Complete</Text>
                       </View>
+
                       <View style={[styles.progressBarTrack, { backgroundColor: colors.outline, height: 10 }]}>
                         <View style={[styles.progressBarFill, { width: '85%', backgroundColor: colors.success }]} />
                       </View>
@@ -344,7 +438,7 @@ export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcce
             </View>
           </View>
 
-          {/* Column 2: Presentation Text & Controls */}
+          {/* Column 2: Feature Information & Instant Launch CTA */}
           <View style={styles.textColumn}>
             
             <View style={[styles.badgePill, { backgroundColor: `${slide.badgeColor}15` }]}>
@@ -356,26 +450,24 @@ export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcce
             <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>{slide.subtitle}</Text>
             <Text style={[styles.descriptionText, { color: colors.onSurfaceVariant }]}>{slide.description}</Text>
 
-            {/* Disclaimer Checkbox on Last Slide */}
-            {isLast && (
-              <TouchableOpacity
-                style={[styles.termsBox, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline }]}
-                onPress={() => setHasAgreed(!hasAgreed)}
-                activeOpacity={0.8}
-              >
-                <MaterialIcons
-                  name={hasAgreed ? "check-box" : "check-box-outline-blank"}
-                  size={22}
-                  color={hasAgreed ? colors.onSurface : colors.outline}
-                  style={{ marginRight: 10 }}
-                />
-                <Text style={[styles.termsText, { color: colors.onSurfaceVariant }]}>
-                  Important Notice: SpendNova stores records locally in this browser. You agree that this is a personal tracking tool and does not constitute financial, tax, or investment advice.
-                </Text>
-              </TouchableOpacity>
-            )}
+            {/* Privacy Disclaimer Checkbox */}
+            <TouchableOpacity
+              style={[styles.termsBox, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline }]}
+              onPress={() => setHasAgreed(!hasAgreed)}
+              activeOpacity={0.8}
+            >
+              <MaterialIcons
+                name={hasAgreed ? "check-box" : "check-box-outline-blank"}
+                size={22}
+                color={hasAgreed ? colors.onSurface : colors.outline}
+                style={{ marginRight: 10, marginTop: 1 }}
+              />
+              <Text style={[styles.termsText, { color: colors.onSurfaceVariant }]}>
+                Notice: SpendNova stores data locally in this browser. You agree this is a personal tracking tool and not financial/tax advice.
+              </Text>
+            </TouchableOpacity>
 
-            {/* Progress Dots */}
+            {/* Interactive Dot Selectors */}
             <View style={styles.dotsRow}>
               {SLIDES.map((_, idx) => (
                 <TouchableOpacity
@@ -386,39 +478,27 @@ export const OnboardingSlideshow: React.FC<OnboardingSlideshowProps> = ({ onAcce
                     { backgroundColor: colors.outline },
                     idx === currentSlideIndex && { width: 32, backgroundColor: colors.onSurface }
                   ]}
+                  activeOpacity={0.8}
                 />
               ))}
             </View>
 
-            {/* Footer Navigation Buttons */}
-            <View style={styles.footerControls}>
-              {!isFirst ? (
-                <TouchableOpacity
-                  style={[styles.btnSecondary, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline }]}
-                  onPress={handlePrev}
-                  activeOpacity={0.8}
-                >
-                  <MaterialIcons name="arrow-back" size={18} color={colors.onSurface} style={{ marginRight: 6 }} />
-                  <Text style={[styles.btnSecondaryText, { color: colors.onSurface }]}>Previous</Text>
-                </TouchableOpacity>
-              ) : <View style={{ width: 90 }} />}
-
-              <TouchableOpacity
-                style={[
-                  styles.btnPrimary,
-                  { backgroundColor: isLast ? colors.success : colors.primaryContainer, borderColor: colors.outline },
-                  isLast && !hasAgreed && { opacity: 0.5 }
-                ]}
-                onPress={handleNext}
-                disabled={isLast && !hasAgreed}
-                activeOpacity={0.85}
-              >
-                <Text style={[styles.btnPrimaryText, { color: isLast ? '#FFFFFF' : colors.onPrimaryContainer }]}>
-                  {isLast ? 'Accept Terms & Launch App' : 'Next Feature'}
-                </Text>
-                {!isLast && <MaterialIcons name="arrow-forward" size={18} color={colors.onPrimaryContainer} style={{ marginLeft: 8 }} />}
-              </TouchableOpacity>
-            </View>
+            {/* Launch App CTA Button (No step-by-step next buttons required!) */}
+            <TouchableOpacity
+              style={[
+                styles.btnPrimary,
+                { backgroundColor: colors.success, borderColor: colors.outline },
+                !hasAgreed && { opacity: 0.5 }
+              ]}
+              onPress={() => onAcceptTerms()}
+              disabled={!hasAgreed}
+              activeOpacity={0.85}
+            >
+              <MaterialIcons name="rocket-launch" size={20} color="#FFFFFF" style={{ marginRight: 10 }} />
+              <Text style={styles.btnPrimaryText}>
+                Accept Terms & Launch SpendNova
+              </Text>
+            </TouchableOpacity>
 
           </View>
 
@@ -466,7 +546,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   logoText: {
     fontSize: 26,
@@ -483,15 +563,40 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  skipBtn: {
+  statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
   },
-  skipText: {
-    fontSize: 13,
-    fontWeight: '600',
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  topProgressTrack: {
+    width: '100%',
+    maxWidth: 1100,
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 24,
+  },
+  progressSegmentBg: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressSegmentFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   stageContainer: {
     width: '100%',
@@ -760,59 +865,45 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: 14,
     lineHeight: 24,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   termsBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 14,
-    borderRadius: 16,
+    padding: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   termsText: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 16,
     flex: 1,
   },
   dotsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 28,
+    marginBottom: 20,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
   },
-  footerControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  btnSecondary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-  },
-  btnSecondaryText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
   btnPrimary: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 22,
+    justifyContent: 'center',
+    width: '100%',
     paddingVertical: 14,
+    paddingHorizontal: 22,
     borderRadius: 16,
     borderWidth: 1,
   },
   btnPrimaryText: {
-    fontSize: 14,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
 });

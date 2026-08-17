@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   scrollContainer: {
-    paddingBottom: 110,
+    paddingBottom: 115,
   },
   listContainer: {
     paddingHorizontal: 16,
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   },
   listPadding: {
     padding: 16,
-    paddingBottom: 110,
+    paddingBottom: 115,
   },
   txItem: {
     flexDirection: 'row',

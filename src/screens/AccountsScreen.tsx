@@ -51,8 +51,8 @@ export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
   };
 
   // 2 columns for web/tablet, 1 for small mobile
-  const numColumns = width > 700 ? 2 : 1;
-  const cardWidth = width > 700 ? '48%' : '100%';
+  const numColumns = width > 600 ? 2 : 1;
+  const cardWidth = width > 600 ? '48%' : '100%';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 100,
+    paddingBottom: 115,
   },
   pageTitle: {
     fontSize: 28,

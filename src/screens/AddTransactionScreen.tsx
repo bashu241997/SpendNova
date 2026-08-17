@@ -189,7 +189,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         )}
       </View>
 
-      <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.formContainer} contentContainerStyle={{ paddingBottom: 115 }} keyboardShouldPersistTaps="handled">
         <View style={[styles.tabBar, { backgroundColor: colors.surfaceVariant }]}>
           {(['expense', 'income', 'transfer'] as const).map(tab => {
             const active = type === tab;

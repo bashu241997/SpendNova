@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   },
   contentPadding: {
     padding: 20,
-    paddingBottom: 110,
+    paddingBottom: 115,
   },
   desktopContent: {
     width: '100%',

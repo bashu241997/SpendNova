@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingBottom: 115,
     paddingTop: 8,
   },
   dateHeaderContainer: {
@@ -448,7 +448,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 24,
-    bottom: Platform.OS === 'web' ? 24 : 90,
+    bottom: 96,
     width: 56,
     height: 56,
     borderRadius: 28,

@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingTop: Platform.OS === 'ios' ? 60 : 32,
-    paddingBottom: 100,
+    paddingBottom: 115,
   },
   headerTitle: {
     fontSize: 28,
