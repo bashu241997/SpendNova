@@ -5,42 +5,71 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     
-    <!-- SEO Title Tag -->
-    <title>SpendNova - Best Free Finance Tracker & Money Manager App</title>
+    <!-- Primary SEO Title Tag -->
+    <title>SpendNova - Free Finance Tracker, Money Manager & Expense App</title>
     
-    <!-- Meta Descriptions & SEO Details -->
-    <meta name="description" content="SpendNova is a secure, clean, and beautiful personal finance tracker and money manager. Track daily expenses, set category budgets, monitor stats, and sync to Google Drive." />
-    <meta name="keywords" content="finance tracker, expense tracker, money manager, budget planner, track expenses, cash flow tracker, personal finance manager, savings goals" />
+    <!-- Meta Descriptions & Search Engine Optimization -->
+    <meta name="description" content="SpendNova is the ultimate free, 100% private personal finance tracker & money manager. Track daily expenses, manage bank accounts, set category budget caps, and monitor savings goals with AES-256 Web Crypto encryption." />
+    <meta name="keywords" content="finance tracker, money manager, expense tracker, track money, money app, personal finance app, budget planner, spending manager, money tracking app, best free finance tracker, budget manager, savings goals tracker, offline expense manager, encrypted money ledger" />
     <meta name="author" content="SpendNova" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <link rel="canonical" href="https://spendnova-ledger.web.app/" />
+    <meta name="theme-color" content="#0F172A" />
 
-    <!-- Open Graph / Facebook / LinkedIn -->
+    <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SpendNova" />
     <meta property="og:url" content="https://spendnova-ledger.web.app/" />
-    <meta property="og:title" content="SpendNova - Best Free Finance Tracker & Money Manager App" />
-    <meta property="og:description" content="SpendNova is a secure, clean, and beautiful personal finance tracker and money manager. Track daily expenses, set category budgets, monitor stats, and sync to Google Drive." />
+    <meta property="og:title" content="SpendNova - Free Finance Tracker, Money Manager & Expense App" />
+    <meta property="og:description" content="Track your money, expenses, budgets, and savings goals securely with 100% local client-side AES-256 Web Crypto encryption." />
     <meta property="og:image" content="https://spendnova-ledger.web.app/favicon.ico" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary" />
-    <meta property="twitter:url" content="https://spendnova-ledger.web.app/" />
-    <meta property="twitter:title" content="SpendNova - Best Free Finance Tracker & Money Manager App" />
-    <meta property="twitter:description" content="SpendNova is a secure, clean, and beautiful personal finance tracker and money manager. Track daily expenses, set category budgets, monitor stats, and sync to Google Drive." />
-    <meta property="twitter:image" content="https://spendnova-ledger.web.app/favicon.ico" />
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://spendnova-ledger.web.app/" />
+    <meta name="twitter:title" content="SpendNova - Free Finance Tracker & Money Manager App" />
+    <meta name="twitter:description" content="The private personal finance tracker & money manager. Track daily expenses, category budgets, and savings goals with zero server tracking." />
+    <meta name="twitter:image" content="https://spendnova-ledger.web.app/favicon.ico" />
+
+    <!-- Google Search Structured Data (JSON-LD Schema) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SpendNova",
+      "alternateName": ["SpendNova Money Manager", "SpendNova Finance Tracker", "SpendNova Expense App"],
+      "url": "https://spendnova-ledger.web.app/",
+      "description": "SpendNova is a free, secure personal finance tracker and money manager app. Track daily expenses, manage bank accounts, set category budgets, and monitor savings goals with client-side AES-256 encryption.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web, Android, iOS",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "AES-256 Web Crypto Encryption",
+        "Personal Finance & Money Tracking",
+        "Category Budgets & Expense Alerts",
+        "Savings Goals Progress Tracking",
+        "Cashflow Graph & Activity Intensity Grid",
+        "Google Drive Encrypted Backup"
+      ]
+    }
+    </script>
 
     <!-- The `react-native-web` recommended style reset -->
     <style id="expo-reset">
-      /* These styles make the body full-height */
       html,
       body {
         height: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #0B0F19;
       }
-      /* These styles disable body scrolling if you are using <ScrollView> */
       body {
         overflow: hidden;
       }
-      /* These styles make the root element full-height */
       #root {
         display: flex;
         height: 100%;
@@ -50,18 +79,23 @@
   </head>
 
   <body>
-    <!-- Fallback for search engine crawlers and users without JavaScript -->
+    <!-- Search engine crawler fallback for Googlebot / Bingbot -->
     <noscript>
-      <div style="padding: 40px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
-        <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 16px;">SpendNova - Best Free Finance Tracker & Money Manager</h1>
-        <p style="font-size: 18px; line-height: 1.6; max-width: 600px; margin: 0 auto 24px auto;">
-          SpendNova is a secure, beautiful, and feature-rich personal finance tracker. Easily record expenses, track income, define budgets, set savings goals, and backup/restore via Google Drive.
+      <div style="padding: 40px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #F8FAFC; background-color: #0B0F19; min-height: 100vh;">
+        <h1 style="font-size: 36px; font-weight: 900; margin-bottom: 16px; color: #38BDF8;">SpendNova - Free Private Finance Tracker & Money Manager</h1>
+        <p style="font-size: 18px; line-height: 1.6; max-width: 720px; margin: 0 auto 24px auto; color: #94A3B8;">
+          SpendNova is your personal <strong>money manager</strong>, <strong>finance tracker</strong>, and <strong>expense tracker app</strong>. Track income, manage daily expenses, create category budget caps, and achieve your savings goals with 100% client-side AES-256 Web Crypto encryption.
         </p>
-        <div style="display: flex; justify-content: center; gap: 20px; font-size: 14px; color: #64748b;">
-          <span>✓ Local Database</span>
-          <span>✓ Budget Planning</span>
-          <span>✓ Interactive Analytics</span>
-          <span>✓ Google Drive Sync</span>
+
+        <div style="max-width: 680px; margin: 0 auto; text-align: left; background: #1E293B; padding: 24px; borderRadius: 16px; border: 1px solid #334155;">
+          <h2 style="font-size: 20px; font-weight: 700; color: #F8FAFC; margin-top: 0;">Key Features of SpendNova Money Manager:</h2>
+          <ul style="font-size: 15px; line-height: 1.8; color: #CBD5E1; padding-left: 20px;">
+            <li><strong>Finance Tracker & Money Manager</strong>: Total control of cashflow, net worth, and multi-bank accounts.</li>
+            <li><strong>Expense & Income Entry</strong>: Instant transaction categorization for dining, bills, shopping, and transfers.</li>
+            <li><strong>Budget Caps & Alerts</strong>: Prevent overspending with real-time category limits and daily safe spending guidance.</li>
+            <li><strong>Savings Goals Tracker</strong>: Dedicated progress tracking for emergency funds, cars, vacations, and investments.</li>
+            <li><strong>100% Client Encryption</strong>: Zero cloud server tracking. Your data is encrypted locally using AES-256.</li>
+          </ul>
         </div>
       </div>
     </noscript>
