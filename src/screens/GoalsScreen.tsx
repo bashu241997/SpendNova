@@ -142,7 +142,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <Text style={[styles.emptySubText, { color: colors.onSurfaceVariant }]}>Create goals like "Emergency Fund", "New Car", or "Vacation" to track progress</Text>
           </View>
         ) : (
-          <View style={styles.grid}>
+          <View style={[styles.grid, width <= 600 && { flexDirection: 'column' }]}>
             {goals.map(g => {
               const pct = g.targetAmount > 0 ? Math.min((g.currentAmount / g.targetAmount) * 100, 100) : 0;
               const remaining = Math.max(g.targetAmount - g.currentAmount, 0);

@@ -47,8 +47,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 1024;
-  const carouselCardWidth = isLargeScreen ? 280 : Math.min(Math.max(width - 32, 280), 340);
-  const desktopFeatureCardWidth = isLargeScreen ? 420 : Math.min(Math.max(width - 40, 290), 360);
+  const carouselCardWidth = isLargeScreen ? 280 : Math.min(width - 32, 340);
+  const desktopFeatureCardWidth = isLargeScreen ? 420 : Math.min(width - 32, 360);
 
   const now = new Date();
   const currentYear = now.getFullYear();

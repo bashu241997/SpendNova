@@ -66,7 +66,7 @@ export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
           <Text style={[styles.pageTitle, { color: colors.onBackground, marginBottom: 0, marginTop: 0, textAlign: 'left' }]}>Accounts</Text>
         </View>
         
-        <View style={styles.gridContainer}>
+        <View style={[styles.gridContainer, width <= 600 && { flexDirection: 'column' }]}>
           {accounts.map(acc => {
             const balance = getAccountBalance(acc.id);
             const txCount = getTxCount(acc.id);

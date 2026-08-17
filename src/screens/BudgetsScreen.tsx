@@ -103,7 +103,7 @@ export const BudgetsScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.grid}>
+        <View style={[styles.grid, width <= 600 && { flexDirection: 'column' }]}>
           {budgets.map(b => {
             const spent = getBudgetSpent(b);
             const remaining = b.amount - spent;

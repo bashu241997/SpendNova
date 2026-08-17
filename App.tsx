@@ -172,13 +172,13 @@ function MainAppContent() {
   const safeAreaStyle = [
     styles.safeArea,
     { backgroundColor: 'transparent' },
-    Platform.OS === 'web' && { alignItems: 'center', justifyContent: 'center' }
+    Platform.OS === 'web' && isDesktop && { alignItems: 'center', justifyContent: 'center' }
   ] as any;
 
   const containerStyle = [
     styles.rootContainer,
     { backgroundColor: 'transparent' },
-    Platform.OS === 'web' && { borderColor: colors.surfaceVariant }
+    Platform.OS === 'web' && isDesktop && { borderColor: colors.surfaceVariant }
   ] as any;
 
   const glassSidebarStyle = [
@@ -478,15 +478,12 @@ const styles = StyleSheet.create({
   rootContainer: {
     flex: 1,
     width: '100%',
-    maxWidth: Platform.OS === 'web' ? 500 : '100%',
     ...Platform.select({
       web: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 12,
-        borderLeftWidth: 1,
-        borderRightWidth: 1,
       },
       default: {},
     }),
