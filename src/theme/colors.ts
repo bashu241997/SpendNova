@@ -38,57 +38,57 @@ export const ACCENT_OPTIONS: AccentOption[] = [
 
 export const getTheme = (type: ThemeType, _accent: AccentTheme = 'tonal'): ColorTheme => {
   if (type === 'dark') {
-    // Pure Dark Neutral Tonal System (Red & Green ONLY for Loss & Profit):
+    // angular.dev Clean Layout Aesthetic (No aggressive reds)
     return {
-      primary: '#F1F1F1',           // Soft off-white text & active state
-      onPrimary: '#0F0F0F',
-      primaryContainer: '#272727',  // Soft dark grey container (#272727)
-      onPrimaryContainer: '#F1F1F1',// Soft off-white text on container
-      secondary: '#AAAAAA',         // Soft muted grey text
-      onSecondary: '#0F0F0F',
-      secondaryContainer: '#272727',// Soft dark grey chip
-      onSecondaryContainer: '#F1F1F1',
-      background: '#0F0F0F',        // Base Dark Background
-      onBackground: '#F1F1F1',      // Soft off-white text
-      surface: '#212121',           // Soft dark grey card surface (#212121)
-      onSurface: '#F1F1F1',
-      surfaceVariant: '#282828',    // Soft dark grey variant surface (#282828)
-      onSurfaceVariant: '#AAAAAA',  // Muted secondary text
-      outline: '#383838',           // Soft muted dark grey border (#383838)
-      error: '#FF4E45',             // Vibrant Red for Expense / Loss
+      primary: '#F8FAFC',           // White text/icons for active states
+      onPrimary: '#0F172A',         // Slate background for primary buttons
+      primaryContainer: '#1E293B',  // Slate 800 (very subtle hover/active state)
+      onPrimaryContainer: '#F8FAFC',// White text
+      secondary: '#94A3B8',         // Slate 400 (muted secondary text/icons)
+      onSecondary: '#0F172A',
+      secondaryContainer: '#0F172A',// Transparent/Background for cards
+      onSecondaryContainer: '#F8FAFC',
+      background: '#09090B',        // Very deep almost-black slate
+      onBackground: '#F8FAFC',      // White Text
+      surface: '#09090B',           // Exactly matches background (NO visible card boxes)
+      onSurface: '#F8FAFC',
+      surfaceVariant: '#18181B',    // Zinc 900 (barely visible elevation)
+      onSurfaceVariant: '#A1A1AA',  // Zinc 400 text
+      outline: '#27272A',           // Zinc 800 (very subtle glassy border)
+      error: '#EF4444',             // Standard Red (only for actual errors)
       onError: '#FFFFFF',
-      success: '#2BA640',           // Vibrant Green for Income / Profit
+      success: '#10B981',           // Emerald 500 (only for positive numbers)
       onSuccess: '#FFFFFF',
-      info: '#AAAAAA',              // Muted Neutral Grey
-      onInfo: '#0F0F0F',
-      backgroundGradient: ['#0F0F0F', '#181818'],
+      info: '#3B82F6',              // Blue 500
+      onInfo: '#FFFFFF',
+      backgroundGradient: ['#09090B', '#09090B'], 
     };
   }
 
-  // Pure Light Neutral Tonal System (Red & Green ONLY for Loss & Profit):
+  // angular.dev Light Layout Aesthetic
   return {
-    primary: '#0F0F0F',             // Charcoal for active states
+    primary: '#09090B',             // Near black for active text/icons
     onPrimary: '#FFFFFF',
-    primaryContainer: '#F2F2F2',    // Soft Light Grey Pill Container
-    onPrimaryContainer: '#0F0F0F',  // Charcoal text on soft grey container
-    secondary: '#606060',           // Medium Grey Text
+    primaryContainer: '#F4F4F5',    // Zinc 100 for subtle hover/active states
+    onPrimaryContainer: '#09090B',  
+    secondary: '#71717A',           // Zinc 500
     onSecondary: '#FFFFFF',
-    secondaryContainer: '#F2F2F2',  // Soft Chip Background
-    onSecondaryContainer: '#0F0F0F',
-    background: '#FFFFFF',          // Pure White Base Canvas
-    onBackground: '#0F0F0F',        // Primary Charcoal Text
-    surface: '#FFFFFF',             // Raised White Card Surface
-    onSurface: '#0F0F0F',
-    surfaceVariant: '#F9F9F9',      // Soft Variant Surface
-    onSurfaceVariant: '#606060',    // Secondary Grey Text
-    outline: '#E5E5E5',             // Soft Light Grey Border
-    error: '#C30027',               // Soft Red for Expense / Loss
+    secondaryContainer: '#FFFFFF',
+    onSecondaryContainer: '#09090B',
+    background: '#FFFFFF',          // Pure white
+    onBackground: '#09090B',        // Near black text
+    surface: '#FFFFFF',             // Exactly matches background
+    onSurface: '#09090B',
+    surfaceVariant: '#FAFAFA',      // Zinc 50
+    onSurfaceVariant: '#52525B',    // Zinc 600 text
+    outline: '#E4E4E7',             // Zinc 200 border
+    error: '#DC2626',               
     onError: '#FFFFFF',
-    success: '#107516',             // Soft Green for Income / Profit
+    success: '#059669',             
     onSuccess: '#FFFFFF',
-    info: '#606060',                // Neutral Secondary Grey
+    info: '#2563EB',                
     onInfo: '#FFFFFF',
-    backgroundGradient: ['#FFFFFF', '#F9F9F9'],
+    backgroundGradient: ['#FFFFFF', '#FFFFFF'], 
   };
 };
 
