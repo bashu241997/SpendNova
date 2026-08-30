@@ -29,12 +29,17 @@ if (isConfigured) {
   firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    isSupported().then(supported => {
-      if (supported) {
-        firebaseAnalytics = getAnalytics(firebaseApp);
-      }
-    }).catch(() => {
-      // Bypasses analytics unsupported browser error gracefully
-    });
+    // Prevent Google Analytics from tracking on localhost
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (!isLocalhost) {
+      isSupported().then(supported => {
+        if (supported) {
+          firebaseAnalytics = getAnalytics(firebaseApp);
+        }
+      }).catch(() => {
+        // Bypasses analytics unsupported browser error gracefully
+      });
+    }
   }
 }
