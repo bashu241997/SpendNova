@@ -1,9 +1,8 @@
-const CACHE_NAME = 'spendnova-pwa-v6';
+const CACHE_NAME = 'spendnova-pwa-v7';
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = [
   '/',
-  '/manifest.json',
   '/icon-192-v5.png',
   '/icon-512-v5.png',
   '/icon-1024-v5.png',
@@ -43,6 +42,15 @@ self.addEventListener('fetch', (event) => {
 
   // Skip chrome-extension and other non-http(s) requests
   if (!request.url.startsWith('http')) return;
+
+  const url = new URL(request.url);
+
+  // The browser must always see the newest PWA metadata. Caching these files
+  // can leave an already-installed app pointing at an older launcher icon.
+  if (url.origin === self.location.origin && (url.pathname === '/manifest.json' || url.pathname === '/service-worker.js')) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // Navigation requests (HTML pages): network-first with cache fallback
   if (request.mode === 'navigate') {
