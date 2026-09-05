@@ -172,7 +172,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
   const dynamicColor = type === 'expense' ? colors.error : type === 'income' ? colors.success : colors.onBackground;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack}>
           <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
@@ -194,8 +194,10 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           {(['expense', 'income', 'transfer'] as const).map(tab => {
             const active = type === tab;
             let tabText = colors.onSurfaceVariant;
+            let activeBg = 'transparent';
             if (active) {
-              tabText = colors.onBackground;
+              tabText = '#FFFFFF';
+              activeBg = tab === 'expense' ? colors.error : tab === 'income' ? colors.success : colors.onBackground;
             }
 
             return (
@@ -208,7 +210,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                     if (matchedCat) setCategory(matchedCat);
                   }
                 }}
-                style={[styles.tabItem, active && { backgroundColor: colors.surfaceVariant, borderRadius: 16 }]}
+                style={[styles.tabItem, active && { backgroundColor: activeBg, borderRadius: 16 }]}
               >
                 <Text style={[styles.tabLabel, { color: tabText }]}>
                   {tab === 'expense' ? 'EXPENSE' : tab === 'income' ? 'INCOME' : 'TRANSFER'}
@@ -419,7 +421,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         onRequestClose={() => setGoalModalVisible(false)}
       >
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setGoalModalVisible(false)}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background, width: '90%', maxWidth: 420 }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface, width: '90%', maxWidth: 420 }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.surfaceVariant }]}>
               <Text style={[styles.modalTitle, { color: colors.onSurface }]}>Link Savings Goal</Text>
               <TouchableOpacity onPress={() => setGoalModalVisible(false)} style={{ padding: 4 }}>
@@ -471,7 +473,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         onRequestClose={() => setShowCalendarModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.surfaceVariant }]}>
               <Text style={[styles.modalTitle, { color: colors.onSurface }]}>Select Date</Text>
               <TouchableOpacity onPress={() => setShowCalendarModal(false)} style={{ padding: 4 }}>

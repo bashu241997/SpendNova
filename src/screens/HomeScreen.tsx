@@ -285,7 +285,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const monthDay = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 115 }}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 180 }}>
       {/* HEADER SECTION */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>

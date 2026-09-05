@@ -307,7 +307,7 @@ function MainAppContent() {
 
           {isAddMode && (
             <View style={styles.desktopModalOverlay}>
-              <View style={[styles.desktopModalContainer, { backgroundColor: colors.background, borderWidth: 0, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.08, shadowRadius: 32, elevation: 20 }]}>
+              <View style={[styles.desktopModalContainer, { backgroundColor: colors.surface, borderWidth: 0, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.08, shadowRadius: 32, elevation: 20 }]}>
                 <AddTransactionScreen
                   onBack={handleCloseAddMode}
                   transactionToEdit={editingTransaction}
@@ -444,9 +444,9 @@ function MainAppContent() {
           </View>
         </View>
 
-        <Modal visible={isAddMode} animationType="slide" transparent={true} onRequestClose={handleCloseAddMode}>
+        <Modal visible={isAddMode} animationType="fade" transparent={true} onRequestClose={handleCloseAddMode}>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-            <View style={{ backgroundColor: colors.background, borderTopLeftRadius: 32, borderTopRightRadius: 32, height: '92%', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 24 }}>
+            <View style={{ backgroundColor: colors.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, height: '92%', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 24 }}>
               <AddTransactionScreen
                 onBack={handleCloseAddMode}
                 transactionToEdit={editingTransaction}

@@ -42,7 +42,7 @@ export const getTheme = (): ColorTheme => {
     outline: '#E4E4E7',             // Zinc 200 border
     error: '#DC2626',
     onError: '#FFFFFF',
-    success: '#16A34A',
+    success: '#52b375',
     onSuccess: '#FFFFFF',
     info: '#18181B',                // Replaced blue info with black
     onInfo: '#FFFFFF',
