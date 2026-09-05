@@ -287,9 +287,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 180 }}>
       {/* HEADER SECTION */}
-      <View style={styles.header}>
+      <View style={[styles.header, isLargeScreen && { paddingHorizontal: 48, paddingTop: 48 }]}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.timeText, { color: colors.onBackground }]}>{timeString}</Text>
+          <Text style={[styles.timeText, { color: colors.onBackground }, isLargeScreen && { fontSize: 44 }]}>{timeString}</Text>
           <Text style={[styles.dateText, { color: colors.onSurfaceVariant }]}>{dayName}</Text>
           <Text style={[styles.dateText, { color: colors.onSurfaceVariant }]}>{monthDay}, {currentYear}</Text>
         </View>
@@ -299,15 +299,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </View>
       </View>
 
-      {/* SPLIT LAYOUT FROM TOP */}
-      <View style={[styles.splitContainer, isLargeScreen ? styles.splitRow : styles.splitCol]}>
+      {/* MAIN SPLIT OR STACK CONTAINER */}
+      <View style={[styles.splitContainer, isLargeScreen ? styles.splitRow : styles.splitCol, isLargeScreen && { paddingHorizontal: 48 }]}>
         
         {/* LEFT COLUMN: ACCOUNTS, BUDGETS, GOALS, UPCOMING/OVERDUE */}
         <View style={[styles.leftColumn, isLargeScreen && { flex: 1, minWidth: 0, paddingRight: 24 }]}>
           
           {/* ACCOUNTS CAROUSEL */}
-          <View style={styles.carouselContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
+          <View style={[styles.carouselContainer, isLargeScreen && { marginHorizontal: Platform.OS === 'web' ? 0 : -48 }]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.carouselScroll, isLargeScreen && { paddingHorizontal: Platform.OS === 'web' ? 0 : 48 }]}>
               {accountStats.map(acc => {
                 const isPos = acc.balance >= 0;
                 const dotColor = isPos ? colors.success : colors.error;
@@ -407,7 +407,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </ParallaxCard>
 
           {/* HORIZONTAL BUDGETS CAROUSEL */}
-          <View style={styles.sectionHeaderRow}>
+          <View style={[styles.sectionHeaderRow, isLargeScreen && { paddingHorizontal: 48 }]}>
             <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Active Budgets</Text>
             <TouchableOpacity onPress={() => onNavigateTab('budgets')}>
               <Text style={[styles.seeAllText, { color: colors.onSurfaceVariant }]}>View All ({userBudgetStats.length})</Text>
@@ -716,8 +716,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: Platform.OS === 'web' ? 48 : 20,
-    paddingTop: Platform.OS === 'web' ? 48 : 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 22,
     width: '100%',
     maxWidth: 1400,
@@ -727,7 +727,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   timeText: {
-    fontSize: Platform.OS === 'web' ? 44 : 32,
+    fontSize: 32,
     fontWeight: '300',
     marginBottom: 2,
   },
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Platform.OS === 'web' ? 48 : 20,
+    paddingHorizontal: 20,
     marginBottom: 12,
   },
   sectionTitle: {
@@ -766,10 +766,10 @@ const styles = StyleSheet.create({
   },
   carouselContainer: {
     marginBottom: 24,
-    marginHorizontal: Platform.OS === 'web' ? -28 : -20,
+    marginHorizontal: Platform.OS === 'web' ? 0 : -20,
   },
   carouselScroll: {
-    paddingHorizontal: Platform.OS === 'web' ? 48 : 20,
+    paddingHorizontal: Platform.OS === 'web' ? 0 : 20,
     gap: 12,
   },
   accountCard: {
@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   splitContainer: {
-    paddingHorizontal: Platform.OS === 'web' ? 48 : 20,
+    paddingHorizontal: 20,
     paddingBottom: 110,
     width: '100%',
     maxWidth: 1400,

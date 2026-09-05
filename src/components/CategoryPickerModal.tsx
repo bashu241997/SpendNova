@@ -132,16 +132,23 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
+    alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
   },
   backdrop: {
     ...StyleSheet.absoluteFill as any,
   },
   content: {
+    ...(Platform.OS === 'web' ? {
+      borderRadius: 24,
+      width: '90%',
+      maxWidth: 500,
+    } : {
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+    }),
     minHeight: '50%',
     maxHeight: '85%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
     paddingTop: 12,
   },
   dragHandle: {

@@ -71,6 +71,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   const [selectedType, setSelectedType] = useState<AccountType>('savings');
 
   useEffect(() => {
+    if (!visible) return;
     if (accountToEdit) {
       setNewAccName(accountToEdit.name);
       setSelectedColor(accountToEdit.color);
@@ -180,7 +181,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             )}
           </View>
 
-          {showAddForm ? (
+          {accountToEdit || showAddForm ? (
             <ScrollView style={styles.formContainer} keyboardShouldPersistTaps="handled">
               <Text style={[styles.label, { color: colors.onBackground }]}>Account Name</Text>
               <TextInput
@@ -321,7 +322,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
+    alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
   },
   backdrop: {
     position: 'absolute',
@@ -332,9 +334,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   content: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    minHeight: '50%',
+    ...(Platform.OS === 'web' ? {
+      borderRadius: 28,
+      width: '90%',
+      maxWidth: 500,
+      minHeight: 'auto',
+    } : {
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      minHeight: '50%',
+    }),
     maxHeight: '85%',
     paddingBottom: 24,
   },

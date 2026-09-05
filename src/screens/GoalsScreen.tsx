@@ -142,12 +142,13 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
             <Text style={[styles.emptySubText, { color: colors.onSurfaceVariant }]}>Create goals like "Emergency Fund", "New Car", or "Vacation" to track progress</Text>
           </View>
         ) : (
-          <View style={[styles.grid, width <= 600 && { flexDirection: 'column' }]}>
+          <View style={[styles.grid, { flexDirection: width > 700 ? 'row' : 'column', flexWrap: 'wrap', justifyContent: 'space-between' }]}>
             {goals.map(g => {
               const pct = g.targetAmount > 0 ? Math.min((g.currentAmount / g.targetAmount) * 100, 100) : 0;
               const remaining = Math.max(g.targetAmount - g.currentAmount, 0);
+              const cardWidth = width > 700 ? '48%' : '100%';
               return (
-                <ParallaxCard key={g.id} style={[styles.goalCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}>
+                <ParallaxCard key={g.id} style={[styles.goalCard, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant, width: cardWidth }]}>
                   <View style={styles.cardTop}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                       <View style={[styles.iconCircle, { backgroundColor: `${g.color || colors.primary}20` }]}>
@@ -192,9 +193,9 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
       </ScrollView>
 
       {/* Create / Edit Goal Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
+      <Modal visible={modalVisible} animationType="fade" transparent={true} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }, Platform.OS === 'web' && { width: '100%', maxWidth: 500, alignSelf: 'center' }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.onSurface }]}>
                 {editingGoal ? 'Edit Savings Goal' : 'New Savings Goal'}
@@ -259,7 +260,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
       {/* Deposit Modal */}
       <Modal visible={depositModalVisible} animationType="fade" transparent={true} onRequestClose={() => setDepositModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }, Platform.OS === 'web' && { width: '100%', maxWidth: 500, alignSelf: 'center' }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.onSurface }]}>Add Savings Deposit</Text>
               <TouchableOpacity onPress={() => setDepositModalVisible(false)}>

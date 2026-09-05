@@ -110,7 +110,8 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onB
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.topHeader}>
+      <View style={styles.innerContainer}>
+        <View style={styles.topHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
           {onBack && (
             <TouchableOpacity onPress={onBack} style={{ marginRight: 12, padding: 4 }}>
@@ -291,6 +292,7 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onB
           )}
         </ScrollView>
       )}
+      </View>
     </View>
   );
 };
@@ -298,6 +300,12 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onB
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  innerContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 700,
+    alignSelf: 'center',
   },
   topHeader: {
     paddingHorizontal: 16,

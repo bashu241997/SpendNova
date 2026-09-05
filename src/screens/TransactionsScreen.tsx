@@ -227,7 +227,8 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.pageTitle, { color: colors.onBackground }]}>Transactions</Text>
+      <View style={styles.innerContainer}>
+        <Text style={[styles.pageTitle, { color: colors.onBackground }]}>Transactions</Text>
 
       <View style={styles.monthSelectorWrapper}>
         <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.surfaceVariant }]} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth - 2, 1))}>
@@ -295,6 +296,7 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
           </View>
         }
       />
+      </View>
 
       <TouchableOpacity 
         style={[styles.fab, { backgroundColor: colors.primaryContainer, borderColor: colors.outline }]}
@@ -310,6 +312,12 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  innerContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 700,
+    alignSelf: 'center',
   },
   pageTitle: {
     fontSize: 28,
