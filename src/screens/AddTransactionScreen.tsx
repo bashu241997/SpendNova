@@ -208,7 +208,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                     if (matchedCat) setCategory(matchedCat);
                   }
                 }}
-                style={[styles.tabItem, active && { borderBottomWidth: 1.5, borderBottomColor: colors.onBackground, borderRadius: 0 }]}
+                style={[styles.tabItem, active && { backgroundColor: colors.surfaceVariant, borderRadius: 16 }]}
               >
                 <Text style={[styles.tabLabel, { color: tabText }]}>
                   {tab === 'expense' ? 'EXPENSE' : tab === 'income' ? 'INCOME' : 'TRANSFER'}
@@ -240,8 +240,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                 {
                   color: dynamicColor,
                   minWidth: 160,
-                  borderBottomWidth: 1.5,
-                  borderBottomColor: dynamicColor,
+                  borderWidth: 0,
                   textAlign: 'center',
                   outlineStyle: 'none'
                 } as any

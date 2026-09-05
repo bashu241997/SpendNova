@@ -522,7 +522,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.carouselContainer}>
             {(!goals || goals.length === 0) ? (
               <TouchableOpacity
-                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline }]}
+                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: colors.surface, borderWidth: 0, shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 16, elevation: 4 }]}
                 onPress={() => onNavigateTab('goals')}
               >
                 <View style={[styles.emptyGoalIcon, { backgroundColor: 'transparent' }]}>
@@ -532,7 +532,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <Text style={[styles.emptyGoalTitle, { color: colors.onBackground }]}>Start a savings goal</Text>
                   <Text style={[styles.emptyGoalDescription, { color: colors.onSurfaceVariant }]}>Plan for an emergency fund, trip, or big purchase.</Text>
                 </View>
-                <View style={[styles.emptyGoalAction, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline }]}>
+                <View style={[styles.emptyGoalAction, { backgroundColor: colors.surfaceVariant }]}>
                   <MaterialIcons name="add" size={18} color={colors.onBackground} />
                 </View>
               </TouchableOpacity>
@@ -773,9 +773,12 @@ const styles = StyleSheet.create({
     width: 145,
     borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    elevation: 0,
-    shadowColor: 'transparent',
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 4,
   },
   accCardTop: {
     flexDirection: 'row',
@@ -821,25 +824,29 @@ const styles = StyleSheet.create({
   horizontalBudgetCard: {
     width: 260,
     borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-    elevation: 0,
-    shadowColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 4,
   },
   goalCardHorizontal: {
     width: 280,
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 0,
     padding: 20,
-    elevation: 0,
-    shadowColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 4,
   },
   emptyGoalCard: {
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 100,
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 0,
     padding: 14,
   },
   emptyGoalIcon: {

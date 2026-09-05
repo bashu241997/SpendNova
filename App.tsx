@@ -8,7 +8,8 @@ import {
   Platform,
   StatusBar as RNStatusBar,
   ActivityIndicator,
-  useWindowDimensions
+  useWindowDimensions,
+  Modal
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -270,7 +271,7 @@ function MainAppContent() {
             </View>
 
             <TouchableOpacity
-              style={[styles.sidebarAddBtn, { backgroundColor: 'rgba(24, 24, 27, 0.85)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } as any]}
+              style={[styles.sidebarAddBtn, { backgroundColor: 'rgba(24, 24, 27, 0.85)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 }]}
               onPress={() => setIsAddMode(true)}
             >
               <MaterialIcons name="add" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
@@ -306,7 +307,7 @@ function MainAppContent() {
 
           {isAddMode && (
             <View style={styles.desktopModalOverlay}>
-              <View style={[styles.desktopModalContainer, { backgroundColor: colors.background, borderColor: colors.outline }]}>
+              <View style={[styles.desktopModalContainer, { backgroundColor: colors.background, borderWidth: 0, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.08, shadowRadius: 32, elevation: 20 }]}>
                 <AddTransactionScreen
                   onBack={handleCloseAddMode}
                   transactionToEdit={editingTransaction}
@@ -324,22 +325,6 @@ function MainAppContent() {
     );
   }
 
-  if (isAddMode) {
-    return (
-      <LinearGradient colors={colors.backgroundGradient as [string, string]} style={{ flex: 1 }}>
-        <SafeAreaView style={safeAreaStyle}>
-          <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
-
-          <View style={containerStyle}>
-            <AddTransactionScreen
-              onBack={handleCloseAddMode}
-              transactionToEdit={editingTransaction}
-            />
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
-    );
-  }
 
   return (
     <LinearGradient colors={colors.backgroundGradient as [string, string]} style={{ flex: 1 }}>
@@ -404,7 +389,7 @@ function MainAppContent() {
               style={styles.tabButton}
               activeOpacity={0.8}
             >
-              <View style={[styles.centerAddCircle, { backgroundColor: 'rgba(24, 24, 27, 0.85)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } as any]}>
+              <View style={[styles.centerAddCircle, { backgroundColor: 'rgba(24, 24, 27, 0.85)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 }]}>
                 <MaterialIcons name="add" size={24} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
@@ -458,6 +443,22 @@ function MainAppContent() {
             </TouchableOpacity>
           </View>
         </View>
+
+        <Modal visible={isAddMode} animationType="slide" transparent={true} onRequestClose={handleCloseAddMode}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+            <View style={{ backgroundColor: colors.background, borderTopLeftRadius: 32, borderTopRightRadius: 32, height: '92%', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 24 }}>
+              <AddTransactionScreen
+                onBack={handleCloseAddMode}
+                transactionToEdit={editingTransaction}
+              />
+            </View>
+          </View>
+        </Modal>
+
+        <GuidedTourModal
+          visible={isTourOpen}
+          onClose={handleCloseTour}
+        />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -518,19 +519,20 @@ const styles = StyleSheet.create({
   },
   bottomTabBar: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: Platform.OS === 'ios' ? 84 : 64,
+    bottom: Platform.OS === 'ios' ? 24 : 16,
+    left: 20,
+    right: 20,
+    height: 64,
+    borderRadius: 32,
     flexDirection: 'row',
-    backgroundColor: 'rgba(247, 245, 241, 0.8)',
-    backdropFilter: 'saturate(180%) blur(20px)',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: Platform.OS === 'ios' ? 20 : 0,
     zIndex: 9999,
     elevation: 24,
   },
