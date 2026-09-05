@@ -33,20 +33,20 @@ export const getTheme = (): ColorTheme => {
     onSecondary: '#FFFFFF',
     secondaryContainer: '#FFFFFF',
     onSecondaryContainer: '#18181B',
-    background: '#F7F5F1',          // Warm paper background exactly from Prinqo
-    onBackground: '#18181B',        // Near black text
-    surface: '#FFFFFF',         // White cards
-    onSurface: '#18181B',       // Near black text on cards
-    surfaceVariant: '#F9F9FB',  // Very soft white-grey for alternate surfaces
-    onSurfaceVariant: '#52525B',    // Zinc 600
+    background: '#fafafa',
+    onBackground: '#18181B',
+    surface: '#FFFFFF',
+    onSurface: '#18181B',
+    surfaceVariant: '#F9F9FB',
+    onSurfaceVariant: '#52525B',
     outline: '#E4E4E7',             // Zinc 200 border
-    error: '#DC2626',               
+    error: '#DC2626',
     onError: '#FFFFFF',
-    success: '#16A34A',             
+    success: '#16A34A',
     onSuccess: '#FFFFFF',
     info: '#18181B',                // Replaced blue info with black
     onInfo: '#FFFFFF',
-    backgroundGradient: ['#F7F5F1', '#F7F5F1'], 
+    backgroundGradient: ['#F7F5F1', '#F7F5F1'],
   };
 };
 

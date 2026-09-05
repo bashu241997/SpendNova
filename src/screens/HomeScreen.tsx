@@ -342,7 +342,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <ParallaxCard 
             style={[styles.analyticsCard, { backgroundColor: colors.surface }]}
           >
-            <Text style={[styles.heatmapTitle, { color: colors.onSurfaceVariant, marginBottom: 12 }]}>Transaction Activity (Last 18 Weeks)</Text>
+            <Text style={[styles.heatmapTitle, { color: colors.onSurfaceVariant }]}>Transaction Activity (Last 18 Weeks)</Text>
             
             <View style={styles.heatmapWrapper}>
               {/* Day of week labels */}
@@ -1080,8 +1080,8 @@ const styles = StyleSheet.create({
   analyticsCard: {
     borderRadius: 24,
     padding: 16,
-    marginBottom: 24,
-    marginHorizontal: Platform.OS === 'web' ? 28 : 20,
+    marginBottom: 16,
+    marginHorizontal: 16,
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.05,
@@ -1158,9 +1158,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     gap: 4,
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
+    marginTop: 4,
+    paddingTop: 8,
   },
   legendText: {
     fontSize: 9,
