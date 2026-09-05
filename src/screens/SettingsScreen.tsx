@@ -292,7 +292,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: 'transparent' }]}
+      style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={[styles.contentPadding, isWideLayout && styles.desktopContent]}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24, marginTop: Platform.OS === 'ios' ? 24 : 0 }}>
