@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   Platform,
   useWindowDimensions
 } from 'react-native';
@@ -40,10 +40,10 @@ const formatDateKey = (isoString: string) => {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 };
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ 
-  onAddTransaction, 
+export const HomeScreen: React.FC<HomeScreenProps> = ({
+  onAddTransaction,
   onEditTransaction,
-  onNavigateTab 
+  onNavigateTab
 }) => {
   const { accounts, categories, transactions, budgets, recurringTxs, goals, colors, currencySymbol, country } = useApp();
 
@@ -78,7 +78,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const heatmapData = useMemo(() => {
     const days: { date: Date; dateStr: string; count: number; amount: number }[] = [];
     const today = new Date();
-    
+
     // Find the Sunday 17 weeks ago
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay() - 17 * 7);
@@ -87,18 +87,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     for (let i = 0; i < 18 * 7; i++) {
       const d = new Date(startOfWeek);
       d.setDate(startOfWeek.getDate() + i);
-      
+
       const safeTxsList = Array.isArray(transactions) ? transactions : [];
       const dayTxs = safeTxsList.filter(t => {
         const txDate = new Date(t.date);
         return txDate.getFullYear() === d.getFullYear() &&
-               txDate.getMonth() === d.getMonth() &&
-               txDate.getDate() === d.getDate();
+          txDate.getMonth() === d.getMonth() &&
+          txDate.getDate() === d.getDate();
       });
       const count = dayTxs.length;
       const amount = dayTxs.reduce((sum, t) => sum + t.amount, 0);
       const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      
+
       days.push({
         date: d,
         dateStr,
@@ -173,7 +173,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     const stats = accounts.map(acc => {
       let balance = (acc as any).initialBalance || 0;
       let txCount = 0;
-      
+
       transactions.forEach(t => {
         if (t.account === acc.id) {
           txCount++;
@@ -268,7 +268,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const groupedTxs = useMemo(() => {
     const sorted = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const groups: { title: string; data: Transaction[] }[] = [];
-    
+
     sorted.slice(0, 50).forEach(t => { // Show last 50
       const key = formatDateKey(t.date);
       let group = groups.find(g => g.title === key);
@@ -309,10 +309,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* MAIN SPLIT OR STACK CONTAINER */}
       <View style={[styles.splitContainer, isLargeScreen ? styles.splitRow : styles.splitCol, isLargeScreen && { paddingHorizontal: 48 }]}>
-        
+
         {/* LEFT COLUMN: ACCOUNTS, BUDGETS, GOALS, UPCOMING/OVERDUE */}
         <View style={[styles.leftColumn, isLargeScreen && { flex: 1, minWidth: 0, paddingRight: 24 }]}>
-          
+
           {/* ACCOUNTS CAROUSEL */}
           <View style={[styles.carouselContainer, isLargeScreen && { marginHorizontal: Platform.OS === 'web' ? 0 : -48 }]}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.carouselScroll, isLargeScreen && { paddingHorizontal: Platform.OS === 'web' ? 0 : 48 }]}>
@@ -320,8 +320,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 const isPos = acc.balance >= 0;
                 const dotColor = isPos ? colors.success : colors.error;
                 return (
-                  <ParallaxCard 
-                    key={acc.id} 
+                  <ParallaxCard
+                    key={acc.id}
                     style={[styles.accountCard, { width: isLargeScreen ? 172 : 145, backgroundColor: colors.surface }]}
                     onPress={() => onNavigateTab('accounts')}
                   >
@@ -347,16 +347,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ParallaxCard 
+          <ParallaxCard
             style={[styles.analyticsCard, { backgroundColor: colors.surface }]}
           >
             <Text style={[styles.heatmapTitle, { color: colors.onSurfaceVariant, marginBottom: 16 }]}>Spending Flow</Text>
-            
-            <AnalyticsChart 
-              transactions={transactions} 
-              categories={categories} 
-              colors={colors} 
-              type="expense" 
+
+            <AnalyticsChart
+              transactions={transactions}
+              categories={categories}
+              colors={colors}
+              type="expense"
             />
           </ParallaxCard>
 
@@ -386,82 +386,82 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </View>
               </TouchableOpacity>
             ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
-              {userBudgetStats.map(b => {
-                // Calculate progress position (day of month percentage for Today badge)
-                const now = new Date();
-                const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                const currentDay = now.getDate();
-                const dayPct = Math.min(Math.max((currentDay / totalDaysInMonth) * 100, 5), 90);
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselScroll}>
+                {userBudgetStats.map(b => {
+                  // Calculate progress position (day of month percentage for Today badge)
+                  const now = new Date();
+                  const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                  const currentDay = now.getDate();
+                  const dayPct = Math.min(Math.max((currentDay / totalDaysInMonth) * 100, 5), 90);
 
-                const monthName = now.toLocaleDateString('en-US', { month: 'short' });
-                const startDateStr = `${monthName} 1`;
-                const endDateStr = `${monthName} ${totalDaysInMonth}`;
+                  const monthName = now.toLocaleDateString('en-US', { month: 'short' });
+                  const startDateStr = `${monthName} 1`;
+                  const endDateStr = `${monthName} ${totalDaysInMonth}`;
 
-                return (
-                  <ParallaxCard 
-                    key={b.id} 
-                    style={[
-                      styles.horizontalBudgetCard,
-                      { width: desktopFeatureCardWidth, backgroundColor: colors.surface }
-                    ]}
-                    onPress={() => onNavigateTab('budgets')}
-                  >
-                    {/* SOFT TINTED TOP HEADER BAND */}
-                    <View style={[styles.bCardHeaderBand, { backgroundColor: 'transparent', borderBottomWidth: 1, borderBottomColor: colors.outline }]}>
-                      <View style={styles.bCardTop}>
-                        <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
-                        <View style={[styles.bIconWrap, { backgroundColor: 'transparent' }]}>
-                          <MaterialIcons name={(b.icon || 'pie-chart') as any} size={16} color={b.color || colors.primary} />
-                        </View>
-                      </View>
-
-                      <View style={styles.bAmountRow}>
-                        <Text style={[styles.bLeft, { color: colors.onSurface }]}>
-                          {currencySymbol}{Math.max(b.left, 0).toLocaleString('en-IN')}
-                        </Text>
-                        <Text style={[styles.bTotal, { color: colors.onSurfaceVariant }]}>
-                          left of {currencySymbol}{b.budget.toLocaleString('en-IN')}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* BODY BAND */}
-                    <View style={styles.bCardBodyBand}>
-                      {b.hasBudget ? (
-                        <>
-                          {/* TODAY MARKER & PROGRESS BAR */}
-                          <View style={styles.todayMarkerWrapper}>
-                            <View style={[styles.todayBadge, { left: `${dayPct}%`, backgroundColor: colors.onSurface }]}>
-                              <Text style={[styles.todayText, { color: '#FFFFFF' }]}>Today</Text>
-                            </View>
-                            
-                            <View style={[styles.bProgressBar, { backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }]}>
-                              <View style={[styles.bProgressFill, { backgroundColor: colors.onBackground, width: `${Math.min(b.pct, 100)}%` }]} />
-                            </View>
-                            
-                            <View style={styles.dateRangeRow}>
-                              <Text style={[styles.dateRangeText, { color: colors.onSurfaceVariant }]}>{startDateStr}</Text>
-                              <Text style={[styles.dateRangeText, { color: colors.onSurfaceVariant }]}>{endDateStr}</Text>
-                            </View>
+                  return (
+                    <ParallaxCard
+                      key={b.id}
+                      style={[
+                        styles.horizontalBudgetCard,
+                        { width: desktopFeatureCardWidth, backgroundColor: colors.surface }
+                      ]}
+                      onPress={() => onNavigateTab('budgets')}
+                    >
+                      {/* SOFT TINTED TOP HEADER BAND */}
+                      <View style={[styles.bCardHeaderBand, { backgroundColor: 'transparent', borderBottomWidth: 1, borderBottomColor: colors.outline }]}>
+                        <View style={styles.bCardTop}>
+                          <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
+                          <View style={[styles.bIconWrap, { backgroundColor: 'transparent' }]}>
+                            <MaterialIcons name={(b.icon || 'pie-chart') as any} size={16} color={b.color || colors.primary} />
                           </View>
+                        </View>
 
-                          <Text style={[styles.bDailyText, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
-                            You can spend {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 2 })}/day for {daysLeft} more days
+                        <View style={styles.bAmountRow}>
+                          <Text style={[styles.bLeft, { color: colors.onSurface }]}>
+                            {currencySymbol}{Math.max(b.left, 0).toLocaleString('en-IN')}
                           </Text>
-                        </>
-                      ) : (
-                        <View style={{ marginTop: 4 }}>
-                          <Text style={[styles.bDailyText, { color: colors.onSurfaceVariant }]}>
-                            Spent: {currencySymbol}{b.spent.toLocaleString('en-IN')} (No limit set)
+                          <Text style={[styles.bTotal, { color: colors.onSurfaceVariant }]}>
+                            left of {currencySymbol}{b.budget.toLocaleString('en-IN')}
                           </Text>
                         </View>
-                      )}
-                    </View>
-                  </ParallaxCard>
-                );
-              })}
-            </ScrollView>
+                      </View>
+
+                      {/* BODY BAND */}
+                      <View style={styles.bCardBodyBand}>
+                        {b.hasBudget ? (
+                          <>
+                            {/* TODAY MARKER & PROGRESS BAR */}
+                            <View style={styles.todayMarkerWrapper}>
+                              <View style={[styles.todayBadge, { left: `${dayPct}%`, backgroundColor: colors.onSurface }]}>
+                                <Text style={[styles.todayText, { color: '#FFFFFF' }]}>Today</Text>
+                              </View>
+
+                              <View style={[styles.bProgressBar, { backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }]}>
+                                <View style={[styles.bProgressFill, { backgroundColor: colors.onBackground, width: `${Math.min(b.pct, 100)}%` }]} />
+                              </View>
+
+                              <View style={styles.dateRangeRow}>
+                                <Text style={[styles.dateRangeText, { color: colors.onSurfaceVariant }]}>{startDateStr}</Text>
+                                <Text style={[styles.dateRangeText, { color: colors.onSurfaceVariant }]}>{endDateStr}</Text>
+                              </View>
+                            </View>
+
+                            <Text style={[styles.bDailyText, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
+                              You can spend {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 2 })}/day for {daysLeft} more days
+                            </Text>
+                          </>
+                        ) : (
+                          <View style={{ marginTop: 4 }}>
+                            <Text style={[styles.bDailyText, { color: colors.onSurfaceVariant }]}>
+                              Spent: {currencySymbol}{b.spent.toLocaleString('en-IN')} (No limit set)
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </ParallaxCard>
+                  );
+                })}
+              </ScrollView>
             )}
           </View>
 
@@ -497,8 +497,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   const remaining = Math.max(g.targetAmount - g.currentAmount, 0);
 
                   return (
-                    <ParallaxCard 
-                      key={g.id} 
+                    <ParallaxCard
+                      key={g.id}
                       style={[styles.goalCardHorizontal, { width: desktopFeatureCardWidth, backgroundColor: colors.surface }]}
                       onPress={() => onNavigateTab('goals')}
                     >
@@ -537,7 +537,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           {/* UPCOMING & OVERDUE BILLS */}
           <View style={styles.goalsGrid}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.goalCard, { backgroundColor: colors.surface }]}
               onPress={() => onNavigateTab('recurring')}
             >
@@ -551,7 +551,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.goalCard, { backgroundColor: colors.surface }]}
               onPress={() => onNavigateTab('recurring')}
             >
@@ -570,32 +570,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* RIGHT COLUMN: RECENT TRANSACTIONS (Independent scroll on web) */}
         <View style={[
-          styles.rightColumn, 
+          styles.rightColumn,
           isLargeScreen && { width: 440, marginLeft: 24 },
-          (isLargeScreen && Platform.OS === 'web') ? ({ 
-            maxHeight: 'calc(100vh - 160px)', 
-            overflowY: 'auto', 
-            paddingRight: 8 
+          (isLargeScreen && Platform.OS === 'web') ? ({
+            maxHeight: 'calc(100vh - 160px)',
+            overflowY: 'auto',
+            paddingRight: 8
           } as any) : undefined
         ]}>
           {groupedTxs.map(group => (
             <View key={group.title} style={styles.txGroup}>
               <Text style={[styles.txGroupTitle, { color: colors.onSurfaceVariant }]}>{group.title}</Text>
-              
+
               {group.data.map(tx => {
                 const isExpense = tx.type === 'expense' || tx.type === 'transfer';
                 const isIncome = tx.type === 'income';
-                
+
                 let amtColor = colors.onSurface;
                 if (isExpense) amtColor = colors.error;
                 if (isIncome) amtColor = colors.success;
 
                 let amtPrefix = isExpense ? '-' : (isIncome ? '+' : '');
-                
+
                 const cat = categories.find(c => c.id === tx.category);
                 const acc = accounts.find(a => a.id === tx.account);
                 const toAcc = accounts.find(a => a.id === tx.toAccount);
-                
+
                 let subObj: any = null;
                 if (tx.subcategory && cat?.subcategories) {
                   subObj = cat.subcategories.find(s => {
@@ -610,8 +610,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 }
 
                 return (
-                  <ParallaxCard 
-                    key={tx.id} 
+                  <ParallaxCard
+                    key={tx.id}
                     style={[styles.txItem, { backgroundColor: colors.surface }]}
                     onPress={() => onEditTransaction(tx)}
                   >
@@ -620,13 +620,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         <MaterialIcons name={(cat?.icon || 'help-outline') as any} size={24} color={cat?.color || colors.outline} />
                       </View>
                     </View>
-                    
+
                     <View style={styles.txMid}>
                       <Text style={[styles.txTitle, { color: colors.onSurface }]} numberOfLines={1}>
                         {cat?.name || tx.category || 'Uncategorized'}
                         {subObj?.name ? ` • ${subObj.name}` : ''}
                       </Text>
-                      
+
                       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                         <Text style={[styles.txSub, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
                           {tx.type === 'transfer' ? `${acc?.name || 'Account'} ➔ ${toAcc?.name || 'Account'}` : (acc?.name || 'Cash')}
@@ -638,7 +638,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         ) : null}
                       </View>
                     </View>
-                    
+
                     <View style={styles.txRight}>
                       <Text style={[styles.txAmount, { color: amtColor }]}>
                         {amtPrefix}{currencySymbol}{tx.amount.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   },
   carouselContainer: {
     marginBottom: 24,
-    marginHorizontal: Platform.OS === 'web' ? 0 : -20,
+    marginHorizontal: Platform.OS === 'web' ? 0 : 10,
   },
   carouselScroll: {
     paddingHorizontal: Platform.OS === 'web' ? 0 : 20,
@@ -779,7 +779,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   rightColumn: {
-    
+
   },
   horizontalBudgetCard: {
     width: 260,
