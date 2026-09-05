@@ -56,7 +56,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
   );
 
   const [amountStr, setAmountStr] = useState(
-    transactionToEdit?.amount ? transactionToEdit.amount.toString() : '0'
+    transactionToEdit?.amount ? transactionToEdit.amount.toString() : ''
   );
 
   const [account, setAccount] = useState<Account | undefined>(() => {
