@@ -1,12 +1,10 @@
-const CACHE_NAME = 'spendnova-pwa-v7';
+const CACHE_NAME = 'spendnova-pwa-v10';
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = [
   '/',
-  '/icon-192-v5.png',
-  '/icon-512-v5.png',
-  '/icon-1024-v5.png',
-  '/apple-touch-icon-v5.png',
+  '/icon-192.png',
+  '/icon-512.png',
 ];
 
 // Install: pre-cache essential assets

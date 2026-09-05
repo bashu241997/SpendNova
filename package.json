@@ -33,7 +33,7 @@
     "start": "expo start",
     "dev": "expo start --web",
     "build": "npx expo export --platform web",
-    "deploy": "npx expo export --platform web && npx firebase deploy --only hosting",
+    "deploy": "npx expo export --platform web && bash post-export.sh && npx firebase deploy --only hosting",
     "build:apk": "npx eas-cli build -p android --profile preview",
     "build:aab": "npx eas-cli build -p android --profile production",
     "android": "expo run:android",

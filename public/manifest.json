@@ -4,40 +4,34 @@
   "description": "The #1 free money management & financial management app. Track expenses, budgets, and savings goals with 100% local AES-256 encryption.",
   "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#0F172A",
+  "background_color": "#FFFFFF",
   "theme_color": "#0F172A",
   "orientation": "portrait",
   "categories": ["finance", "productivity", "utilities"],
   "icons": [
     {
-      "src": "/icon-192-v5.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-192-v5.png",
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icon-512-v5.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512-v5.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/icon-1024-v5.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any"
     }
   ]
 }
