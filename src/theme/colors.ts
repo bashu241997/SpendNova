@@ -35,9 +35,9 @@ export const getTheme = (): ColorTheme => {
     onSecondaryContainer: '#18181B',
     background: '#F7F5F1',          // Warm paper background exactly from Prinqo
     onBackground: '#18181B',        // Near black text
-    surface: '#FFFFFF',             // Pure white cards
+    surface: 'transparent',         // No background for cards
     onSurface: '#18181B',           // Near black text on cards
-    surfaceVariant: '#F4F4F5',      // Zinc 100 for alternate backgrounds
+    surfaceVariant: 'transparent',  // No background for alternate surfaces
     onSurfaceVariant: '#52525B',    // Zinc 600
     outline: '#E4E4E7',             // Zinc 200 border
     error: '#DC2626',               

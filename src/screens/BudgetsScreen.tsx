@@ -114,7 +114,7 @@ export const BudgetsScreen: React.FC = () => {
             return (
               <ParallaxCard key={b.id} style={[styles.budgetCard, { width: cardWidth as any }]}>
                 {/* Top Half */}
-                <View style={[styles.cardTop, { backgroundColor: `${b.color}30` }]}>
+                <View style={[styles.cardTop, { backgroundColor: 'transparent', borderBottomWidth: 1, borderBottomColor: colors.outline }]}>
                   <View style={styles.cardHeaderRow}>
                     <Text style={[styles.budgetName, { color: colors.onSurface }]}>{b.name}</Text>
                     <TouchableOpacity onPress={() => openEdit(b)}>

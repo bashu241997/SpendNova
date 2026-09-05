@@ -417,18 +417,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.carouselContainer}>
             {(!budgets || budgets.length === 0) ? (
               <TouchableOpacity
-                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: colors.primaryContainer, borderColor: colors.outline }]}
+                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline }]}
                 onPress={() => onNavigateTab('budgets')}
               >
-                <View style={[styles.emptyGoalIcon, { backgroundColor: colors.surface }]}>
+                <View style={[styles.emptyGoalIcon, { backgroundColor: 'transparent' }]}>
                   <MaterialIcons name="account-balance-wallet" size={23} color={colors.primary} />
                 </View>
                 <View style={styles.emptyGoalContent}>
-                  <Text style={[styles.emptyGoalTitle, { color: colors.onPrimaryContainer }]}>Create a budget</Text>
-                  <Text style={[styles.emptyGoalDescription, { color: colors.onPrimaryContainer }]}>Set spending limits and track where your money goes.</Text>
+                  <Text style={[styles.emptyGoalTitle, { color: colors.onBackground }]}>Create a budget</Text>
+                  <Text style={[styles.emptyGoalDescription, { color: colors.onSurfaceVariant }]}>Set spending limits and track where your money goes.</Text>
                 </View>
-                <View style={[styles.emptyGoalAction, { backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}>
-                  <MaterialIcons name="add" size={18} color={colors.onPrimaryContainer} />
+                <View style={[styles.emptyGoalAction, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline }]}>
+                  <MaterialIcons name="add" size={18} color={colors.onBackground} />
                 </View>
               </TouchableOpacity>
             ) : (
@@ -454,10 +454,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     onPress={() => onNavigateTab('budgets')}
                   >
                     {/* SOFT TINTED TOP HEADER BAND */}
-                    <View style={[styles.bCardHeaderBand, { backgroundColor: `${b.color}12` }]}>
+                    <View style={[styles.bCardHeaderBand, { backgroundColor: 'transparent', borderBottomWidth: 1, borderBottomColor: colors.outline }]}>
                       <View style={styles.bCardTop}>
                         <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
-                        <View style={[styles.bIconWrap, { backgroundColor: `${b.color}18` }]}>
+                        <View style={[styles.bIconWrap, { backgroundColor: 'transparent' }]}>
                           <MaterialIcons name={(b.icon || 'pie-chart') as any} size={16} color={b.color || colors.primary} />
                         </View>
                       </View>
@@ -482,8 +482,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                               <Text style={[styles.todayText, { color: colors.surface }]}>Today</Text>
                             </View>
                             
-                            <View style={[styles.bProgressBar, { backgroundColor: `${b.color}15` }]}>
-                              <View style={[styles.bProgressFill, { backgroundColor: `${b.color}90`, width: `${Math.min(b.pct, 100)}%` }]} />
+                            <View style={[styles.bProgressBar, { backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }]}>
+                              <View style={[styles.bProgressFill, { backgroundColor: colors.onBackground, width: `${Math.min(b.pct, 100)}%` }]} />
                             </View>
                             
                             <View style={styles.dateRangeRow}>
@@ -522,18 +522,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.carouselContainer}>
             {(!goals || goals.length === 0) ? (
               <TouchableOpacity
-                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: colors.primaryContainer, borderColor: colors.outline }]}
+                style={[styles.emptyGoalCard, { width: desktopFeatureCardWidth, backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline }]}
                 onPress={() => onNavigateTab('goals')}
               >
-                <View style={[styles.emptyGoalIcon, { backgroundColor: colors.surface }]}>
+                <View style={[styles.emptyGoalIcon, { backgroundColor: 'transparent' }]}>
                   <MaterialIcons name="emoji-events" size={23} color={colors.primary} />
                 </View>
                 <View style={styles.emptyGoalContent}>
-                  <Text style={[styles.emptyGoalTitle, { color: colors.onPrimaryContainer }]}>Start a savings goal</Text>
-                  <Text style={[styles.emptyGoalDescription, { color: colors.onPrimaryContainer }]}>Plan for an emergency fund, trip, or big purchase.</Text>
+                  <Text style={[styles.emptyGoalTitle, { color: colors.onBackground }]}>Start a savings goal</Text>
+                  <Text style={[styles.emptyGoalDescription, { color: colors.onSurfaceVariant }]}>Plan for an emergency fund, trip, or big purchase.</Text>
                 </View>
-                <View style={[styles.emptyGoalAction, { backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}>
-                  <MaterialIcons name="add" size={18} color={colors.onPrimaryContainer} />
+                <View style={[styles.emptyGoalAction, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline }]}>
+                  <MaterialIcons name="add" size={18} color={colors.onBackground} />
                 </View>
               </TouchableOpacity>
             ) : (
@@ -549,7 +549,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       onPress={() => onNavigateTab('goals')}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                        <View style={[styles.bIconWrap, { backgroundColor: `${g.color || colors.primary}12`, marginRight: 10, width: 34, height: 34, borderRadius: 17 }]}>
+                        <View style={[styles.bIconWrap, { backgroundColor: 'transparent', marginRight: 10, width: 34, height: 34, borderRadius: 17 }]}>
                           <MaterialIcons name={(g.icon || 'savings') as any} size={18} color={g.color || colors.primary} />
                         </View>
                         <View style={{ flex: 1 }}>
@@ -567,8 +567,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         </Text>
                       </View>
 
-                      <View style={[styles.bProgressBar, { backgroundColor: `${g.color || colors.primary}12`, marginBottom: 8 }]}>
-                        <View style={[styles.bProgressFill, { backgroundColor: `${g.color || colors.primary}80`, width: `${pct}%` }]} />
+                      <View style={[styles.bProgressBar, { backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline, marginBottom: 8 }]}>
+                        <View style={[styles.bProgressFill, { backgroundColor: colors.onBackground, width: `${pct}%` }]} />
                       </View>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <Text style={{ fontSize: 12, fontWeight: '500', color: colors.onSurfaceVariant }}>{Math.round(pct)}% saved</Text>

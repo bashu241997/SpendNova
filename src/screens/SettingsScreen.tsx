@@ -432,36 +432,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
 
 
 
-      <View style={styles.bentoRow}>
-        <View style={[styles.bentoSquareCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <MaterialIcons name="dark-mode" size={24} color={colors.primary} />
-            <Switch
-              value={themeType === 'dark'}
-              onValueChange={(val) => setThemeType(val ? 'dark' : 'light')}
-              thumbColor={themeType === 'dark' ? colors.primary : colors.onSurfaceVariant}
-              trackColor={{ false: colors.surfaceVariant, true: colors.primaryContainer }}
-            />
-          </View>
-          <View style={{ marginTop: 12 }}>
-            <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>Dark Mode</Text>
-            <Text style={[styles.bentoSubLabel, { color: colors.onSurfaceVariant }]}>Use a darker interface</Text>
-          </View>
-        </View>
-
-        <View style={[styles.bentoSquareCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
-          <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer }]}>
+      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer, marginRight: 16, marginBottom: 0 }]}>
             <MaterialIcons name="category" size={24} color={colors.primary} />
           </View>
-          <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>Categories</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>Categories</Text>
+          </View>
           <TouchableOpacity
-            style={[styles.smallPill, { backgroundColor: colors.primaryContainer, marginTop: 8 }]}
+            style={[styles.smallPill, { backgroundColor: colors.primaryContainer }]}
             onPress={() => onNavigate?.('categories')}
           >
             <Text style={[styles.smallPillText, { color: colors.primary }]}>Manage</Text>
           </TouchableOpacity>
         </View>
       </View>
+
 
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
         <Text style={[styles.bentoHeader, { color: colors.primary }]}>Local Storage Ledger</Text>

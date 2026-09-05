@@ -247,7 +247,7 @@ function MainAppContent() {
                     onPress={() => setActiveTab(tab)}
                     style={[
                       styles.sidebarMenuItem,
-                      active && { backgroundColor: colors.primaryContainer }
+                      active && { backgroundColor: 'transparent' }
                     ]}
                     activeOpacity={0.8}
                   >
@@ -270,12 +270,11 @@ function MainAppContent() {
             </View>
 
             <TouchableOpacity
-              style={[styles.sidebarAddBtn, { backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}
+              style={[styles.sidebarAddBtn, { backgroundColor: 'rgba(24, 24, 27, 0.85)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } as any]}
               onPress={() => setIsAddMode(true)}
-              activeOpacity={0.85}
             >
-              <MaterialIcons name="add" size={20} color={colors.onPrimaryContainer} style={{ marginRight: 8 }} />
-              <Text style={[styles.sidebarAddText, { color: colors.onPrimaryContainer }]}>Add Entry</Text>
+              <MaterialIcons name="add" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#FFFFFF' }}>Add Entry</Text>
             </TouchableOpacity>
           </View>
 
@@ -292,7 +291,7 @@ function MainAppContent() {
 
               <TouchableOpacity 
                 onPress={() => setIsTourOpen(true)}
-                style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: colors.primaryContainer, borderWidth: 1, borderColor: colors.outline }]}
+                style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline }]}
                 activeOpacity={0.8}
               >
                 <MaterialIcons name="explore" size={18} color={colors.onPrimaryContainer} style={{ marginRight: 6 }} />
@@ -307,7 +306,7 @@ function MainAppContent() {
 
           {isAddMode && (
             <View style={styles.desktopModalOverlay}>
-              <View style={[styles.desktopModalContainer, { backgroundColor: colors.background, shadowColor: '#000', borderColor: colors.surfaceVariant }]}>
+              <View style={[styles.desktopModalContainer, { backgroundColor: colors.background, borderColor: colors.outline }]}>
                 <AddTransactionScreen
                   onBack={handleCloseAddMode}
                   transactionToEdit={editingTransaction}
@@ -359,7 +358,7 @@ function MainAppContent() {
             >
               <View style={[
                 styles.tabPill,
-                activeTab === 'home' && { backgroundColor: colors.primaryContainer }
+                activeTab === 'home' && { backgroundColor: 'transparent' }
               ]}>
                 <MaterialIcons
                   name="dashboard"
@@ -383,7 +382,7 @@ function MainAppContent() {
             >
               <View style={[
                 styles.tabPill,
-                activeTab === 'transactions' && { backgroundColor: colors.primaryContainer }
+                activeTab === 'transactions' && { backgroundColor: 'transparent' }
               ]}>
                 <MaterialIcons
                   name="receipt"
@@ -405,8 +404,8 @@ function MainAppContent() {
               style={styles.tabButton}
               activeOpacity={0.8}
             >
-              <View style={[styles.centerAddCircle, { backgroundColor: colors.primary }]}>
-                <MaterialIcons name="add" size={24} color={colors.onPrimary} />
+              <View style={[styles.centerAddCircle, { backgroundColor: 'rgba(24, 24, 27, 0.85)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } as any]}>
+                <MaterialIcons name="add" size={24} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
 
@@ -417,7 +416,7 @@ function MainAppContent() {
             >
               <View style={[
                 styles.tabPill,
-                activeTab === 'budgets' && { backgroundColor: colors.primaryContainer }
+                activeTab === 'budgets' && { backgroundColor: 'transparent' }
               ]}>
                 <MaterialIcons
                   name="pie-chart"
@@ -441,7 +440,7 @@ function MainAppContent() {
             >
               <View style={[
                 styles.tabPill,
-                ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { backgroundColor: colors.primaryContainer }
+                ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { backgroundColor: 'transparent' }
               ]}>
                 <MaterialIcons
                   name="menu"
@@ -519,39 +518,34 @@ const styles = StyleSheet.create({
   },
   bottomTabBar: {
     position: 'absolute',
-    bottom: 12,
-    alignSelf: 'center',
-    width: '94%',
-    maxWidth: 480,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: Platform.OS === 'ios' ? 84 : 64,
     flexDirection: 'row',
-    height: 68,
-    borderRadius: 34,
-    borderWidth: 1,
-    paddingHorizontal: 6,
+    backgroundColor: 'rgba(247, 245, 241, 0.8)',
+    backdropFilter: 'saturate(180%) blur(20px)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(0, 0, 0, 0.15)',
+    paddingHorizontal: 16,
     alignItems: 'center',
-    justifyContent: 'space-around',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 4,
+    justifyContent: 'space-between',
+    paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+    zIndex: 9999,
+    elevation: 24,
   },
   tabButton: {
     alignItems: 'center',
     flex: 1,
   },
   tabPill: {
-    width: 50,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
+    padding: 4,
     alignItems: 'center',
-    marginBottom: 4,
   },
   tabLabelText: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.25,
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 4,
   },
   headerAddBtn: {
     padding: 4,
@@ -674,7 +668,7 @@ const styles = StyleSheet.create({
     width: 480,
     height: 700,
     maxHeight: '90%',
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
   }

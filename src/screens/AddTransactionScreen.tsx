@@ -169,7 +169,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
     setDate(d.toISOString().split('T')[0]);
   };
 
-  const dynamicColor = type === 'expense' ? colors.error : type === 'income' ? colors.success : colors.primary;
+  const dynamicColor = type === 'expense' ? colors.error : type === 'income' ? colors.success : colors.onBackground;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -193,19 +193,9 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         <View style={[styles.tabBar, { backgroundColor: colors.surfaceVariant }]}>
           {(['expense', 'income', 'transfer'] as const).map(tab => {
             const active = type === tab;
-            let tabBg = 'transparent';
             let tabText = colors.onSurfaceVariant;
             if (active) {
-              if (tab === 'expense') {
-                tabBg = colors.error;
-                tabText = colors.onError;
-              } else if (tab === 'income') {
-                tabBg = colors.success;
-                tabText = colors.onSuccess;
-              } else {
-                tabBg = colors.primary;
-                tabText = colors.onPrimary;
-              }
+              tabText = colors.onBackground;
             }
 
             return (
@@ -218,7 +208,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                     if (matchedCat) setCategory(matchedCat);
                   }
                 }}
-                style={[styles.tabItem, active && { backgroundColor: tabBg }]}
+                style={[styles.tabItem, active && { borderBottomWidth: 1.5, borderBottomColor: colors.onBackground, borderRadius: 0 }]}
               >
                 <Text style={[styles.tabLabel, { color: tabText }]}>
                   {tab === 'expense' ? 'EXPENSE' : tab === 'income' ? 'INCOME' : 'TRANSFER'}
@@ -228,14 +218,15 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           })}
         </View>
 
-        <View style={[styles.amountContainer, { backgroundColor: colors.surface }]}>
+        <View style={[styles.amountContainer, { backgroundColor: 'transparent' }]}>
           <Text style={[styles.amountLabel, { color: colors.onSurfaceVariant }]}>AMOUNT</Text>
           <View style={styles.amountValueWrapper}>
             <Text style={[styles.currencySign, { color: dynamicColor }]}>{currencySymbol}</Text>
             <TextInput
               value={amountStr}
               onChangeText={setAmountStr}
-              keyboardType="decimal-pad"
+              keyboardType="numeric"
+              inputMode="decimal"
               inputAccessoryViewID={inputAccessoryViewID}
               placeholder="0.00"
               placeholderTextColor={colors.outline}
@@ -260,7 +251,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         </View>
 
         <View style={styles.formRow}>
-          <MaterialIcons name="event" size={24} color={colors.outline} style={styles.fieldIcon} />
+          <MaterialIcons name="event" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
           <View style={styles.dateSelector}>
             <TouchableOpacity onPress={() => handleDateChange(-1)} style={styles.dateArrow}>
               <MaterialIcons name="chevron-left" size={24} color={colors.primary} />
@@ -278,7 +269,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         </View>
 
         <View style={styles.formRow}>
-          <MaterialIcons name="account-balance-wallet" size={24} color={colors.outline} style={styles.fieldIcon} />
+          <MaterialIcons name="account-balance-wallet" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
           <View style={styles.pickerWrapper}>
             <TouchableOpacity
               onPress={() => setAccountModalVisible(true)}
@@ -311,7 +302,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
 
         {type !== 'transfer' && (
           <View style={styles.formRow}>
-            <MaterialIcons name="category" size={24} color={colors.outline} style={styles.fieldIcon} />
+            <MaterialIcons name="category" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
             <TouchableOpacity
               onPress={() => setCategoryModalVisible(true)}
               style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
@@ -328,7 +319,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         {/* Savings Goal Picker Row */}
         {goals && goals.length > 0 && (
           <View style={styles.formRow}>
-            <MaterialIcons name="emoji-events" size={24} color={colors.outline} style={styles.fieldIcon} />
+            <MaterialIcons name="emoji-events" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
             <TouchableOpacity
               onPress={() => setGoalModalVisible(true)}
               style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
@@ -343,7 +334,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         )}
 
         <View style={styles.formRow}>
-          <MaterialIcons name="description" size={24} color={colors.outline} style={styles.fieldIcon} />
+          <MaterialIcons name="description" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
           <TextInput
             placeholder="Description / Note"
             placeholderTextColor={colors.outline}
@@ -364,13 +355,19 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         </View>
 
         <TouchableOpacity
-          style={[styles.saveButtonWeb, { backgroundColor: colors.primary }]}
+          style={[styles.saveButtonWeb, { 
+            backgroundColor: 'rgba(24, 24, 27, 0.85)', 
+            borderWidth: 1, 
+            borderColor: 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          } as any]}
           onPress={() => {
             const numericVal = parseFloat(amountStr) || 0;
             handleNumpadDone(numericVal);
           }}
         >
-          <Text style={[styles.saveButtonTextWeb, { color: colors.onPrimary }]}>
+          <Text style={[styles.saveButtonTextWeb, { color: '#FFFFFF' }]}>
             Save Transaction
           </Text>
         </TouchableOpacity>
@@ -614,11 +611,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 2,
   },
   amountLabel: {
     fontSize: 10,
