@@ -11,7 +11,7 @@ import {
   Keyboard,
   InputAccessoryView,
   Button,
-  TouchableWithoutFeedback,
+  Pressable,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ColorTheme } from '../theme/colors';
@@ -147,9 +147,9 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
         <View style={styles.overlay}>
-          <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+          <Pressable onPress={(e) => e.stopPropagation()} style={{ flex: 1, width: '100%', alignItems: 'center' }}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
               
               <View style={[styles.header, { borderBottomColor: colors.surfaceVariant }]}>
@@ -307,9 +307,9 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
           </View>
 
         </View>
-      </TouchableWithoutFeedback>
+      </Pressable>
     </View>
-  </TouchableWithoutFeedback>
+  </Pressable>
 
   {Platform.OS === 'ios' && (
     <InputAccessoryView nativeID={inputAccessoryViewID}>

@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  useWindowDimensions
+  useWindowDimensions,
+  Platform
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';

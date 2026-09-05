@@ -12,6 +12,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { Transaction } from '../utils/storage';
 import { ParallaxCard } from '../components/ParallaxCard';
+import { AnalyticsChart } from '../components/AnalyticsChart';
 
 interface HomeScreenProps {
   onAddTransaction: (type?: 'income' | 'expense' | 'transfer') => void;
@@ -342,72 +343,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <ParallaxCard 
             style={[styles.analyticsCard, { backgroundColor: colors.surface }]}
           >
-            <Text style={[styles.heatmapTitle, { color: colors.onSurfaceVariant }]}>Transaction Activity (Last 18 Weeks)</Text>
+            <Text style={[styles.heatmapTitle, { color: colors.onSurfaceVariant, marginBottom: 16 }]}>Spending Flow</Text>
             
-            <View style={styles.heatmapWrapper}>
-              {/* Day of week labels */}
-              <View style={[styles.dayLabelsCol, { height: gridHeight }]}>
-                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>S</Text>
-                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>M</Text>
-                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>T</Text>
-                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>W</Text>
-                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>T</Text>
-                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>F</Text>
-                <Text style={[styles.dayLabelText, { color: colors.outline, height: squareSize, lineHeight: squareSize }]}>S</Text>
-              </View>
-
-              <View style={{ flex: 1 }}>
-                <View style={[styles.heatmapGrid, { height: gridHeight, gap: squareGap }]}>
-                  {weeks.map((week, wIdx) => (
-                    <View key={`week-${wIdx}`} style={[styles.heatmapColumn, { gap: squareGap }]}>
-                      {week.map((day, dIdx) => {
-                        let bg = colors.surfaceVariant;
-                        if (day.count > 0) {
-                          if (day.count === 1) bg = colors.outline;
-                          else if (day.count === 2) bg = '#B0B0B0';
-                          else bg = '#757575';
-                        }
-                        return (
-                          <View 
-                            key={day.dateStr} 
-                            style={[styles.heatmapSquare, { width: squareSize, height: squareSize, backgroundColor: bg }]} 
-                          />
-                        );
-                      })}
-                    </View>
-                  ))}
-                </View>
-
-                {/* Heatmap Dates Labels */}
-                <View style={styles.heatmapLabelsRow}>
-                  {weekLabels.map((lbl, idx) => {
-                    const leftPos = lbl.index * (squareSize + squareGap);
-                    return (
-                      <Text 
-                        key={`lbl-${idx}`} 
-                        style={[styles.heatmapLabelText, { color: colors.onSurfaceVariant, left: leftPos }]}
-                      >
-                        {lbl.text}
-                      </Text>
-                    );
-                  })}
-                </View>
-              </View>
-            </View>
-
-            {/* Legend section at the bottom */}
-            <View style={[styles.legendRow, { borderTopColor: colors.surfaceVariant }]}>
-              <Text style={[styles.legendText, { color: colors.onSurfaceVariant }]}>Less</Text>
-              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: colors.surfaceVariant }]} />
-              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: colors.outline }]} />
-              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: '#B0B0B0' }]} />
-              <View style={[styles.legendSquare, { width: 10, height: 10, borderRadius: 2, backgroundColor: '#757575' }]} />
-              <Text style={[styles.legendText, { color: colors.onSurfaceVariant }]}>More</Text>
-            </View>
+            <AnalyticsChart 
+              transactions={transactions} 
+              categories={categories} 
+              colors={colors} 
+              type="expense" 
+            />
           </ParallaxCard>
 
           {/* HORIZONTAL BUDGETS CAROUSEL */}
-          <View style={[styles.sectionHeaderRow, isLargeScreen && { paddingHorizontal: 48 }]}>
+          <View style={styles.sectionHeaderRow}>
             <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Active Budgets</Text>
             <TouchableOpacity onPress={() => onNavigateTab('budgets')}>
               <Text style={[styles.seeAllText, { color: colors.onSurfaceVariant }]}>View All ({userBudgetStats.length})</Text>
@@ -753,7 +700,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
     marginBottom: 12,
   },
   sectionTitle: {
@@ -1087,7 +1034,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 16,
     marginBottom: 16,
-    marginHorizontal: 16,
+    marginHorizontal: 0,
     elevation: 2,
     shadowColor: '#000',
     shadowOpacity: 0.05,
