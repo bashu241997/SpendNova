@@ -194,7 +194,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
       {/* Create / Edit Goal Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.onSurface }]}>
                 {editingGoal ? 'Edit Savings Goal' : 'New Savings Goal'}

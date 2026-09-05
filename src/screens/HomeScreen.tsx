@@ -479,7 +479,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                           {/* TODAY MARKER & PROGRESS BAR */}
                           <View style={styles.todayMarkerWrapper}>
                             <View style={[styles.todayBadge, { left: `${dayPct}%`, backgroundColor: colors.onSurface }]}>
-                              <Text style={[styles.todayText, { color: colors.surface }]}>Today</Text>
+                              <Text style={[styles.todayText, { color: '#FFFFFF' }]}>Today</Text>
                             </View>
                             
                             <View style={[styles.bProgressBar, { backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }]}>
@@ -763,6 +763,7 @@ const styles = StyleSheet.create({
   },
   carouselContainer: {
     marginBottom: 24,
+    marginHorizontal: Platform.OS === 'web' ? -28 : -20,
   },
   carouselScroll: {
     paddingHorizontal: Platform.OS === 'web' ? 28 : 20,

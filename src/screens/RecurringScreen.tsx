@@ -190,7 +190,7 @@ export const RecurringScreen: React.FC<RecurringScreenProps> = ({ onBack }) => {
       {/* Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent={true} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.onSurface }]}>
                 {editingItem ? 'Edit Recurring Payment' : 'New Subscription / EMI'}

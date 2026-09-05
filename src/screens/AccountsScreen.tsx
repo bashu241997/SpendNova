@@ -169,15 +169,9 @@ const styles = StyleSheet.create({
   accountCard: {
     padding: 20,
     borderRadius: 16,
-    borderLeftWidth: 5,
     marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.03)',
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   cardTopRow: {
     flexDirection: 'row',
