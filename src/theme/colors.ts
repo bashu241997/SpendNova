@@ -23,72 +23,30 @@ export interface ColorTheme {
   backgroundGradient: string[];
 }
 
-export type ThemeType = 'light' | 'dark';
-export type AccentTheme = 'tonal' | 'slate' | 'nature' | 'classic' | 'core_blue';
-
-export interface AccentOption {
-  id: AccentTheme;
-  name: string;
-  color: string;
-}
-
-export const ACCENT_OPTIONS: AccentOption[] = [
-  { id: 'tonal', name: 'SpendNova Tonal Theme', color: '#606060' },
-];
-
-export const getTheme = (type: ThemeType, _accent: AccentTheme = 'tonal'): ColorTheme => {
-  if (type === 'dark') {
-    return {
-      primary: '#10B981',           // Emerald/Mint accent
-      onPrimary: '#FFFFFF',         // White text for primary buttons
-      primaryContainer: '#042F2E',  // Dark Teal for active states
-      onPrimaryContainer: '#34D399',// Light Mint text
-      secondary: '#9CA3AF',         // Gray 400
-      onSecondary: '#111827',
-      secondaryContainer: '#1F2937',// Card background
-      onSecondaryContainer: '#F3F4F6',
-      background: '#0F172A',        // Slate 900 background
-      onBackground: '#F8FAFC',      // White Text
-      surface: '#1E293B',           // Slate 800 surfaces
-      onSurface: '#F8FAFC',
-      surfaceVariant: '#334155',    // Slate 700 
-      onSurfaceVariant: '#94A3B8',  // Slate 400 text
-      outline: '#334155',           // Slate 700 border
-      error: '#EF4444',             
-      onError: '#FFFFFF',
-      success: '#10B981',           
-      onSuccess: '#FFFFFF',
-      info: '#3B82F6',              
-      onInfo: '#FFFFFF',
-      backgroundGradient: ['#0F172A', '#0F172A'], 
-    };
-  }
-
+export const getTheme = (): ColorTheme => {
   return {
-    primary: '#059669',             // Emerald/Mint primary
-    onPrimary: '#FFFFFF',
-    primaryContainer: '#D1FAE5',    // Light Mint for active states
-    onPrimaryContainer: '#065F46',  // Dark Mint text
-    secondary: '#6B7280',           // Gray 500
+    primary: '#18181B',             // Near black (like Prinqo buttons)
+    onPrimary: '#FFFFFF',           // White text on buttons
+    primaryContainer: '#E4E4E7',    // Light gray for active states
+    onPrimaryContainer: '#18181B',  // Black text
+    secondary: '#71717A',           // Zinc 500 (muted text)
     onSecondary: '#FFFFFF',
     secondaryContainer: '#FFFFFF',
-    onSecondaryContainer: '#111827',
-    background: '#F8F9FA',          // Soft Off-White Background
-    onBackground: '#111827',        // Dark Gray text
+    onSecondaryContainer: '#18181B',
+    background: '#F7F5F1',          // Warm paper background exactly from Prinqo
+    onBackground: '#18181B',        // Near black text
     surface: '#FFFFFF',             // Pure white cards
-    onSurface: '#111827',
-    surfaceVariant: '#F3F4F6',      // Gray 100
-    onSurfaceVariant: '#4B5563',    // Gray 600 text
-    outline: '#E5E7EB',             // Soft gray border
+    onSurface: '#18181B',           // Near black text on cards
+    surfaceVariant: '#F4F4F5',      // Zinc 100 for alternate backgrounds
+    onSurfaceVariant: '#52525B',    // Zinc 600
+    outline: '#E4E4E7',             // Zinc 200 border
     error: '#DC2626',               
     onError: '#FFFFFF',
-    success: '#059669',             
+    success: '#16A34A',             
     onSuccess: '#FFFFFF',
-    info: '#2563EB',                
+    info: '#18181B',                // Replaced blue info with black
     onInfo: '#FFFFFF',
-    backgroundGradient: ['#F8F9FA', '#F8F9FA'], 
+    backgroundGradient: ['#F7F5F1', '#F7F5F1'], 
   };
 };
 
-export const lightTheme = getTheme('light');
-export const darkTheme = getTheme('dark');

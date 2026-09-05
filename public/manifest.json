@@ -4,8 +4,8 @@
   "description": "The #1 free money management & financial management app.",
   "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#F8F9FA",
-  "theme_color": "#F8F9FA",
+  "background_color": "#F7F5F1",
+  "theme_color": "#F7F5F1",
   "orientation": "portrait",
   "icons": [
     {

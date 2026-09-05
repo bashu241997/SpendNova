@@ -3,7 +3,6 @@ import { Platform, useColorScheme } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { 
   ColorTheme, 
-  ThemeType, 
   AccentTheme,
   getTheme 
 } from '../theme/colors';
@@ -107,8 +106,6 @@ interface AppContextProps {
   recurringTxs: RecurringTransaction[];
   goals: Goal[];
   loading: boolean;
-  themeType: ThemeType;
-  setThemeType: (theme: ThemeType) => void;
   accentTheme: AccentTheme;
   setAccentTheme: (accent: AccentTheme) => void;
   colors: ColorTheme;
@@ -161,8 +158,6 @@ interface AppContextProps {
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const systemScheme = useColorScheme();
-  const [themeType, setThemeTypeState] = useState<ThemeType>(systemScheme === 'dark' ? 'dark' : 'light');
   const [accentTheme, setAccentTheme] = useState<AccentTheme>('tonal' as any);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -198,7 +193,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       setHasAcceptedTerms(termsAccepted);
       if (preferences) {
-        setThemeTypeState(preferences.themeType);
         setAccentTheme(preferences.accentTheme || 'tonal');
         setCountryState(preferences.country || 'IN');
       } else {
@@ -220,21 +214,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     init();
   }, []);
 
-  const colors = getTheme(themeType, accentTheme);
-
-  const setThemeType = (theme: ThemeType) => {
-    setThemeTypeState(theme);
-    void saveAppPreferences({ themeType: theme, accentTheme, country });
-  };
+  const colors = getTheme();
 
   const setCountry = (newCountry: CountryType) => {
     setCountryState(newCountry);
-    void saveAppPreferences({ themeType, accentTheme, country: newCountry });
+    void saveAppPreferences({ accentTheme, country: newCountry });
   };
 
   const setAccentThemeAndPersist = (accent: AccentTheme) => {
     setAccentTheme(accent);
-    void saveAppPreferences({ themeType, accentTheme: accent, country });
+    void saveAppPreferences({ accentTheme: accent, country });
   };
 
   const acceptTerms = async () => {
@@ -567,8 +556,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         recurringTxs,
         goals,
         loading,
-        themeType,
-        setThemeType,
         accentTheme,
         setAccentTheme: setAccentThemeAndPersist,
         colors,
