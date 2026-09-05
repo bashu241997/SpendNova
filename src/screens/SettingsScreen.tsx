@@ -36,8 +36,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
   const { width } = useWindowDimensions();
   const isWideLayout = width >= 768;
   const {
-    themeType,
-    setThemeType,
     accentTheme,
     setAccentTheme,
     colors,
@@ -509,7 +507,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
 
       <Modal
         visible={legalModalType !== null}
-        animationType="slide"
+        animationType={Platform.OS === 'web' ? 'fade' : 'slide'}
         transparent={true}
         onRequestClose={() => setLegalModalType(null)}
       >
@@ -806,13 +804,24 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS !== 'web' ? 'flex-end' : 'center',
+    alignItems: Platform.OS !== 'web' ? 'stretch' : 'center',
   },
   modalContent: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    height: '80%',
     paddingBottom: 24,
+    ...(Platform.OS !== 'web' ? {
+      width: '100%',
+      height: '80%',
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    } : {
+      borderRadius: 28,
+      width: '90%',
+      maxWidth: 600,
+      height: '80%',
+    }),
   },
   modalHeader: {
     flexDirection: 'row',

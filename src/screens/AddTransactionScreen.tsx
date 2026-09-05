@@ -41,7 +41,6 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
     addAccount,
     addCategory,
     currencySymbol,
-    themeType,
     goals
   } = useApp();
 
@@ -356,9 +355,9 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         </View>
 
         <TouchableOpacity
-          style={[styles.saveButtonWeb, { 
-            backgroundColor: 'rgba(24, 24, 27, 0.85)', 
-            borderWidth: 1, 
+          style={[styles.saveButtonWeb, {
+            backgroundColor: 'rgba(24, 24, 27, 0.85)',
+            borderWidth: 1,
             borderColor: 'rgba(255,255,255,0.1)',
             backdropFilter: 'blur(12px)',
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
@@ -417,7 +416,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
       <Modal
         visible={goalModalVisible}
         transparent
-        animationType="fade"
+        animationType={Platform.OS === 'web' ? 'fade' : 'slide'}
         onRequestClose={() => setGoalModalVisible(false)}
       >
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setGoalModalVisible(false)}>
@@ -469,7 +468,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
       <Modal
         visible={showCalendarModal}
         transparent
-        animationType="fade"
+        animationType={Platform.OS === 'web' ? 'fade' : 'slide'}
         onRequestClose={() => setShowCalendarModal(false)}
       >
         <View style={styles.modalOverlay}>
@@ -499,7 +498,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
             flexDirection: 'row',
             justifyContent: 'flex-end',
             alignItems: 'center',
-            backgroundColor: themeType === 'dark' ? '#1E293B' : '#F6F6F6',
+            backgroundColor: colors.onBackground !== '#262626' ? '#1E293B' : '#F6F6F6',
             paddingHorizontal: 16,
             paddingVertical: 4,
             borderTopWidth: StyleSheet.hairlineWidth,
@@ -508,7 +507,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
             <Button
               title="Done"
               onPress={() => Keyboard.dismiss()}
-              color={themeType === 'dark' ? '#38BDF8' : '#007AFF'}
+              color={colors.onBackground !== '#262626' ? '#38BDF8' : '#007AFF'}
             />
           </View>
         </InputAccessoryView>

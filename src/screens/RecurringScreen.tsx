@@ -189,7 +189,7 @@ export const RecurringScreen: React.FC<RecurringScreenProps> = ({ onBack }) => {
       </ScrollView>
 
       {/* Modal */}
-      <Modal visible={modalVisible} animationType="fade" transparent={true} onRequestClose={() => setModalVisible(false)}>
+      <Modal visible={modalVisible} animationType={Platform.OS === 'web' ? 'fade' : 'slide'} transparent={true} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background }, Platform.OS === 'web' && { width: '100%', maxWidth: 500, alignSelf: 'center' }]}>
             <View style={styles.modalHeader}>
@@ -361,13 +361,23 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
+    justifyContent: Platform.OS !== 'web' ? 'flex-end' : 'center',
+    alignItems: Platform.OS !== 'web' ? 'stretch' : 'center',
   },
   modalContent: {
-    borderRadius: 24,
     padding: 24,
     elevation: 10,
+    ...(Platform.OS !== 'web' ? {
+      width: '100%',
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    } : {
+      borderRadius: 28,
+      width: '90%',
+      maxWidth: 500,
+    }),
   },
   modalHeader: {
     flexDirection: 'row',

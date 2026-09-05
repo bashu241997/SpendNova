@@ -194,7 +194,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
       </ScrollView>
 
       {/* Create / Edit Goal Modal */}
-      <Modal visible={modalVisible} animationType="fade" transparent={true} onRequestClose={() => setModalVisible(false)}>
+      <Modal visible={modalVisible} animationType={Platform.OS === 'web' ? 'fade' : 'slide'} transparent={true} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background }, Platform.OS === 'web' && { width: '100%', maxWidth: 500, alignSelf: 'center' }]}>
             <View style={styles.modalHeader}>
@@ -211,21 +211,21 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
               style={[styles.input, { color: colors.onSurface, borderColor: colors.outline, backgroundColor: colors.background }]}
               value={name}
               onChangeText={setName}
-              placeholder="Goal Name"
+              placeholder="e.g. Vacation to Goa"
               placeholderTextColor={colors.outline}
             />
 
-            <Text style={[styles.label, { color: colors.onSurface }]}>Target Amount</Text>
+            <Text style={[styles.label, { color: colors.onSurface }]}>Target Amount ({currencySymbol})</Text>
             <TextInput
               style={[styles.input, { color: colors.onSurface, borderColor: colors.outline, backgroundColor: colors.background }]}
               value={targetAmount}
               onChangeText={setTargetAmount}
               keyboardType="numeric"
-              placeholder="Target Amount"
+              placeholder="50000"
               placeholderTextColor={colors.outline}
             />
 
-            <Text style={[styles.label, { color: colors.onSurface }]}>Current Saved Amount</Text>
+            <Text style={[styles.label, { color: colors.onSurface }]}>Initial Saved Amount ({currencySymbol})</Text>
             <TextInput
               style={[styles.input, { color: colors.onSurface, borderColor: colors.outline, backgroundColor: colors.background }]}
               value={currentAmount}
@@ -235,7 +235,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
               placeholderTextColor={colors.outline}
             />
 
-            <Text style={[styles.label, { color: colors.onSurface }]}>Target Date (YYYY-MM-DD)</Text>
+            <Text style={[styles.label, { color: colors.onSurface }]}>Target Completion Date</Text>
             <TextInput
               style={[styles.input, { color: colors.onSurface, borderColor: colors.outline, backgroundColor: colors.background }]}
               value={targetDate}
@@ -259,7 +259,7 @@ export const GoalsScreen: React.FC<GoalsScreenProps> = ({ onBack }) => {
       </Modal>
 
       {/* Deposit Modal */}
-      <Modal visible={depositModalVisible} animationType="fade" transparent={true} onRequestClose={() => setDepositModalVisible(false)}>
+      <Modal visible={depositModalVisible} animationType={Platform.OS === 'web' ? 'fade' : 'slide'} transparent={true} onRequestClose={() => setDepositModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.background }, Platform.OS === 'web' && { width: '100%', maxWidth: 500, alignSelf: 'center' }]}>
             <View style={styles.modalHeader}>
@@ -414,13 +414,23 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
+    justifyContent: Platform.OS !== 'web' ? 'flex-end' : 'center',
+    alignItems: Platform.OS !== 'web' ? 'stretch' : 'center',
   },
   modalContent: {
-    borderRadius: 24,
     padding: 24,
     elevation: 10,
+    ...(Platform.OS !== 'web' ? {
+      width: '100%',
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    } : {
+      borderRadius: 28,
+      width: '90%',
+      maxWidth: 500,
+    }),
   },
   modalHeader: {
     flexDirection: 'row',

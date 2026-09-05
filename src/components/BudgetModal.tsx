@@ -10,6 +10,7 @@ import {
   Platform,
   Keyboard,
   InputAccessoryView,
+  KeyboardAvoidingView,
   Button,
   Pressable,
 } from 'react-native';
@@ -110,7 +111,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
   };
 
   const toggleAccount = (accId: string) => {
-    setIncludedAccounts(prev => 
+    setIncludedAccounts(prev =>
       prev.includes(accId) ? prev.filter(id => id !== accId) : [...prev, accId]
     );
   };
@@ -129,229 +130,245 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
   };
 
   const toggleCategoryExclude = (catId: string) => {
-    setExcludedCategories(prev => 
+    setExcludedCategories(prev =>
       prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
     );
     setIncludedCategories(prev => prev.filter(id => id !== catId));
   };
 
   const toggleSubcategory = (sub: string) => {
-    setIncludedSubcategories(prev => 
+    setIncludedSubcategories(prev =>
       prev.includes(sub) ? prev.filter(s => s !== sub) : [...prev, sub]
     );
   };
 
-  const activeSubs = selectedCategoryForSubs 
-    ? categories.find(c => c.id === selectedCategoryForSubs)?.subcategories || [] 
+  const activeSubs = selectedCategoryForSubs
+    ? categories.find(c => c.id === selectedCategoryForSubs)?.subcategories || []
     : [];
 
   return (
-    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent>
-      <Pressable style={{ flex: 1 }} onPress={Keyboard.dismiss}>
-        <View style={styles.overlay}>
-          <Pressable onPress={(e) => e.stopPropagation()} style={{ flex: 1, width: '100%', alignItems: 'center' }}>
-            <View style={[styles.container, { backgroundColor: colors.background }]}>
-              
-              <View style={[styles.header, { borderBottomColor: colors.surfaceVariant }]}>
-                <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
-                  <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
+    <Modal
+      visible={visible}
+      animationType={Platform.OS === 'web' ? 'fade' : 'slide'}
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView 
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+
+            <View style={[styles.header, { borderBottomColor: colors.surfaceVariant }]}>
+              <TouchableOpacity onPress={onClose} style={styles.iconBtn}>
+                <MaterialIcons name="arrow-back" size={24} color={colors.onBackground} />
+              </TouchableOpacity>
+              <Text style={[styles.title, { color: colors.onBackground }]}>
+                {budgetToEdit ? 'Edit Budget' : 'New Budget'}
+              </Text>
+              {budgetToEdit ? (
+                <TouchableOpacity onPress={() => { onDelete(budgetToEdit.id); onClose(); }} style={styles.iconBtn}>
+                  <MaterialIcons name="delete-outline" size={24} color={colors.error} />
                 </TouchableOpacity>
-                <Text style={[styles.title, { color: colors.onBackground }]}>
-                  {budgetToEdit ? 'Edit Budget' : 'New Budget'}
-                </Text>
-                {budgetToEdit ? (
-                  <TouchableOpacity onPress={() => { onDelete(budgetToEdit.id); onClose(); }} style={styles.iconBtn}>
-                    <MaterialIcons name="delete-outline" size={24} color={colors.error} />
-                  </TouchableOpacity>
-                ) : (
-                  <View style={{ width: 40 }} />
-                )}
-              </View>
-
-              <ScrollView style={styles.body} contentContainerStyle={{ paddingBottom: 100 }}>
-            <View style={[styles.inputCard, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Budget Name</Text>
-              <TextInput
-                style={[styles.input, { color: colors.onSurface, borderBottomColor: colors.surfaceVariant }]}
-                value={name}
-                onChangeText={setName}
-                placeholder="e.g. Groceries"
-                placeholderTextColor={colors.onSurfaceVariant}
-                inputAccessoryViewID={inputAccessoryViewID}
-              />
-              <Text style={[styles.label, { marginTop: 16, color: colors.onSurfaceVariant }]}>Amount</Text>
-              <View style={styles.amountRow}>
-                <Text style={[styles.currency, { color: colors.onSurface }]}>{currencySymbol}</Text>
-                <TextInput
-                  style={[styles.input, { flex: 1, color: colors.onSurface, borderBottomColor: colors.surfaceVariant }]}
-                  value={amount}
-                  onChangeText={setAmount}
-                  placeholder="0.00"
-                  keyboardType="decimal-pad"
-                  placeholderTextColor={colors.onSurfaceVariant}
-                  inputAccessoryViewID={inputAccessoryViewID}
-                />
-              </View>
-            </View>
-
-            <View style={[styles.section, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Set Category Spending Limits (Color)</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.colorScroll}>
-                {BUDGET_COLORS.map(c => (
-                  <TouchableOpacity
-                    key={c}
-                    style={[styles.colorCircle, { backgroundColor: c }, color === c && { borderWidth: 3, borderColor: colors.onSurface }]}
-                    onPress={() => setColor(c)}
-                  >
-                    {color === c && <MaterialIcons name="check" size={16} color="#FFF" />}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-
-            <View style={[styles.section, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Select Accounts</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
-                <TouchableOpacity
-                  style={[styles.pill, includedAccounts.length === 0 ? { backgroundColor: `${colors.primary}20`, borderColor: colors.primary } : { borderColor: colors.outline }]}
-                  onPress={() => setIncludedAccounts([])}
-                >
-                  <Text style={[styles.pillText, { color: includedAccounts.length === 0 ? colors.primary : colors.onSurfaceVariant }]}>All Accounts</Text>
-                </TouchableOpacity>
-                {accounts.map(acc => {
-                  const isSel = includedAccounts.includes(acc.id);
-                  return (
-                    <TouchableOpacity
-                      key={acc.id}
-                      style={[styles.pill, isSel ? { backgroundColor: `${acc.color}20`, borderColor: acc.color } : { borderColor: colors.outline }]}
-                      onPress={() => toggleAccount(acc.id)}
-                    >
-                      <Text style={[styles.pillText, { color: isSel ? acc.color : colors.onSurfaceVariant }]}>{acc.name}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-
-            <View style={[styles.section, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Select Categories to Include</Text>
-              <View style={styles.grid}>
-                {categories.map(cat => {
-                  const isSel = includedCategories.includes(cat.id);
-                  return (
-                    <TouchableOpacity
-                      key={cat.id}
-                      style={[styles.catSquare, isSel && { backgroundColor: `${cat.color}15` }]}
-                      onPress={() => toggleCategoryInclude(cat.id)}
-                    >
-                      <View style={[styles.catIconWrap, { backgroundColor: isSel ? cat.color : colors.surfaceVariant }]}>
-                        <MaterialIcons name={cat.icon as any} size={24} color={isSel ? '#FFF' : colors.onSurfaceVariant} />
-                      </View>
-                      <Text style={[styles.catText, { color: colors.onSurfaceVariant }, isSel && { color: cat.color, fontWeight: '700' }]} numberOfLines={1}>{cat.name}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {activeSubs.length > 0 && (
-                <View style={styles.subContainer}>
-                  <Text style={[styles.subLabel, { color: colors.onSurfaceVariant }]}>Subcategories for {categories.find(c => c.id === selectedCategoryForSubs)?.name}</Text>
-                  <View style={styles.subGrid}>
-                    {activeSubs.map(subObj => {
-                      const isObj = typeof subObj === 'object';
-                      const subId = isObj ? (subObj as any).id : subObj;
-                      const subName = isObj ? (subObj as any).name : subObj;
-                      const isSel = includedSubcategories.includes(subId);
-                      return (
-                        <TouchableOpacity
-                          key={subId}
-                          style={[styles.pill, isSel ? { backgroundColor: `${colors.primary}20`, borderColor: colors.primary } : { borderColor: colors.outline }]}
-                          onPress={() => toggleSubcategory(subId)}
-                        >
-                          <Text style={[styles.pillText, { color: isSel ? colors.primary : colors.onSurfaceVariant }]}>{subName}</Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
+              ) : (
+                <View style={{ width: 40 }} />
               )}
             </View>
 
-            <View style={[styles.section, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Exclude Categories</Text>
-              <View style={styles.grid}>
-                {categories.map(cat => {
-                  const isEx = excludedCategories.includes(cat.id);
-                  return (
-                    <TouchableOpacity
-                      key={`ex_${cat.id}`}
-                      style={[styles.catSquare, { opacity: isEx ? 1 : 0.5 }, isEx && { backgroundColor: `${colors.error}15` }]}
-                      onPress={() => toggleCategoryExclude(cat.id)}
-                    >
-                      <View style={[styles.catIconWrap, { backgroundColor: isEx ? colors.error : colors.surfaceVariant }]}>
-                        <MaterialIcons name={cat.icon as any} size={24} color={isEx ? '#FFF' : colors.onSurfaceVariant} />
-                      </View>
-                      <Text style={[styles.catText, { color: colors.onSurfaceVariant }, isEx && { color: colors.error, fontWeight: '700' }]} numberOfLines={1}>{cat.name}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
+            <ScrollView style={styles.body} contentContainerStyle={{ paddingBottom: 100 }}>
+              <View style={[styles.inputCard, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Budget Name</Text>
+                <TextInput
+                  style={[styles.input, { color: colors.onSurface, borderBottomColor: colors.surfaceVariant }]}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="e.g. Groceries"
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  inputAccessoryViewID={inputAccessoryViewID}
+                />
+                <Text style={[styles.label, { marginTop: 16, color: colors.onSurfaceVariant }]}>Amount</Text>
+                <View style={styles.amountRow}>
+                  <Text style={[styles.currency, { color: colors.onSurface }]}>{currencySymbol}</Text>
+                  <TextInput
+                    style={[styles.input, { flex: 1, color: colors.onSurface, borderBottomColor: colors.surfaceVariant }]}
+                    value={amount}
+                    onChangeText={setAmount}
+                    placeholder="0.00"
+                    keyboardType="decimal-pad"
+                    placeholderTextColor={colors.onSurfaceVariant}
+                    inputAccessoryViewID={inputAccessoryViewID}
+                  />
+                </View>
               </View>
+
+              <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Set Category Spending Limits (Color)</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.colorScroll}>
+                  {BUDGET_COLORS.map(c => (
+                    <TouchableOpacity
+                      key={c}
+                      style={[styles.colorCircle, { backgroundColor: c }, color === c && { borderWidth: 3, borderColor: colors.onSurface }]}
+                      onPress={() => setColor(c)}
+                    >
+                      {color === c && <MaterialIcons name="check" size={16} color="#FFF" />}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Select Accounts</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+                  <TouchableOpacity
+                    style={[styles.pill, includedAccounts.length === 0 ? { backgroundColor: `${colors.primary}20`, borderColor: colors.primary } : { borderColor: colors.outline }]}
+                    onPress={() => setIncludedAccounts([])}
+                  >
+                    <Text style={[styles.pillText, { color: includedAccounts.length === 0 ? colors.primary : colors.onSurfaceVariant }]}>All Accounts</Text>
+                  </TouchableOpacity>
+                  {accounts.map(acc => {
+                    const isSel = includedAccounts.includes(acc.id);
+                    return (
+                      <TouchableOpacity
+                        key={acc.id}
+                        style={[styles.pill, isSel ? { backgroundColor: `${acc.color}20`, borderColor: acc.color } : { borderColor: colors.outline }]}
+                        onPress={() => toggleAccount(acc.id)}
+                      >
+                        <Text style={[styles.pillText, { color: isSel ? acc.color : colors.onSurfaceVariant }]}>{acc.name}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
+              <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Select Categories to Include</Text>
+                <View style={styles.grid}>
+                  {categories.map(cat => {
+                    const isSel = includedCategories.includes(cat.id);
+                    return (
+                      <TouchableOpacity
+                        key={cat.id}
+                        style={[styles.catSquare, isSel && { backgroundColor: `${cat.color}15` }]}
+                        onPress={() => toggleCategoryInclude(cat.id)}
+                      >
+                        <View style={[styles.catIconWrap, { backgroundColor: isSel ? cat.color : colors.surfaceVariant }]}>
+                          <MaterialIcons name={cat.icon as any} size={24} color={isSel ? '#FFF' : colors.onSurfaceVariant} />
+                        </View>
+                        <Text style={[styles.catText, { color: colors.onSurfaceVariant }, isSel && { color: cat.color, fontWeight: '700' }]} numberOfLines={1}>{cat.name}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {activeSubs.length > 0 && (
+                  <View style={styles.subContainer}>
+                    <Text style={[styles.subLabel, { color: colors.onSurfaceVariant }]}>Subcategories for {categories.find(c => c.id === selectedCategoryForSubs)?.name}</Text>
+                    <View style={styles.subGrid}>
+                      {activeSubs.map(subObj => {
+                        const isObj = typeof subObj === 'object';
+                        const subId = isObj ? (subObj as any).id : subObj;
+                        const subName = isObj ? (subObj as any).name : subObj;
+                        const isSel = includedSubcategories.includes(subId);
+                        return (
+                          <TouchableOpacity
+                            key={subId}
+                            style={[styles.pill, isSel ? { backgroundColor: `${colors.primary}20`, borderColor: colors.primary } : { borderColor: colors.outline }]}
+                            onPress={() => toggleSubcategory(subId)}
+                          >
+                            <Text style={[styles.pillText, { color: isSel ? colors.primary : colors.onSurfaceVariant }]}>{subName}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              <View style={[styles.section, { backgroundColor: colors.surface }]}>
+                <Text style={[styles.label, { color: colors.onSurfaceVariant }]}>Exclude Categories</Text>
+                <View style={styles.grid}>
+                  {categories.map(cat => {
+                    const isEx = excludedCategories.includes(cat.id);
+                    return (
+                      <TouchableOpacity
+                        key={`ex_${cat.id}`}
+                        style={[styles.catSquare, { opacity: isEx ? 1 : 0.5 }, isEx && { backgroundColor: `${colors.error}15` }]}
+                        onPress={() => toggleCategoryExclude(cat.id)}
+                      >
+                        <View style={[styles.catIconWrap, { backgroundColor: isEx ? colors.error : colors.surfaceVariant }]}>
+                          <MaterialIcons name={cat.icon as any} size={24} color={isEx ? '#FFF' : colors.onSurfaceVariant} />
+                        </View>
+                        <Text style={[styles.catText, { color: colors.onSurfaceVariant }, isEx && { color: colors.error, fontWeight: '700' }]} numberOfLines={1}>{cat.name}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
+            </ScrollView>
+
+            <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.surfaceVariant }]}>
+              <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave}>
+                <Text style={[styles.saveText, { color: colors.onPrimary }]}>Save Changes</Text>
+              </TouchableOpacity>
             </View>
 
-          </ScrollView>
-
-          <View style={[styles.footer, { backgroundColor: colors.surface, borderTopColor: colors.surfaceVariant }]}>
-            <TouchableOpacity style={[styles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave}>
-              <Text style={[styles.saveText, { color: colors.onPrimary }]}>Save Changes</Text>
-            </TouchableOpacity>
           </View>
+        </KeyboardAvoidingView>
 
-        </View>
-      </Pressable>
-    </View>
-  </Pressable>
-
-  {Platform.OS === 'ios' && (
-    <InputAccessoryView nativeID={inputAccessoryViewID}>
-      <View style={{
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        backgroundColor: isDark ? '#1E293B' : '#F6F6F6',
-        paddingHorizontal: 16,
-        paddingVertical: 4,
-        borderTopWidth: StyleSheet.hairlineWidth,
-        borderTopColor: '#A7A7AA',
-      }}>
-        <Button
-          title="Done"
-          onPress={() => Keyboard.dismiss()}
-          color={isDark ? '#38BDF8' : '#007AFF'}
-        />
-      </View>
-    </InputAccessoryView>
-  )}
-</Modal>
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID={inputAccessoryViewID}>
+          <View style={{
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            backgroundColor: isDark ? '#1E293B' : '#F6F6F6',
+            paddingHorizontal: 16,
+            paddingVertical: 4,
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: '#A7A7AA',
+          }}>
+            <Button
+              title="Done"
+              onPress={() => Keyboard.dismiss()}
+              color={isDark ? '#38BDF8' : '#007AFF'}
+            />
+          </View>
+        </InputAccessoryView>
+      )}
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: Platform.OS === 'web' ? 'center' : 'flex-end',
     alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
   },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
   container: {
     ...(Platform.OS === 'web' ? {
-      borderRadius: 24,
+      borderRadius: 28,
       width: '90%',
       maxWidth: 500,
-      height: '90%',
+      maxHeight: '90%',
     } : {
+      width: '100%',
       height: '90%',
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
     }),
     overflow: 'hidden',
   },

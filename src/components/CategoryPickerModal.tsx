@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Modal, 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   ScrollView,
   Platform,
 } from 'react-native';
@@ -21,11 +21,11 @@ interface CategoryPickerModalProps {
   onSelect: (category: Category, subcategory?: string) => void;
 }
 
-export const CategoryPickerModal: React.FC<CategoryPickerModalProps> = ({ 
-  visible, 
-  onClose, 
-  colors, 
-  categories, 
+export const CategoryPickerModal: React.FC<CategoryPickerModalProps> = ({
+  visible,
+  onClose,
+  colors,
+  categories,
   type,
   onSelect,
 }) => {
@@ -38,12 +38,12 @@ export const CategoryPickerModal: React.FC<CategoryPickerModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType={Platform.OS === 'web' ? 'fade' : 'slide'} transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         <View style={[styles.content, { backgroundColor: colors.background }]}>
           <View style={[styles.dragHandle, { backgroundColor: colors.outline }]} />
-          
+
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.onBackground }]}>Select Category</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -57,7 +57,7 @@ export const CategoryPickerModal: React.FC<CategoryPickerModalProps> = ({
             ) : (
               filteredCategories.map(cat => (
                 <View key={cat.id}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.item, { borderBottomColor: colors.surfaceVariant }]}
                     onPress={() => {
                       if (cat.subcategories && cat.subcategories.length > 0) {
@@ -74,13 +74,13 @@ export const CategoryPickerModal: React.FC<CategoryPickerModalProps> = ({
                       <Text style={[styles.itemName, { color: colors.onBackground }]}>{cat.name}</Text>
                     </View>
                     {(cat.subcategories && cat.subcategories.length > 0) ? (
-                      <MaterialIcons 
-                        name={expandedCat === cat.id ? 'expand-less' : 'expand-more'} 
-                        size={24} 
-                        color={colors.outline} 
+                      <MaterialIcons
+                        name={expandedCat === cat.id ? 'expand-less' : 'expand-more'}
+                        size={24}
+                        color={colors.outline}
                       />
                     ) : (
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={[styles.selectBtn, { backgroundColor: `${colors.primary}20` }]}
                         onPress={() => handleSelect(cat)}
                       >
@@ -92,7 +92,7 @@ export const CategoryPickerModal: React.FC<CategoryPickerModalProps> = ({
                   {/* Subcategories Expansion */}
                   {expandedCat === cat.id && (
                     <View style={[styles.subList, { backgroundColor: colors.surface }]}>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={[styles.subItem, { borderBottomColor: colors.surfaceVariant }]}
                         onPress={() => handleSelect(cat)}
                       >
@@ -102,9 +102,9 @@ export const CategoryPickerModal: React.FC<CategoryPickerModalProps> = ({
                         // fallback for old string subcategories
                         const isObj = typeof subObj === 'object';
                         const sub = isObj ? subObj as any : { id: subObj, name: subObj, color: cat.color, icon: cat.icon };
-                        
+
                         return (
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             key={sub.id}
                             style={[styles.subItem, { borderBottomColor: colors.surfaceVariant }]}
                             onPress={() => handleSelect(cat, sub.id)}
@@ -140,12 +140,15 @@ const styles = StyleSheet.create({
   },
   content: {
     ...(Platform.OS === 'web' ? {
-      borderRadius: 24,
+      borderRadius: 28,
       width: '90%',
       maxWidth: 500,
     } : {
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
+      width: '100%',
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
     }),
     minHeight: '50%',
     maxHeight: '85%',

@@ -27,14 +27,14 @@ const AVAILABLE_COLORS = [
 ];
 
 const AVAILABLE_ICONS = [
-  'restaurant', 'fastfood', 'local-cafe', 'local-bar', 
-  'shopping-cart', 'shopping-bag', 'storefront', 'checkroom', 
-  'directions-car', 'local-gas-station', 'flight', 'directions-bus', 
-  'movie', 'sports-esports', 'headset', 'auto-awesome', 
-  'home', 'electrical-services', 'wifi', 'phone-android', 
-  'face', 'spa', 'medical-services', 'fitness-center', 
-  'school', 'work', 'card-giftcard', 'monetization-on', 
-  'pets', 'build', 'child-care', 'subscriptions', 
+  'restaurant', 'fastfood', 'local-cafe', 'local-bar',
+  'shopping-cart', 'shopping-bag', 'storefront', 'checkroom',
+  'directions-car', 'local-gas-station', 'flight', 'directions-bus',
+  'movie', 'sports-esports', 'headset', 'auto-awesome',
+  'home', 'electrical-services', 'wifi', 'phone-android',
+  'face', 'spa', 'medical-services', 'fitness-center',
+  'school', 'work', 'card-giftcard', 'monetization-on',
+  'pets', 'build', 'child-care', 'subscriptions',
   'savings', 'shield', 'more-horiz'
 ];
 
@@ -99,7 +99,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
 
   const handleSaveCategory = async () => {
     if (!newCatName.trim()) return;
-    
+
     if (editingCatId) {
       const existing = categories.find(c => c.id === editingCatId);
       if (existing) {
@@ -119,7 +119,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
         icon: selectedIcon,
       });
     }
-    
+
     setNewCatName('');
     setEditingCatId(null);
     setAddCatVisible(false);
@@ -139,8 +139,8 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
       `Are you sure you want to delete "${cat.name}"? Transactions tied to this category will fallback to 'Other'.`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             await deleteCategory(cat.id);
@@ -174,7 +174,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
     if (!cat) return;
 
     const subs: SubCategory[] = (cat.subcategories || []).map(s => normalizeSub(s, cat));
-    
+
     if (editingSubId) {
       const idx = subs.findIndex(s => s.id === editingSubId || s.name.toLowerCase() === editingSubId.toLowerCase());
       if (idx !== -1) {
@@ -219,8 +219,8 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
       `Remove "${sub.name}" from ${cat.name}?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Remove', 
+        {
+          text: 'Remove',
           style: 'destructive',
           onPress: async () => {
             const subs = (cat.subcategories || [])
@@ -272,11 +272,11 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
                   </TouchableOpacity>
                 </View>
               </View>
-              
+
               <View style={styles.subCatContainer}>
                 {normSubs.map(sub => (
-                  <TouchableOpacity 
-                    key={sub.id} 
+                  <TouchableOpacity
+                    key={sub.id}
                     style={[styles.subPill, { borderColor: colors.outline, backgroundColor: `${sub.color}15` }]}
                     onPress={() => openEditSubCategory(cat, sub)}
                     onLongPress={() => handleDeleteSubCategory(cat, sub)}
@@ -286,8 +286,8 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
                     <Text style={[styles.subPillText, { color: colors.onSurface }]}>{sub.name}</Text>
                   </TouchableOpacity>
                 ))}
-                <TouchableOpacity 
-                  style={[styles.subPillAdd, { borderColor: colors.outline }]} 
+                <TouchableOpacity
+                  style={[styles.subPillAdd, { borderColor: colors.outline }]}
                   onPress={() => openSubCategoryPrompt(cat)}
                 >
                   <MaterialIcons name="add" size={16} color={colors.outline} />
@@ -299,7 +299,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
       </ScrollView>
 
       {/* Add / Edit Subcategory Modal - Bottom Sheet Style */}
-      <Modal visible={addSubCatVisible} animationType="slide" transparent>
+      <Modal visible={addSubCatVisible} animationType={Platform.OS === 'web' ? 'fade' : 'slide'} transparent>
         <KeyboardAvoidingView style={styles.modalOverlayFlex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={[styles.sheetContent, { backgroundColor: colors.background }]}>
             <View style={styles.sheetHeader}>
@@ -355,7 +355,7 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
       </Modal>
 
       {/* Add / Edit Category Modal */}
-      <Modal visible={addCatVisible} animationType="slide" transparent>
+      <Modal visible={addCatVisible} animationType={Platform.OS === 'web' ? 'fade' : 'slide'} transparent>
         <KeyboardAvoidingView style={styles.modalOverlayFlex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={[styles.sheetContent, { backgroundColor: colors.background }]}>
             <View style={styles.sheetHeader}>
@@ -370,13 +370,13 @@ export const CategoriesScreen: React.FC<CategoriesScreenProps> = ({ onBack }) =>
 
             <ScrollView contentContainerStyle={styles.sheetScroll}>
               <View style={styles.typeSwitcher}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.typeBtn, newCatType === 'expense' && { backgroundColor: `${colors.error}20` }]}
                   onPress={() => setNewCatType('expense')}
                 >
                   <Text style={[styles.typeText, { color: newCatType === 'expense' ? colors.error : colors.outline }]}>Expense</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.typeBtn, newCatType === 'income' && { backgroundColor: `${colors.primary}20` }]}
                   onPress={() => setNewCatType('income')}
                 >
@@ -529,13 +529,23 @@ const styles = StyleSheet.create({
   modalOverlayFlex: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    justifyContent: Platform.OS !== 'web' ? 'flex-end' : 'center',
+    alignItems: Platform.OS !== 'web' ? 'stretch' : 'center',
   },
   sheetContent: {
-    height: '90%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    maxHeight: '90%',
     overflow: 'hidden',
+    ...(Platform.OS !== 'web' ? {
+      width: '100%',
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    } : {
+      borderRadius: 28,
+      width: '90%',
+      maxWidth: 500,
+    }),
   },
   sheetHeader: {
     flexDirection: 'row',

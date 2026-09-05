@@ -50,3 +50,13 @@ export const getTheme = (): ColorTheme => {
   };
 };
 
+export type AccentTheme = 'tonal' | 'slate' | 'nature' | 'classic' | 'core_blue';
+
+export const ACCENT_OPTIONS: { id: AccentTheme; label: string; color: string }[] = [
+  { id: 'tonal', label: 'Tonal', color: '#262626' },
+  { id: 'slate', label: 'Slate', color: '#475569' },
+  { id: 'nature', label: 'Nature', color: '#166534' },
+  { id: 'classic', label: 'Classic', color: '#1E293B' },
+  { id: 'core_blue', label: 'Core Blue', color: '#2563EB' },
+];
+

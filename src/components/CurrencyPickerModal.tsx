@@ -43,7 +43,7 @@ export const CurrencyPickerModal: React.FC<CurrencyPickerModalProps> = ({
   }, [searchQuery]);
 
   return (
-    <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
+    <Modal visible={visible} animationType={Platform.OS === 'web' ? 'fade' : 'slide'} transparent={true} onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={[
           styles.modalContent, 
@@ -119,13 +119,19 @@ const styles = StyleSheet.create({
     alignItems: Platform.OS === 'web' ? 'center' : 'stretch',
   },
   modalContent: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
     paddingTop: 8,
     paddingBottom: Platform.OS === 'ios' ? 40 : 20,
     ...(Platform.OS === 'web' ? {
-      borderRadius: 24,
-    } : {}),
+      borderRadius: 28,
+      width: '90%',
+      maxWidth: 500,
+    } : {
+      width: '100%',
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+    }),
   },
   header: {
     flexDirection: 'row',

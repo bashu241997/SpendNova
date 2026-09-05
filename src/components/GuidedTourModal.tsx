@@ -77,7 +77,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ visible, onClo
     <Modal
       visible={visible}
       transparent={true}
-      animationType="fade"
+      animationType={Platform.OS === 'web' ? 'fade' : 'slide'}
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>

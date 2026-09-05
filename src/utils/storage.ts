@@ -102,9 +102,8 @@ export interface AppData {
 }
 
 export interface AppPreferences {
-  accentTheme?: string;
   accentTheme: 'tonal' | 'slate' | 'nature' | 'classic' | 'core_blue';
-  country: 'US' | 'IN' | 'EU' | 'UK';
+  country: string;
 }
 
 const TRANSACTIONS_KEY = 'ledgeit_transactions';
@@ -681,10 +680,11 @@ export const saveTermsAcceptance = async (accepted: boolean): Promise<void> => {
 export const loadAppPreferences = async (): Promise<AppPreferences | null> => {
   try {
     const raw = await SecureStorage.getItem(PREFERENCES_KEY);
-    if (raw) return JSON.parse(raw);    return { themeType: 'light', accentTheme: 'tonal' as any, country: 'IN' };
+    if (raw) return JSON.parse(raw);
+    return { accentTheme: 'tonal', country: 'IN' };
   } catch (error) {
     console.error('Error loading app preferences:', error);
-    return { themeType: 'light', accentTheme: 'tonal' as any, country: 'IN' };
+    return { accentTheme: 'tonal', country: 'IN' };
   }
 };
 
