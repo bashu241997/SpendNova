@@ -239,6 +239,11 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
               inputAccessoryViewID={inputAccessoryViewID}
               placeholder="0.00"
               placeholderTextColor={colors.outline}
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                const numericVal = parseFloat(amountStr) || 0;
+                handleNumpadDone(numericVal);
+              }}
               style={[
                 styles.amountValueText,
                 {
@@ -246,8 +251,9 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                   minWidth: 160,
                   borderBottomWidth: 1.5,
                   borderBottomColor: dynamicColor,
-                  textAlign: 'center'
-                }
+                  textAlign: 'center',
+                  outlineStyle: 'none'
+                } as any
               ]}
             />
           </View>
@@ -343,11 +349,17 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
             placeholderTextColor={colors.outline}
             value={description}
             onChangeText={setDescription}
+            returnKeyType="done"
+            onSubmitEditing={() => {
+              const numericVal = parseFloat(amountStr) || 0;
+              handleNumpadDone(numericVal);
+            }}
             style={[styles.descriptionInput, {
               color: colors.onBackground,
               borderColor: colors.surfaceVariant,
-              backgroundColor: colors.surfaceVariant
-            }]}
+              backgroundColor: colors.surfaceVariant,
+              outlineStyle: 'none'
+            } as any]}
           />
         </View>
 
@@ -528,7 +540,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 4,
     marginBottom: 16,
   },
@@ -536,7 +548,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 20,
   },
   tabLabel: {
     fontSize: 12,
@@ -575,7 +587,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: 48,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 12,
   },
   selectedIndicator: {
@@ -592,13 +604,13 @@ const styles = StyleSheet.create({
   descriptionInput: {
     flex: 1,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 16,
     fontSize: 15,
   },
   amountContainer: {
     padding: 20,
-    borderRadius: 20,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 12,
@@ -652,11 +664,11 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     borderRadius: 24,
     padding: 12,
-    elevation: 6,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
   modalHeader: {
     flexDirection: 'row',

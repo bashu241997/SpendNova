@@ -681,11 +681,10 @@ export const saveTermsAcceptance = async (accepted: boolean): Promise<void> => {
 export const loadAppPreferences = async (): Promise<AppPreferences | null> => {
   try {
     const raw = await SecureStorage.getItem(PREFERENCES_KEY);
-    if (raw) return JSON.parse(raw);
-    return { themeType: 'dark', accentTheme: 'tonal' as any, country: 'IN' };
-  } catch (e) {
-    console.error('Failed to load preferences', e);
-    return { themeType: 'dark', accentTheme: 'tonal' as any, country: 'IN' };
+    if (raw) return JSON.parse(raw);    return { themeType: 'light', accentTheme: 'tonal' as any, country: 'IN' };
+  } catch (error) {
+    console.error('Error loading app preferences:', error);
+    return { themeType: 'light', accentTheme: 'tonal' as any, country: 'IN' };
   }
 };
 

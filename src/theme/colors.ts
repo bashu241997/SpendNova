@@ -38,57 +38,55 @@ export const ACCENT_OPTIONS: AccentOption[] = [
 
 export const getTheme = (type: ThemeType, _accent: AccentTheme = 'tonal'): ColorTheme => {
   if (type === 'dark') {
-    // angular.dev Clean Layout Aesthetic (No aggressive reds)
     return {
-      primary: '#F8FAFC',           // White text/icons for active states
-      onPrimary: '#0F172A',         // Slate background for primary buttons
-      primaryContainer: '#1E293B',  // Slate 800 (very subtle hover/active state)
-      onPrimaryContainer: '#F8FAFC',// White text
-      secondary: '#94A3B8',         // Slate 400 (muted secondary text/icons)
-      onSecondary: '#0F172A',
-      secondaryContainer: '#0F172A',// Transparent/Background for cards
-      onSecondaryContainer: '#F8FAFC',
-      background: '#09090B',        // Very deep almost-black slate
+      primary: '#10B981',           // Emerald/Mint accent
+      onPrimary: '#FFFFFF',         // White text for primary buttons
+      primaryContainer: '#042F2E',  // Dark Teal for active states
+      onPrimaryContainer: '#34D399',// Light Mint text
+      secondary: '#9CA3AF',         // Gray 400
+      onSecondary: '#111827',
+      secondaryContainer: '#1F2937',// Card background
+      onSecondaryContainer: '#F3F4F6',
+      background: '#0F172A',        // Slate 900 background
       onBackground: '#F8FAFC',      // White Text
-      surface: '#09090B',           // Exactly matches background (NO visible card boxes)
+      surface: '#1E293B',           // Slate 800 surfaces
       onSurface: '#F8FAFC',
-      surfaceVariant: '#18181B',    // Zinc 900 (barely visible elevation)
-      onSurfaceVariant: '#A1A1AA',  // Zinc 400 text
-      outline: '#27272A',           // Zinc 800 (very subtle glassy border)
-      error: '#EF4444',             // Standard Red (only for actual errors)
+      surfaceVariant: '#334155',    // Slate 700 
+      onSurfaceVariant: '#94A3B8',  // Slate 400 text
+      outline: '#334155',           // Slate 700 border
+      error: '#EF4444',             
       onError: '#FFFFFF',
-      success: '#10B981',           // Emerald 500 (only for positive numbers)
+      success: '#10B981',           
       onSuccess: '#FFFFFF',
-      info: '#3B82F6',              // Blue 500
+      info: '#3B82F6',              
       onInfo: '#FFFFFF',
-      backgroundGradient: ['#09090B', '#09090B'], 
+      backgroundGradient: ['#0F172A', '#0F172A'], 
     };
   }
 
-  // angular.dev Light Layout Aesthetic
   return {
-    primary: '#09090B',             // Near black for active text/icons
+    primary: '#059669',             // Emerald/Mint primary
     onPrimary: '#FFFFFF',
-    primaryContainer: '#F4F4F5',    // Zinc 100 for subtle hover/active states
-    onPrimaryContainer: '#09090B',  
-    secondary: '#71717A',           // Zinc 500
+    primaryContainer: '#D1FAE5',    // Light Mint for active states
+    onPrimaryContainer: '#065F46',  // Dark Mint text
+    secondary: '#6B7280',           // Gray 500
     onSecondary: '#FFFFFF',
     secondaryContainer: '#FFFFFF',
-    onSecondaryContainer: '#09090B',
-    background: '#FFFFFF',          // Pure white
-    onBackground: '#09090B',        // Near black text
-    surface: '#FFFFFF',             // Exactly matches background
-    onSurface: '#09090B',
-    surfaceVariant: '#FAFAFA',      // Zinc 50
-    onSurfaceVariant: '#52525B',    // Zinc 600 text
-    outline: '#E4E4E7',             // Zinc 200 border
+    onSecondaryContainer: '#111827',
+    background: '#F8F9FA',          // Soft Off-White Background
+    onBackground: '#111827',        // Dark Gray text
+    surface: '#FFFFFF',             // Pure white cards
+    onSurface: '#111827',
+    surfaceVariant: '#F3F4F6',      // Gray 100
+    onSurfaceVariant: '#4B5563',    // Gray 600 text
+    outline: '#E5E7EB',             // Soft gray border
     error: '#DC2626',               
     onError: '#FFFFFF',
     success: '#059669',             
     onSuccess: '#FFFFFF',
     info: '#2563EB',                
     onInfo: '#FFFFFF',
-    backgroundGradient: ['#FFFFFF', '#FFFFFF'], 
+    backgroundGradient: ['#F8F9FA', '#F8F9FA'], 
   };
 };
 
