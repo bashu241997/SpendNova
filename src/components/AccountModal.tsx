@@ -146,7 +146,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       onRequestClose={onClose}
     >
@@ -334,6 +334,7 @@ const styles = StyleSheet.create({
   content: {
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    minHeight: '50%',
     maxHeight: '85%',
     paddingBottom: 24,
   },

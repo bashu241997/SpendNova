@@ -38,7 +38,7 @@ export const CategoryPickerModal: React.FC<CategoryPickerModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         <View style={[styles.content, { backgroundColor: colors.background }]}>
@@ -138,7 +138,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill as any,
   },
   content: {
-    height: '80%',
+    minHeight: '50%',
+    maxHeight: '85%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 12,

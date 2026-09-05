@@ -146,7 +146,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
     : [];
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
+    <Modal visible={visible} animationType="fade" onRequestClose={onClose} transparent>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>

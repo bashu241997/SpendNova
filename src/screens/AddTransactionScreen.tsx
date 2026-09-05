@@ -655,6 +655,7 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '92%',
     maxWidth: 400,
+    minHeight: '50%',
     borderRadius: 24,
     padding: 12,
     elevation: 2,

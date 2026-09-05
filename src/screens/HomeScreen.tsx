@@ -716,9 +716,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: Platform.OS === 'web' ? 28 : 20,
-    paddingTop: Platform.OS === 'web' ? 28 : 20,
+    paddingHorizontal: Platform.OS === 'web' ? 48 : 20,
+    paddingTop: Platform.OS === 'web' ? 48 : 20,
     paddingBottom: 22,
+    width: '100%',
+    maxWidth: 1400,
+    alignSelf: 'center',
   },
   headerLeft: {
     flex: 1,
@@ -750,7 +753,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Platform.OS === 'web' ? 28 : 20,
+    paddingHorizontal: Platform.OS === 'web' ? 48 : 20,
     marginBottom: 12,
   },
   sectionTitle: {
@@ -766,7 +769,7 @@ const styles = StyleSheet.create({
     marginHorizontal: Platform.OS === 'web' ? -28 : -20,
   },
   carouselScroll: {
-    paddingHorizontal: Platform.OS === 'web' ? 28 : 20,
+    paddingHorizontal: Platform.OS === 'web' ? 48 : 20,
     gap: 12,
   },
   accountCard: {
@@ -806,8 +809,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   splitContainer: {
-    paddingHorizontal: Platform.OS === 'web' ? 28 : 20,
+    paddingHorizontal: Platform.OS === 'web' ? 48 : 20,
     paddingBottom: 110,
+    width: '100%',
+    maxWidth: 1400,
+    alignSelf: 'center',
   },
   splitRow: {
     flexDirection: 'row',
