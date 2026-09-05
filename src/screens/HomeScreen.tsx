@@ -13,6 +13,7 @@ import { useApp } from '../context/AppContext';
 import { Transaction } from '../utils/storage';
 import { ParallaxCard } from '../components/ParallaxCard';
 import { AnalyticsChart } from '../components/AnalyticsChart';
+import { getCountryDetails } from '../utils/currencies';
 
 interface HomeScreenProps {
   onAddTransaction: (type?: 'income' | 'expense' | 'transfer') => void;
@@ -44,7 +45,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onEditTransaction,
   onNavigateTab 
 }) => {
-  const { accounts, categories, transactions, budgets, recurringTxs, goals, colors, currencySymbol } = useApp();
+  const { accounts, categories, transactions, budgets, recurringTxs, goals, colors, currencySymbol, country } = useApp();
 
   const { width } = useWindowDimensions();
   const isLargeScreen = width > 1024;
@@ -296,7 +297,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </View>
         <View style={styles.headerRight}>
           <Text style={[styles.greetingText, { color: colors.onSurfaceVariant }]}>Hello there</Text>
-          <Text style={[styles.nameText, { color: colors.onBackground }]}>Welcome back</Text>
+          <Text style={[styles.nameText, { color: colors.onBackground, marginBottom: 8 }]}>Welcome back</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: colors.surfaceVariant, alignSelf: 'flex-end' }}>
+            <Text style={{ fontSize: 16 }}>{getCountryDetails(country).flag}</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.onSurfaceVariant }}>
+              {country} {getCountryDetails(country).symbol}
+            </Text>
+          </View>
         </View>
       </View>
 

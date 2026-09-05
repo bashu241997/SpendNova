@@ -44,14 +44,9 @@ import {
   DriveFile
 } from '../utils/googleDrive';
 
-export type CountryType = 'US' | 'IN' | 'EU' | 'UK';
+import { detectUserCountry, getCurrencySymbol } from '../utils/currencies';
 
-export const countryToSymbolMap: Record<CountryType, string> = {
-  US: '$',
-  IN: '₹',
-  EU: '€',
-  UK: '£',
-};
+export type CountryType = string;
 
 export interface GoogleUser {
   id: string;
@@ -167,7 +162,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [cloudBackups, setCloudBackups] = useState<DriveFile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [country, setCountryState] = useState<CountryType>('IN');
+  const [country, setCountryState] = useState<string>('US');
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
@@ -194,9 +189,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setHasAcceptedTerms(termsAccepted);
       if (preferences) {
         setAccentTheme(preferences.accentTheme || 'tonal');
-        setCountryState(preferences.country || 'IN');
+        setCountryState(preferences.country || detectUserCountry());
       } else {
-        setCountryState('IN');
+        setCountryState(detectUserCountry());
       }
 
       const storedToken = await getGoogleToken();
@@ -233,7 +228,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 
 
-  const currencySymbol = countryToSymbolMap[country];
+  const currencySymbol = getCurrencySymbol(country);
 
   const recalculateGoalsFromTransactions = async (txs: Transaction[]) => {
     if (!Array.isArray(goals) || goals.length === 0) return;

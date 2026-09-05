@@ -31,15 +31,18 @@ import { OnboardingSlideshow } from './src/components/OnboardingSlideshow';
 import { GuidedTourModal } from './src/components/GuidedTourModal';
 import { SecureStorage } from './src/utils/secureStorage';
 import { Transaction } from './src/utils/storage';
+import { CurrencyPickerModal } from './src/components/CurrencyPickerModal';
+import { getCountryDetails } from './src/utils/currencies';
 
 type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings' | 'categories' | 'more' | 'recurring' | 'goals';
 
 function MainAppContent() {
-  const { colors, themeType, loading, hasAcceptedTerms, acceptTerms } = useApp();
+  const { colors, themeType, loading, hasAcceptedTerms, acceptTerms, country, setCountry } = useApp();
   const [activeTab, setActiveTab] = useState<MainTab>('home');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
   const [isAddMode, setIsAddMode] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false);
   const { width } = useWindowDimensions();
 
   useEffect(() => {
@@ -285,7 +288,21 @@ function MainAppContent() {
                 <View style={{ paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }}>
                   <Text style={{ fontSize: 11, fontWeight: '600', color: colors.onSurfaceVariant }}>Vault: Encrypted</Text>
                 </View>
-                <Text style={[styles.mainHeaderTitle, { color: colors.onSurface }]}>
+
+                {Platform.OS === 'web' && (
+                  <TouchableOpacity 
+                    onPress={() => setIsCurrencyModalOpen(true)}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }}
+                  >
+                    <Text style={{ fontSize: 14 }}>{getCountryDetails(country).flag}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.onSurfaceVariant }}>
+                      {country} {getCountryDetails(country).symbol}
+                    </Text>
+                    <MaterialIcons name="arrow-drop-down" size={14} color={colors.onSurfaceVariant} style={{ marginLeft: -2 }} />
+                  </TouchableOpacity>
+                )}
+
+                <Text style={[styles.mainHeaderTitle, { color: colors.onSurface, marginLeft: 8 }]}>
                   {getHeaderTitle()}
                 </Text>
               </View>
@@ -319,6 +336,14 @@ function MainAppContent() {
           <GuidedTourModal
             visible={isTourOpen}
             onClose={handleCloseTour}
+          />
+
+          <CurrencyPickerModal
+            visible={isCurrencyModalOpen}
+            onClose={() => setIsCurrencyModalOpen(false)}
+            colors={colors}
+            selectedCountryCode={country}
+            onSelect={(c) => setCountry(c.code)}
           />
         </SafeAreaView>
       </LinearGradient>

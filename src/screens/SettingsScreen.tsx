@@ -19,6 +19,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { ColorTheme, ACCENT_OPTIONS, AccentTheme } from '../theme/colors';
 import { useApp } from '../context/AppContext';
 import { exportDataToFile, importDataFromFile, exportSampleTemplate, CloudBackup } from '../utils/storage';
+import { CurrencyPickerModal } from '../components/CurrencyPickerModal';
+import { getCountryDetails } from '../utils/currencies';
 
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
@@ -67,6 +69,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
 
   const [activeView, setActiveView] = useState<'main' | 'data_sync' | 'legal' | 'danger'>('main');
   const [showWipeConfirm, setShowWipeConfirm] = useState(false);
+  const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false);
 
   const googleClientIds = {
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
@@ -391,42 +394,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
           Select the currency symbol displayed throughout the app.
         </Text>
 
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-          {(['US', 'IN', 'EU', 'UK'] as const).map((cnt) => {
-            const active = country === cnt;
-            let symbol = '$';
-            let label = 'US Dollars';
-            if (cnt === 'IN') { symbol = '₹'; label = 'Rupees'; }
-            if (cnt === 'EU') { symbol = '€'; label = 'Euros'; }
-            if (cnt === 'UK') { symbol = '£'; label = 'Pound Sterling'; }
-
-            return (
-              <TouchableOpacity
-                key={cnt}
-                onPress={() => setCountry(cnt)}
-                style={[
-                  styles.currencyPill,
-                  { backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: 'transparent' },
-                  active && { backgroundColor: colors.primaryContainer, borderColor: colors.outline }
-                ]}
-              >
-                <Text style={[
-                  styles.currencyPillSymbol,
-                  { color: colors.onSurfaceVariant },
-                  active && { color: colors.onPrimaryContainer, fontWeight: '800' }
-                ]}>
-                  {symbol}
-                </Text>
-                <Text style={[
-                  styles.currencyPillLabel,
-                  { color: colors.onSurfaceVariant },
-                  active && { color: colors.onPrimaryContainer, fontWeight: '800' }
-                ]}>
-                  {cnt}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer, marginRight: 16, marginBottom: 0 }]}>
+            <MaterialIcons name="public" size={24} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>
+              {getCountryDetails(country).name} ({country})
+            </Text>
+            <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant }]}>
+              Symbol: {getCountryDetails(country).symbol}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.smallPill, { backgroundColor: colors.primaryContainer }]}
+            onPress={() => setIsCurrencyModalOpen(true)}
+          >
+            <Text style={[styles.smallPillText, { color: colors.primary }]}>Change</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -599,6 +584,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
         </View>
       </Modal>
 
+      <CurrencyPickerModal
+        visible={isCurrencyModalOpen}
+        onClose={() => setIsCurrencyModalOpen(false)}
+        colors={colors}
+        selectedCountryCode={country}
+        onSelect={(c) => setCountry(c.code)}
+      />
     </ScrollView>
   );
 };
