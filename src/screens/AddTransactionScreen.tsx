@@ -440,7 +440,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                 }}
               >
                 <MaterialIcons name="do-not-disturb-alt" size={20} color={colors.onSurfaceVariant} style={{ marginRight: 10 }} />
-                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.onSurface }}>No Goal (Unlinked)</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: colors.onSurface }}>No Goal (Unlinked)</Text>
               </TouchableOpacity>
               {(goals || []).map(g => (
                 <TouchableOpacity
@@ -456,7 +456,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                 >
                   <View style={[styles.selectedIndicator, { backgroundColor: g.color || colors.primary, marginRight: 10 }]} />
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: colors.onSurface }}>{g.name}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: colors.onSurface }}>{g.name}</Text>
                     <Text style={{ fontSize: 11, color: colors.onSurfaceVariant }}>Target: {currencySymbol}{g.targetAmount.toLocaleString()}</Text>
                   </View>
                 </TouchableOpacity>
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   formContainer: {
     flex: 1,
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 0.5,
   },
   formRow: {
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   pickerWrapper: {
     flex: 1,
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
   },
   amountLabel: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: 1,
     marginBottom: 8,
   },
@@ -626,12 +626,12 @@ const styles = StyleSheet.create({
   },
   currencySign: {
     fontSize: 32,
-    fontWeight: '800',
+    fontWeight: '600',
     marginRight: 8,
   },
   amountValueText: {
     fontSize: 48,
-    fontWeight: '900',
+    fontWeight: '700',
     textAlign: 'center',
   },
   saveButtonWeb: {
@@ -644,7 +644,7 @@ const styles = StyleSheet.create({
   },
   saveButtonTextWeb: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
@@ -674,6 +674,6 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

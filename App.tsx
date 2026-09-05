@@ -261,7 +261,7 @@ function MainAppContent() {
                     <Text style={[
                       styles.sidebarMenuItemText,
                       { color: active ? colors.onPrimaryContainer : colors.onSurfaceVariant },
-                      active && { fontWeight: '700' }
+                      active && { fontWeight: '600' }
                     ]}>
                       {label}
                     </Text>
@@ -283,7 +283,7 @@ function MainAppContent() {
             <View style={[styles.mainHeader, { borderBottomColor: colors.outline, backgroundColor: colors.surface, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 20 }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }}>
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: colors.onSurfaceVariant }}>Vault: Encrypted</Text>
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: colors.onSurfaceVariant }}>Vault: Encrypted</Text>
                 </View>
                 <Text style={[styles.mainHeaderTitle, { color: colors.onSurface }]}>
                   {getHeaderTitle()}
@@ -354,7 +354,7 @@ function MainAppContent() {
               <Text style={[
                 styles.tabLabelText,
                 { color: activeTab === 'home' ? colors.onBackground : colors.onSurfaceVariant },
-                activeTab === 'home' && { fontWeight: '700' }
+                activeTab === 'home' && { fontWeight: '600' }
               ]}>
                 Home
               </Text>
@@ -378,7 +378,7 @@ function MainAppContent() {
               <Text style={[
                 styles.tabLabelText,
                 { color: activeTab === 'transactions' ? colors.onBackground : colors.onSurfaceVariant },
-                activeTab === 'transactions' && { fontWeight: '700' }
+                activeTab === 'transactions' && { fontWeight: '600' }
               ]}>
                 Transaction
               </Text>
@@ -412,7 +412,7 @@ function MainAppContent() {
               <Text style={[
                 styles.tabLabelText,
                 { color: activeTab === 'budgets' ? colors.onBackground : colors.onSurfaceVariant },
-                activeTab === 'budgets' && { fontWeight: '700' }
+                activeTab === 'budgets' && { fontWeight: '600' }
               ]}>
                 Budgets
               </Text>
@@ -436,7 +436,7 @@ function MainAppContent() {
               <Text style={[
                 styles.tabLabelText,
                 { color: ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) ? colors.onBackground : colors.onSurfaceVariant },
-                ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { fontWeight: '700' }
+                ['more', 'stats', 'accounts', 'settings', 'categories'].includes(activeTab) && { fontWeight: '600' }
               ]}>
                 More
               </Text>
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 14,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   mainHeader: {
     flexDirection: 'row',
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   },
   mainHeaderTitle: {
     fontSize: 22,
-    fontWeight: '900',
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
   viewport: {
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
   },
   tabLabelText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: 4,
   },
   headerAddBtn: {
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
   },
   centerAddText: {
     fontSize: 11,
-    fontWeight: '900',
+    fontWeight: '700',
     letterSpacing: 1.5,
   },
   sidebar: {
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
   },
   sidebarLogo: {
     fontSize: 22,
-    fontWeight: '900',
+    fontWeight: '700',
     marginBottom: 32,
     letterSpacing: 0.5,
   },
@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
   },
   sidebarAddText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   desktopMain: {
     flex: 1,

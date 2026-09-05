@@ -553,7 +553,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                           <MaterialIcons name={(g.icon || 'savings') as any} size={18} color={g.color || colors.primary} />
                         </View>
                         <View style={{ flex: 1 }}>
-                          <Text style={[{ fontSize: 15, fontWeight: '700', color: colors.onSurface }]} numberOfLines={1}>{g.name}</Text>
+                          <Text style={[{ fontSize: 15, fontWeight: '600', color: colors.onSurface }]} numberOfLines={1}>{g.name}</Text>
                         </View>
                         <MaterialIcons name="chevron-right" size={20} color={colors.onSurfaceVariant} />
                       </View>
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
     marginBottom: 3,
   },
   headerRight: {
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
   },
   nameText: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -755,11 +755,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   seeAllText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   carouselContainer: {
     marginBottom: 24,
@@ -788,7 +788,7 @@ const styles = StyleSheet.create({
   },
   accName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     flex: 1,
     paddingRight: 6,
   },
@@ -799,7 +799,7 @@ const styles = StyleSheet.create({
   },
   accBalance: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
     marginBottom: 4,
   },
   accTxCount: {
@@ -863,7 +863,7 @@ const styles = StyleSheet.create({
   },
   emptyGoalTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
     marginBottom: 3,
   },
   emptyGoalDescription: {
@@ -903,7 +903,7 @@ const styles = StyleSheet.create({
   },
   bName: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     flex: 1,
   },
   bAmountRow: {
@@ -912,7 +912,7 @@ const styles = StyleSheet.create({
   },
   bLeft: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '600',
     marginRight: 6,
   },
   bTotal: {
@@ -933,7 +933,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 8,
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   todayMarkerWrapper: {
     marginTop: 2,
@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
   },
   todayText: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   dateRangeRow: {
     flexDirection: 'row',
@@ -989,7 +989,7 @@ const styles = StyleSheet.create({
   },
   goalTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     marginLeft: 8,
   },
   goalFooter: {
@@ -1002,14 +1002,14 @@ const styles = StyleSheet.create({
   },
   goalAmt: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   txGroup: {
     marginBottom: 24,
   },
   txGroupTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     marginBottom: 12,
     marginLeft: 4,
   },
@@ -1041,7 +1041,7 @@ const styles = StyleSheet.create({
   },
   txTitle: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   subPill: {
     flexDirection: 'row',
@@ -1052,7 +1052,7 @@ const styles = StyleSheet.create({
   },
   subPillText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   txSub: {
     fontSize: 13,
@@ -1063,7 +1063,7 @@ const styles = StyleSheet.create({
   },
   txAmount: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     marginBottom: 4,
   },
   txTime: {
@@ -1096,11 +1096,11 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   chartAmount: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   heatmapContainer: {
     marginTop: 12,
@@ -1109,7 +1109,7 @@ const styles = StyleSheet.create({
   },
   heatmapTitle: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
@@ -1125,7 +1125,7 @@ const styles = StyleSheet.create({
   },
   dayLabelText: {
     fontSize: 8,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'right',
     width: 10,
   },
@@ -1151,7 +1151,7 @@ const styles = StyleSheet.create({
   heatmapLabelText: {
     position: 'absolute',
     fontSize: 8,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   legendRow: {
     flexDirection: 'row',
@@ -1163,7 +1163,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 9,
-    fontWeight: '600',
+    fontWeight: '500',
     marginHorizontal: 2,
   },
   legendSquare: {
