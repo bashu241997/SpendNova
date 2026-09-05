@@ -38,7 +38,10 @@ import { PWAInstallBanner } from './src/components/PWAInstallBanner';
 type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings' | 'categories' | 'more' | 'recurring' | 'goals';
 
 function MainAppContent() {
-  const { colors, themeType, loading, hasAcceptedTerms, acceptTerms, country, setCountry } = useApp();
+  const { colors, loading, hasAcceptedTerms, acceptTerms, country, setCountry } = useApp();
+  // AppContext no longer exposes `themeType`; derive the status-bar treatment
+  // from the active palette instead.
+  const themeType = colors.background === '#0B0F19' ? 'dark' : 'light';
   const [activeTab, setActiveTab] = useState<MainTab>('home');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
   const [isAddMode, setIsAddMode] = useState(false);
@@ -291,7 +294,7 @@ function MainAppContent() {
                 </View>
 
                 {Platform.OS === 'web' && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => setIsCurrencyModalOpen(true)}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }}
                   >
@@ -308,7 +311,7 @@ function MainAppContent() {
                 </Text>
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setIsTourOpen(true)}
                 style={[{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 16, backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.outline }]}
                 activeOpacity={0.8}
