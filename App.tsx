@@ -33,6 +33,7 @@ import { SecureStorage } from './src/utils/secureStorage';
 import { Transaction } from './src/utils/storage';
 import { CurrencyPickerModal } from './src/components/CurrencyPickerModal';
 import { getCountryDetails } from './src/utils/currencies';
+import { PWAInstallBanner } from './src/components/PWAInstallBanner';
 
 type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings' | 'categories' | 'more' | 'recurring' | 'goals';
 
@@ -345,6 +346,7 @@ function MainAppContent() {
             selectedCountryCode={country}
             onSelect={(c) => setCountry(c.code)}
           />
+          <PWAInstallBanner colors={colors} />
         </SafeAreaView>
       </LinearGradient>
     );
@@ -484,6 +486,7 @@ function MainAppContent() {
           visible={isTourOpen}
           onClose={handleCloseTour}
         />
+        <PWAInstallBanner colors={colors} />
       </SafeAreaView>
     </LinearGradient>
   );
