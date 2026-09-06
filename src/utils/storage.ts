@@ -699,5 +699,27 @@ export const saveAppPreferences = async (preferences: AppPreferences): Promise<v
   }
 };
 
+export const getAccountBalance = (acc: Account, transactions: Transaction[]): number => {
+  const initial = acc.initialBalance || 0;
+  let inc = 0, exp = 0, trOut = 0, trIn = 0;
+  transactions.forEach(t => {
+    if (t.account === acc.id || t.account === acc.name) {
+      if (t.type === 'income') inc += t.amount;
+      if (t.type === 'expense') exp += t.amount;
+      if (t.type === 'transfer') trOut += t.amount;
+    }
+    if (t.type === 'transfer' && (t.toAccount === acc.id || t.toAccount === acc.name)) {
+      trIn += t.amount;
+    }
+  });
+  return initial + inc - exp - trOut + trIn;
+};
+
+export const getTotalNetWorth = (accounts: Account[], transactions: Transaction[]): number => {
+  if (!Array.isArray(accounts) || accounts.length === 0) return 0;
+  const safeTxs = Array.isArray(transactions) ? transactions : [];
+  return accounts.reduce((sum, acc) => sum + getAccountBalance(acc, safeTxs), 0);
+};
+
 
 

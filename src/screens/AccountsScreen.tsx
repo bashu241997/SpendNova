@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
-import { Account } from '../utils/storage';
+import { Account, getAccountBalance, getTotalNetWorth } from '../utils/storage';
 import { AccountModal } from '../components/AccountModal';
 import { ParallaxCard } from '../components/ParallaxCard';
 
@@ -43,13 +43,13 @@ export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
     let txCount = 0;
 
     transactions.forEach(t => {
-      if (t.account === accId) {
+      if (t.account === accId || t.account === acc.name) {
         txCount++;
         if (t.type === 'income') incomeTotal += t.amount;
         if (t.type === 'expense') expenseTotal += t.amount;
         if (t.type === 'transfer') transferOutTotal += t.amount;
       }
-      if (t.type === 'transfer' && t.toAccount === accId) {
+      if (t.type === 'transfer' && (t.toAccount === accId || t.toAccount === acc.name)) {
         txCount++;
         transferInTotal += t.amount;
       }
@@ -67,9 +67,9 @@ export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
     };
   };
 
-  const totalCombinedBalance = accounts.reduce((sum, acc) => {
-    return sum + getAccountStats(acc).netBalance;
-  }, 0);
+  const totalCombinedBalance = React.useMemo(() => {
+    return getTotalNetWorth(accounts, transactions);
+  }, [accounts, transactions]);
 
   // 2 columns for web/tablet, 1 for small mobile
   const numColumns = width > 600 ? 2 : 1;

@@ -10,7 +10,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { ColorTheme } from '../theme/colors';
 import { useApp } from '../context/AppContext';
-import { Transaction, Category } from '../utils/storage';
+import { Transaction, Category, getTotalNetWorth } from '../utils/storage';
 import { AnalyticsChart } from '../components/AnalyticsChart';
 
 interface StatsScreenProps {
@@ -26,21 +26,7 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onB
 
   // Overall Total Money He Has Now (Combined Net Worth across accounts)
   const totalMoneyNow = useMemo(() => {
-    return accounts.reduce((sum, acc) => {
-      const initial = acc.initialBalance || 0;
-      let inc = 0, exp = 0, trOut = 0, trIn = 0;
-      transactions.forEach(t => {
-        if (t.account === acc.id) {
-          if (t.type === 'income') inc += t.amount;
-          if (t.type === 'expense') exp += t.amount;
-          if (t.type === 'transfer') trOut += t.amount;
-        }
-        if (t.type === 'transfer' && t.toAccount === acc.id) {
-          trIn += t.amount;
-        }
-      });
-      return sum + (initial + inc - exp - trOut + trIn);
-    }, 0);
+    return getTotalNetWorth(accounts, transactions);
   }, [accounts, transactions]);
 
   const [currentFilterMonth, setCurrentFilterMonth] = useState(() => {
@@ -64,10 +50,20 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onB
     setCurrentFilterMonth(new Date(filterYear, currentFilterMonth.getMonth() + 1, 1));
   };
 
-  const monthlyTxs = transactions.filter(t => {
-    const txDate = new Date(t.date);
-    return txDate.getFullYear() === filterYear && (txDate.getMonth() + 1) === filterMonth;
-  });
+  const monthlyTxs = useMemo(() => {
+    return transactions.filter(t => {
+      if (!t.date) return false;
+      const dateStr = typeof t.date === 'string' ? t.date.split('T')[0] : '';
+      const parts = dateStr.split('-');
+      if (parts.length >= 2) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        return y === filterYear && m === filterMonth;
+      }
+      const txDate = new Date(t.date);
+      return txDate.getFullYear() === filterYear && (txDate.getMonth() + 1) === filterMonth;
+    });
+  }, [transactions, filterYear, filterMonth]);
 
   const filteredTxs = monthlyTxs.filter(t => t.type === type);
   const totalAmount = filteredTxs.reduce((sum, t) => sum + t.amount, 0);
@@ -280,6 +276,13 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onB
                 <Text style={{ fontSize: 10, color: colors.onSurfaceVariant, fontWeight: '600' }}>TOTAL EXPENSE</Text>
                 <Text style={{ fontSize: 14, color: colors.error, fontWeight: '800' }}>-{currencySymbol}{totalBurned.toFixed(2)}</Text>
               </View>
+              <View style={[styles.vibeDivider, { backgroundColor: colors.surfaceVariant }]} />
+              <View style={styles.vibeCol}>
+                <Text style={{ fontSize: 10, color: colors.onSurfaceVariant, fontWeight: '600' }}>NET SAVINGS</Text>
+                <Text style={{ fontSize: 14, color: '#2563EB', fontWeight: '800' }}>
+                  {netVibe >= 0 ? '+' : ''}{currencySymbol}{netVibe.toFixed(2)}
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -314,6 +317,7 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onB
 
           <AnalyticsChart
             transactions={monthlyTxs}
+            allTransactions={transactions}
             categories={categories}
             accounts={accounts}
             colors={colors}

@@ -415,7 +415,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (token && user) {
       await saveGoogleToken(token);
       await SecureStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(user));
-      const backups = await listDriveBackups(token);
+      let backups = await listDriveBackups(token);
+      if (backups.length > 1) {
+        for (let i = 1; i < backups.length; i++) {
+          await deleteDriveBackup(backups[i].id, token);
+        }
+        backups = await listDriveBackups(token);
+      }
       setCloudBackups(backups);
     } else {
       await removeGoogleToken();
@@ -436,7 +442,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const backupToCloud = async () => {
     if (!googleToken) return;
     const currentData: AppData = { transactions, accounts, categories, budgets, recurring: recurringTxs, goals };
-    const success = await uploadDriveBackup(JSON.stringify(currentData), googleToken);
+    const targetFileId = cloudBackups.length > 0 ? cloudBackups[0].id : undefined;
+    const success = await uploadDriveBackup(JSON.stringify(currentData), googleToken, targetFileId);
     if (success) {
       await refreshCloudBackups();
     } else {

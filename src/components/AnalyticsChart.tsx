@@ -2,10 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle, Line, Polygon, G, Text as SvgText, Rect } from 'react-native-svg';
 import { ColorTheme } from '../theme/colors';
-import { Transaction, Category, Account } from '../utils/storage';
+import { Transaction, Category, Account, getTotalNetWorth } from '../utils/storage';
 
 export interface AnalyticsChartProps {
   transactions: Transaction[];
+  allTransactions?: Transaction[];
   categories?: Category[];
   accounts?: Account[];
   colors: ColorTheme;
@@ -17,6 +18,7 @@ export interface AnalyticsChartProps {
 
 export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
   transactions,
+  allTransactions,
   categories = [],
   accounts = [],
   colors,
@@ -28,13 +30,34 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
   const [width, setWidth] = useState(Dimensions.get('window').width - 48);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
+  const getFormatDateStr = (dateInput: string | Date) => {
+    if (!dateInput) return '';
+    if (typeof dateInput === 'string') {
+      if (dateInput.includes('T')) {
+        return dateInput.split('T')[0];
+      }
+      if (dateInput.length >= 10) {
+        return dateInput.substring(0, 10);
+      }
+    }
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const fullTxList = useMemo(() => {
+    return allTransactions && allTransactions.length > 0 ? allTransactions : transactions;
+  }, [allTransactions, transactions]);
+
   // -------------------------------------------------------------
-  // 1. LAST 45 DAYS LINE COMPARISON DATA (Money Left, Expense, Income Data Points)
+  // 1. LAST 30 DAYS LINE COMPARISON DATA (Money Left, Expense, Income Data Points)
   // -------------------------------------------------------------
   const lineComparisonData = useMemo(() => {
-    const numDays = 45;
+    const numDays = 30;
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
     const daysList: { date: Date; dateStr: string; label: string }[] = [];
     for (let i = 0; i < numDays; i++) {
@@ -42,7 +65,7 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
       d.setDate(today.getDate() - (numDays - 1 - i));
       daysList.push({
         date: d,
-        dateStr: d.toISOString().split('T')[0],
+        dateStr: getFormatDateStr(d),
         label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       });
     }
@@ -50,10 +73,8 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     const dailyIncome = new Array(numDays).fill(0);
     const dailyExpense = new Array(numDays).fill(0);
 
-    transactions.forEach(t => {
-      const tDate = new Date(t.date);
-      tDate.setHours(0, 0, 0, 0);
-      const tStr = tDate.toISOString().split('T')[0];
+    fullTxList.forEach(t => {
+      const tStr = getFormatDateStr(t.date);
       const dayIdx = daysList.findIndex(d => d.dateStr === tStr);
       if (dayIdx !== -1) {
         if (t.type === 'income') dailyIncome[dayIdx] += t.amount;
@@ -77,7 +98,7 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     const totalExpense = runExpense;
 
     return { daysList, numDays, dailyIncome, dailyExpense, cumIncome, cumExpense, totalIncome, totalExpense };
-  }, [transactions]);
+  }, [fullTxList]);
 
   // -------------------------------------------------------------
   // 2. CATEGORY BREAKDOWN DATA (For Donut & Radar Charts)
@@ -116,19 +137,23 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
 
     const { daysList, numDays, dailyIncome, dailyExpense, cumIncome, cumExpense, totalIncome, totalExpense } = lineComparisonData;
 
-    // Total Starting Money at the start of 45-day window
-    const baseAccountStartingBalance = accounts.length > 0
-      ? accounts.reduce((sum, a) => sum + (a.initialBalance || 0), 0)
-      : 0;
+    // Current Total Net Worth (Money Left) across all active accounts
+    const totalNetWorthNow = getTotalNetWorth(accounts, fullTxList);
 
-    // Money Left per day curve = Base starting money + cumIncome[i] - cumExpense[i]
-    const moneyLeftCurve = cumExpense.map((exp, i) => {
-      return Math.max(0, baseAccountStartingBalance + cumIncome[i] - exp);
-    });
+    // Compute Money Left per day backwards starting from Today = totalNetWorthNow
+    const moneyLeftCurve = new Array(numDays).fill(0);
+    moneyLeftCurve[numDays - 1] = totalNetWorthNow;
 
-    const currentMoneyLeft = moneyLeftCurve[moneyLeftCurve.length - 1] ?? Math.max(0, baseAccountStartingBalance + totalIncome - totalExpense);
+    for (let i = numDays - 2; i >= 0; i--) {
+      const nextVal = moneyLeftCurve[i + 1];
+      const nextInc = dailyIncome[i + 1] || 0;
+      const nextExp = dailyExpense[i + 1] || 0;
+      moneyLeftCurve[i] = Math.max(0, nextVal - nextInc + nextExp);
+    }
 
-    const maxVal = Math.max(...moneyLeftCurve, ...cumExpense, baseAccountStartingBalance + totalIncome, 100);
+    const currentMoneyLeft = totalNetWorthNow;
+
+    const maxVal = Math.max(...moneyLeftCurve, ...cumExpense, totalNetWorthNow, 100);
     const minVal = 0;
     const rangeY = maxVal - minVal || 1;
 
@@ -197,9 +222,9 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
           <View style={[styles.legendBox, { backgroundColor: `${moneyLeftColor}15` }]}>
             <View style={[styles.dot, { backgroundColor: moneyLeftColor }]} />
             <View>
-              <Text style={[styles.legendLabel, { color: colors.onSurfaceVariant }]}>Money Left (Last 45 Days)</Text>
+              <Text style={[styles.legendLabel, { color: colors.onSurfaceVariant }]}>Money Left Now</Text>
               <Text style={[styles.legendValue, { color: moneyLeftColor }]}>
-                {currencySymbol}{currentMoneyLeft.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {currencySymbol}{currentMoneyLeft.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Text>
             </View>
           </View>
@@ -207,15 +232,15 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
           <View style={[styles.legendBox, { backgroundColor: `${expenseColor}15` }]}>
             <View style={[styles.dot, { backgroundColor: expenseColor }]} />
             <View>
-              <Text style={[styles.legendLabel, { color: colors.onSurfaceVariant }]}>Money Spent (45 Days)</Text>
+              <Text style={[styles.legendLabel, { color: colors.onSurfaceVariant }]}>Spent (Last 30 Days)</Text>
               <Text style={[styles.legendValue, { color: expenseColor }]}>
-                {currencySymbol}{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {currencySymbol}{totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* 45-DAY DUAL LINE CHART SVG */}
+        {/* 30-DAY DUAL LINE CHART SVG */}
         <View 
           style={{ height, width, position: 'relative' }}
           {...({
@@ -366,7 +391,7 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
               </>
             )}
 
-            {/* Touch / Hover Column Detectors for 45 Days */}
+            {/* Touch / Hover Column Detectors for 30 Days */}
             {daysList.map((d, i) => {
               const colW = graphW / numDays;
               const cx = getX(i) - colW / 2;
@@ -386,11 +411,11 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
           </Svg>
         </View>
 
-        {/* X-AXIS 45-DAY LABELS */}
+        {/* X-AXIS 30-DAY LABELS */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: paddingX, marginTop: 4 }}>
-          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>45 Days Ago ({daysList[0]?.label})</Text>
-          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>{daysList[22]?.label}</Text>
-          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>Today ({daysList[44]?.label})</Text>
+          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>30 Days Ago ({daysList[0]?.label})</Text>
+          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>{daysList[15]?.label}</Text>
+          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>Today ({daysList[29]?.label})</Text>
         </View>
       </View>
     );

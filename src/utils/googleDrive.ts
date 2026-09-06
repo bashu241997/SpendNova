@@ -52,6 +52,19 @@ export const downloadDriveBackup = async (fileId: string, accessToken: string): 
 
 export const uploadDriveBackup = async (fileContent: string, accessToken: string, existingFileId?: string): Promise<boolean> => {
   try {
+    let targetFileId = existingFileId;
+
+    if (!targetFileId) {
+      const existing = await listDriveBackups(accessToken);
+      if (existing.length > 0) {
+        targetFileId = existing[0].id;
+        // Clean up any surplus older duplicate backup files if any exist
+        for (let i = 1; i < existing.length; i++) {
+          await deleteDriveBackup(existing[i].id, accessToken);
+        }
+      }
+    }
+
     const metadata = {
       name: 'spendnova_backup.json',
       mimeType: 'application/json',
@@ -64,8 +77,8 @@ export const uploadDriveBackup = async (fileContent: string, accessToken: string
     let url = `${DRIVE_UPLOAD_URL}?uploadType=multipart`;
     let method = 'POST';
 
-    if (existingFileId) {
-      url = `${DRIVE_UPLOAD_URL}/${existingFileId}?uploadType=multipart`;
+    if (targetFileId) {
+      url = `${DRIVE_UPLOAD_URL}/${targetFileId}?uploadType=multipart`;
       method = 'PATCH';
     }
 
