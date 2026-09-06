@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import Svg, { Path, Defs, LinearGradient, Stop, Circle, Line, Polygon, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, Defs, LinearGradient, Stop, Circle, Line, Polygon, G, Text as SvgText, Rect } from 'react-native-svg';
 import { ColorTheme } from '../theme/colors';
 import { Transaction, Category, Account } from '../utils/storage';
 
@@ -26,28 +26,36 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
   onSelectCategory
 }) => {
   const [width, setWidth] = useState(Dimensions.get('window').width - 48);
-
-  // Filter transactions for current period
-  const sampleDate = useMemo(() => {
-    if (transactions.length > 0) return new Date(transactions[0].date);
-    return new Date();
-  }, [transactions]);
-
-  const year = sampleDate.getFullYear();
-  const month = sampleDate.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   // -------------------------------------------------------------
-  // 1. LINE COMPARISON DATA (Income vs Spending over days)
+  // 1. LAST 45 DAYS LINE COMPARISON DATA (Money Left, Expense, Income Data Points)
   // -------------------------------------------------------------
   const lineComparisonData = useMemo(() => {
-    const dailyIncome = new Array(daysInMonth).fill(0);
-    const dailyExpense = new Array(daysInMonth).fill(0);
+    const numDays = 45;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const daysList: { date: Date; dateStr: string; label: string }[] = [];
+    for (let i = 0; i < numDays; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - (numDays - 1 - i));
+      daysList.push({
+        date: d,
+        dateStr: d.toISOString().split('T')[0],
+        label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      });
+    }
+
+    const dailyIncome = new Array(numDays).fill(0);
+    const dailyExpense = new Array(numDays).fill(0);
 
     transactions.forEach(t => {
-      const d = new Date(t.date);
-      if (d.getMonth() === month && d.getFullYear() === year) {
-        const dayIdx = d.getDate() - 1;
+      const tDate = new Date(t.date);
+      tDate.setHours(0, 0, 0, 0);
+      const tStr = tDate.toISOString().split('T')[0];
+      const dayIdx = daysList.findIndex(d => d.dateStr === tStr);
+      if (dayIdx !== -1) {
         if (t.type === 'income') dailyIncome[dayIdx] += t.amount;
         if (t.type === 'expense') dailyExpense[dayIdx] += t.amount;
       }
@@ -58,7 +66,7 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     let runIncome = 0;
     let runExpense = 0;
 
-    for (let i = 0; i < daysInMonth; i++) {
+    for (let i = 0; i < numDays; i++) {
       runIncome += dailyIncome[i];
       runExpense += dailyExpense[i];
       cumIncome.push(runIncome);
@@ -68,8 +76,8 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
     const totalIncome = runIncome;
     const totalExpense = runExpense;
 
-    return { cumIncome, cumExpense, dailyIncome, dailyExpense, totalIncome, totalExpense };
-  }, [transactions, month, year, daysInMonth]);
+    return { daysList, numDays, dailyIncome, dailyExpense, cumIncome, cumExpense, totalIncome, totalExpense };
+  }, [transactions]);
 
   // -------------------------------------------------------------
   // 2. CATEGORY BREAKDOWN DATA (For Donut & Radar Charts)
@@ -99,44 +107,52 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
   }, [transactions, categories, type]);
 
   // -------------------------------------------------------------
-  // RENDER MODE 1: DUAL / TRIPLE LINE CHART COMPARISON (Income vs Spending vs Money Left)
+  // RENDER MODE 1: LAST 45 DAYS LINE CHART COMPARISON
   // -------------------------------------------------------------
   if (mode === 'line_comparison' || mode === 'area') {
-    const height = 220;
+    const height = 230;
     const paddingX = 24;
     const paddingY = 24;
 
-    const { cumIncome, cumExpense, totalIncome, totalExpense } = lineComparisonData;
-    const moneyLeft = totalIncome - totalExpense;
+    const { daysList, numDays, dailyIncome, dailyExpense, cumIncome, cumExpense, totalIncome, totalExpense } = lineComparisonData;
 
-    const cumNet = cumIncome.map((inc, i) => inc - cumExpense[i]);
+    // Total Starting Money at the start of 45-day window
+    const baseAccountStartingBalance = accounts.length > 0
+      ? accounts.reduce((sum, a) => sum + (a.initialBalance || 0), 0)
+      : 0;
 
-    const maxVal = Math.max(...cumIncome, ...cumExpense, ...cumNet, 100);
-    const minVal = Math.min(0, ...cumNet);
+    // Money Left per day curve = Base starting money + cumIncome[i] - cumExpense[i]
+    const moneyLeftCurve = cumExpense.map((exp, i) => {
+      return Math.max(0, baseAccountStartingBalance + cumIncome[i] - exp);
+    });
+
+    const currentMoneyLeft = moneyLeftCurve[moneyLeftCurve.length - 1] ?? Math.max(0, baseAccountStartingBalance + totalIncome - totalExpense);
+
+    const maxVal = Math.max(...moneyLeftCurve, ...cumExpense, baseAccountStartingBalance + totalIncome, 100);
+    const minVal = 0;
     const rangeY = maxVal - minVal || 1;
 
     const graphW = width - paddingX * 2;
     const graphH = height - paddingY * 2;
-    const stepX = graphW / (daysInMonth - 1 || 1);
+    const stepX = graphW / (numDays - 1 || 1);
 
     const getX = (idx: number) => paddingX + idx * stepX;
     const getY = (val: number) => paddingY + graphH - ((val - minVal) / rangeY) * graphH;
 
-    let pathInc = '';
-    let areaInc = '';
-    let pathExp = '';
-    let areaExp = '';
-    let pathNet = '';
+    let pathMoneyLeft = '';
+    let areaMoneyLeft = '';
+    let pathExpInc = '';
+    let areaExpInc = '';
 
-    cumIncome.forEach((val, i) => {
+    moneyLeftCurve.forEach((val, i) => {
       const x = getX(i);
       const y = getY(val);
       if (i === 0) {
-        pathInc += `M ${x},${y} `;
-        areaInc += `M ${x},${y} `;
+        pathMoneyLeft += `M ${x},${y} `;
+        areaMoneyLeft += `M ${x},${y} `;
       } else {
-        pathInc += `L ${x},${y} `;
-        areaInc += `L ${x},${y} `;
+        pathMoneyLeft += `L ${x},${y} `;
+        areaMoneyLeft += `L ${x},${y} `;
       }
     });
 
@@ -144,45 +160,46 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
       const x = getX(i);
       const y = getY(val);
       if (i === 0) {
-        pathExp += `M ${x},${y} `;
-        areaExp += `M ${x},${y} `;
+        pathExpInc += `M ${x},${y} `;
+        areaExpInc += `M ${x},${y} `;
       } else {
-        pathExp += `L ${x},${y} `;
-        areaExp += `L ${x},${y} `;
+        pathExpInc += `L ${x},${y} `;
+        areaExpInc += `L ${x},${y} `;
       }
     });
 
-    cumNet.forEach((val, i) => {
-      const x = getX(i);
-      const y = getY(val);
-      if (i === 0) {
-        pathNet += `M ${x},${y} `;
-      } else {
-        pathNet += `L ${x},${y} `;
-      }
-    });
-
-    const bottomY = getY(minVal);
+    const bottomY = getY(0);
     const firstX = getX(0);
-    const lastX = getX(daysInMonth - 1);
+    const lastX = getX(numDays - 1);
 
-    areaInc += `L ${lastX},${bottomY} L ${firstX},${bottomY} Z`;
-    areaExp += `L ${lastX},${bottomY} L ${firstX},${bottomY} Z`;
+    areaMoneyLeft += `L ${lastX},${bottomY} L ${firstX},${bottomY} Z`;
+    areaExpInc += `L ${lastX},${bottomY} L ${firstX},${bottomY} Z`;
 
-    const incomeColor = colors.success || '#10B981';
+    const moneyLeftColor = '#2563EB'; // Rich Vibrant Royal Blue
     const expenseColor = colors.error || '#EF4444';
-    const netColor = colors.primary || '#3B82F6';
+    const incomeColor = colors.success || '#10B981';
+
+    const activePoint = hoveredIdx !== null ? {
+      dateLabel: daysList[hoveredIdx]?.label,
+      moneyLeftVal: moneyLeftCurve[hoveredIdx],
+      expenseVal: cumExpense[hoveredIdx],
+      dailyIncomeVal: dailyIncome[hoveredIdx],
+      dailyExpenseVal: dailyExpense[hoveredIdx],
+      x: getX(hoveredIdx),
+      yMoney: getY(moneyLeftCurve[hoveredIdx]),
+      yExp: getY(cumExpense[hoveredIdx]),
+    } : null;
 
     return (
       <View style={styles.container} onLayout={e => setWidth(e.nativeEvent.layout.width)}>
-        {/* STATS HEADER SUMMARY (Money Left, Money Spent, Income Credited) */}
+        {/* STATS HEADER SUMMARY (Money Left in Blue, Money Spent in Red) */}
         <View style={styles.legendHeaderRow}>
-          <View style={[styles.legendBox, { backgroundColor: `${netColor}15` }]}>
-            <View style={[styles.dot, { backgroundColor: netColor }]} />
+          <View style={[styles.legendBox, { backgroundColor: `${moneyLeftColor}15` }]}>
+            <View style={[styles.dot, { backgroundColor: moneyLeftColor }]} />
             <View>
-              <Text style={[styles.legendLabel, { color: colors.onSurfaceVariant }]}>Money Left</Text>
-              <Text style={[styles.legendValue, { color: moneyLeft >= 0 ? netColor : colors.error }]}>
-                {currencySymbol}{moneyLeft.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              <Text style={[styles.legendLabel, { color: colors.onSurfaceVariant }]}>Money Left (Last 45 Days)</Text>
+              <Text style={[styles.legendValue, { color: moneyLeftColor }]}>
+                {currencySymbol}{currentMoneyLeft.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </Text>
             </View>
           </View>
@@ -190,34 +207,36 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
           <View style={[styles.legendBox, { backgroundColor: `${expenseColor}15` }]}>
             <View style={[styles.dot, { backgroundColor: expenseColor }]} />
             <View>
-              <Text style={[styles.legendLabel, { color: colors.onSurfaceVariant }]}>Money Spent</Text>
+              <Text style={[styles.legendLabel, { color: colors.onSurfaceVariant }]}>Money Spent (45 Days)</Text>
               <Text style={[styles.legendValue, { color: expenseColor }]}>
-                -{currencySymbol}{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.legendBox, { backgroundColor: `${incomeColor}15` }]}>
-            <View style={[styles.dot, { backgroundColor: incomeColor }]} />
-            <View>
-              <Text style={[styles.legendLabel, { color: colors.onSurfaceVariant }]}>Income</Text>
-              <Text style={[styles.legendValue, { color: incomeColor }]}>
-                +{currencySymbol}{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                {currencySymbol}{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* DUAL / TRIPLE LINE CHART SVG */}
-        <View style={{ height, width, position: 'relative' }}>
+        {/* 45-DAY DUAL LINE CHART SVG */}
+        <View 
+          style={{ height, width, position: 'relative' }}
+          {...({
+            onPointerMove: (e: any) => {
+              if (e?.nativeEvent?.locationX !== undefined) {
+                const mouseX = e.nativeEvent.locationX;
+                const idx = Math.floor(((mouseX - paddingX) / graphW) * numDays);
+                if (idx >= 0 && idx < numDays) setHoveredIdx(idx);
+              }
+            },
+            onPointerLeave: () => setHoveredIdx(null)
+          } as any)}
+        >
           <Svg width={width} height={height}>
             <Defs>
-              <LinearGradient id="incGrad" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={incomeColor} stopOpacity="0.2" />
-                <Stop offset="1" stopColor={incomeColor} stopOpacity="0.0" />
+              <LinearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={moneyLeftColor} stopOpacity="0.25" />
+                <Stop offset="1" stopColor={moneyLeftColor} stopOpacity="0.0" />
               </LinearGradient>
-              <LinearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={expenseColor} stopOpacity="0.2" />
+              <LinearGradient id="redGrad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={expenseColor} stopOpacity="0.25" />
                 <Stop offset="1" stopColor={expenseColor} stopOpacity="0.0" />
               </LinearGradient>
             </Defs>
@@ -240,49 +259,138 @@ export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
             })}
 
             {/* Area Fills */}
-            <Path d={areaInc} fill="url(#incGrad)" />
-            <Path d={areaExp} fill="url(#expGrad)" />
+            <Path d={areaMoneyLeft} fill="url(#blueGrad)" />
+            <Path d={areaExpInc} fill="url(#redGrad)" />
 
             {/* Line Strokes */}
-            <Path d={pathInc} fill="none" stroke={incomeColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-            <Path d={pathExp} fill="none" stroke={expenseColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-            <Path d={pathNet} fill="none" stroke={netColor} strokeWidth={3} strokeDasharray="6,4" strokeLinecap="round" strokeLinejoin="round" />
+            <Path d={pathMoneyLeft} fill="none" stroke={moneyLeftColor} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
+            <Path d={pathExpInc} fill="none" stroke={expenseColor} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" />
 
-            {/* End Point Markers */}
-            {cumIncome.length > 0 && (
-              <Circle
-                cx={getX(daysInMonth - 1)}
-                cy={getY(cumIncome[daysInMonth - 1])}
-                r={4}
-                fill={incomeColor}
-              />
+            {/* Income Data Point Pulse Dots (Shows green dots on days income was credited) */}
+            {dailyIncome.map((inc, idx) => {
+              if (inc <= 0) return null;
+              const ix = getX(idx);
+              const iy = getY(moneyLeftCurve[idx]);
+              return (
+                <G key={`inc_dot_${idx}`}>
+                  <Circle cx={ix} cy={iy} r={6} fill={incomeColor} stroke="#FFFFFF" strokeWidth={2} />
+                </G>
+              );
+            })}
+
+            {/* Hover Guide & Active Highlight Dots */}
+            {activePoint && (
+              <>
+                <Line
+                  x1={activePoint.x}
+                  y1={paddingY}
+                  x2={activePoint.x}
+                  y2={height - paddingY}
+                  stroke={colors.onSurfaceVariant}
+                  strokeWidth={1.5}
+                  strokeDasharray="4,4"
+                />
+                <Circle cx={activePoint.x} cy={activePoint.yMoney} r={7} fill={moneyLeftColor} stroke="#FFFFFF" strokeWidth={2} />
+                <Circle cx={activePoint.x} cy={activePoint.yExp} r={7} fill={expenseColor} stroke="#FFFFFF" strokeWidth={2} />
+
+                {/* IN-CHART SVG TOOLTIP POPOVER */}
+                {(() => {
+                  const hasIncome = activePoint.dailyIncomeVal > 0;
+                  const tipWidth = 145;
+                  const tipHeight = hasIncome ? 74 : 58;
+
+                  let tipX = activePoint.x - tipWidth / 2;
+                  if (tipX < paddingX) tipX = paddingX;
+                  if (tipX + tipWidth > width - paddingX) tipX = width - paddingX - tipWidth;
+
+                  let tipY = activePoint.yMoney - tipHeight - 10;
+                  if (tipY < paddingY) {
+                    tipY = activePoint.yMoney + 14;
+                  }
+
+                  return (
+                    <G key="in_chart_tooltip">
+                      <Rect
+                        x={tipX}
+                        y={tipY}
+                        width={tipWidth}
+                        height={tipHeight}
+                        rx={10}
+                        ry={10}
+                        fill="#0F172A"
+                        fillOpacity={0.94}
+                        stroke={moneyLeftColor}
+                        strokeWidth={1.5}
+                      />
+                      <SvgText
+                        x={tipX + 10}
+                        y={tipY + 16}
+                        fill="#F8FAFC"
+                        fontSize="11"
+                        fontWeight="700"
+                      >
+                        📅 {activePoint.dateLabel}
+                      </SvgText>
+                      <SvgText
+                        x={tipX + 10}
+                        y={tipY + 32}
+                        fill="#60A5FA"
+                        fontSize="11"
+                        fontWeight="600"
+                      >
+                        Left: {currencySymbol}{activePoint.moneyLeftVal.toLocaleString()}
+                      </SvgText>
+                      <SvgText
+                        x={tipX + 10}
+                        y={tipY + 48}
+                        fill="#F87171"
+                        fontSize="11"
+                        fontWeight="600"
+                      >
+                        Spent: -{currencySymbol}{activePoint.dailyExpenseVal.toLocaleString()}
+                      </SvgText>
+                      {hasIncome && (
+                        <SvgText
+                          x={tipX + 10}
+                          y={tipY + 64}
+                          fill="#34D399"
+                          fontSize="11"
+                          fontWeight="700"
+                        >
+                          Income: +{currencySymbol}{activePoint.dailyIncomeVal.toLocaleString()}
+                        </SvgText>
+                      )}
+                    </G>
+                  );
+                })()}
+              </>
             )}
-            {cumExpense.length > 0 && (
-              <Circle
-                cx={getX(daysInMonth - 1)}
-                cy={getY(cumExpense[daysInMonth - 1])}
-                r={4}
-                fill={expenseColor}
-              />
-            )}
-            {cumNet.length > 0 && (
-              <Circle
-                cx={getX(daysInMonth - 1)}
-                cy={getY(cumNet[daysInMonth - 1])}
-                r={5}
-                fill={netColor}
-                stroke="#FFFFFF"
-                strokeWidth={2}
-              />
-            )}
+
+            {/* Touch / Hover Column Detectors for 45 Days */}
+            {daysList.map((d, i) => {
+              const colW = graphW / numDays;
+              const cx = getX(i) - colW / 2;
+              return (
+                <Rect
+                  key={i}
+                  x={cx}
+                  y={0}
+                  width={colW}
+                  height={height}
+                  fill="transparent"
+                  onPressIn={() => setHoveredIdx(i)}
+                  onPress={() => setHoveredIdx(i)}
+                />
+              );
+            })}
           </Svg>
         </View>
 
-        {/* X-AXIS DAY LABELS */}
+        {/* X-AXIS 45-DAY LABELS */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: paddingX, marginTop: 4 }}>
-          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>Day 1</Text>
-          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>Day {Math.floor(daysInMonth / 2)}</Text>
-          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>Day {daysInMonth}</Text>
+          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>45 Days Ago ({daysList[0]?.label})</Text>
+          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>{daysList[22]?.label}</Text>
+          <Text style={{ fontSize: 10, color: colors.onSurfaceVariant }}>Today ({daysList[44]?.label})</Text>
         </View>
       </View>
     );
@@ -517,7 +625,7 @@ const styles = StyleSheet.create({
   legendHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 16,
+    marginBottom: 12,
     gap: 12,
   },
   legendBox: {
@@ -540,6 +648,36 @@ const styles = StyleSheet.create({
   },
   legendValue: {
     fontSize: 16,
+    fontWeight: '800',
+  },
+  tooltipCard: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    padding: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  tooltipDate: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  tooltipRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 1,
+  },
+  tooltipLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  tooltipVal: {
+    fontSize: 12,
     fontWeight: '800',
   },
 });

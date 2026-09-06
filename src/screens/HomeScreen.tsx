@@ -353,6 +353,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <AnalyticsChart
               transactions={transactions}
               categories={categories}
+              accounts={accounts}
               colors={colors}
               mode="line_comparison"
               currencySymbol={currencySymbol}
