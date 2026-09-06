@@ -15,6 +15,7 @@ export interface Account {
   icon: string;
   color: string;
   type: AccountType;
+  initialBalance?: number;
 }
 
 export interface SubCategory {
@@ -289,6 +290,7 @@ export const exportDataToFile = async (data: AppData): Promise<boolean> => {
         AccountColor: acc?.color || '',
         AccountIcon: (acc as any)?.icon || '',
         AccountType: acc?.type || '',
+        AccountInitialBalance: (acc as any)?.initialBalance || 0,
         ToAccountName: toAcc?.name || '',
         ToAccountColor: toAcc?.color || '',
         ToAccountIcon: (toAcc as any)?.icon || '',
@@ -531,7 +533,8 @@ export const importDataFromFile = async (): Promise<AppData | null> => {
             name: row.AccountName,
             color: row.AccountColor || '#64748B',
             icon: row.AccountIcon || 'account-balance',
-            type: (row.AccountType as AccountType) || 'custom'
+            type: (row.AccountType as AccountType) || 'custom',
+            initialBalance: parseFloat(row.AccountInitialBalance) || 0
           });
         } else {
           accId = accountsMap.get(key)!.id;

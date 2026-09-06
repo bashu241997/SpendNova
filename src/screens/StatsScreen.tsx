@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -19,9 +19,29 @@ interface StatsScreenProps {
 }
 
 export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onBack }) => {
-  const { transactions, categories, colors, currencySymbol } = useApp();
+  const { transactions, categories, accounts, colors, currencySymbol } = useApp();
   const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [chartMode, setChartMode] = useState<'donut' | 'radar' | 'line_comparison'>('donut');
   const [selectedCategoryForDrillDown, setSelectedCategoryForDrillDown] = useState<string | null>(null);
+
+  // Overall Total Money He Has Now (Combined Net Worth across accounts)
+  const totalMoneyNow = useMemo(() => {
+    return accounts.reduce((sum, acc) => {
+      const initial = acc.initialBalance || 0;
+      let inc = 0, exp = 0, trOut = 0, trIn = 0;
+      transactions.forEach(t => {
+        if (t.account === acc.id) {
+          if (t.type === 'income') inc += t.amount;
+          if (t.type === 'expense') exp += t.amount;
+          if (t.type === 'transfer') trOut += t.amount;
+        }
+        if (t.type === 'transfer' && t.toAccount === acc.id) {
+          trIn += t.amount;
+        }
+      });
+      return sum + (initial + inc - exp - trOut + trIn);
+    }, 0);
+  }, [accounts, transactions]);
 
   const [currentFilterMonth, setCurrentFilterMonth] = useState(() => {
     const today = new Date();
@@ -212,6 +232,35 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onB
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {/* TOTAL MONEY NOW HERO CARD */}
+          <View style={{
+            marginHorizontal: 16,
+            marginTop: 12,
+            marginBottom: 8,
+            padding: 20,
+            borderRadius: 24,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.surfaceVariant,
+            elevation: 3,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.05,
+            shadowRadius: 16,
+          }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                Total Money Available Now
+              </Text>
+              <View style={{ backgroundColor: `${colors.primary}15`, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>All Accounts</Text>
+              </View>
+            </View>
+            <Text style={{ fontSize: 32, fontWeight: '800', color: colors.onBackground }}>
+              {currencySymbol}{totalMoneyNow.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Text>
+          </View>
+
           <View style={[styles.vibeCard, { borderColor: vibeColor }]}>
             <View style={styles.vibeRow}>
               <Text style={[styles.vibeTitle, { color: colors.onBackground }]}>Financial Status:</Text>
@@ -234,11 +283,44 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({ onEditTransaction, onB
             </View>
           </View>
 
+          {/* CHART MODE SWITCHER TABS */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginHorizontal: 16, marginBottom: 8 }}>
+            {[
+              { id: 'donut', label: '🍩 Donut Chart' },
+              { id: 'radar', label: '🕸️ Radar Chart' },
+              { id: 'line_comparison', label: '📈 Line Chart' },
+            ].map(tab => {
+              const active = chartMode === tab.id;
+              return (
+                <TouchableOpacity
+                  key={tab.id}
+                  onPress={() => setChartMode(tab.id as any)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 16,
+                    alignItems: 'center',
+                    backgroundColor: active ? colors.primary : colors.surfaceVariant,
+                  }}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: active ? colors.onPrimary : colors.onSurfaceVariant }}>
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           <AnalyticsChart
             transactions={monthlyTxs}
             categories={categories}
+            accounts={accounts}
             colors={colors}
             type={type}
+            mode={chartMode}
+            currencySymbol={currencySymbol}
+            onSelectCategory={catId => setSelectedCategoryForDrillDown(catId)}
           />
 
           {breakdownData.length > 0 && (

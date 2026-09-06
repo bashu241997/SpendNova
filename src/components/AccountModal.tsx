@@ -26,7 +26,8 @@ interface AccountModalProps {
     name: string, 
     color: string, 
     icon: string, 
-    type: AccountType
+    type: AccountType,
+    initialBalance?: number
   ) => Promise<void>;
   onUpdateAccount?: (account: Account) => Promise<void>;
   onDeleteAccount?: (id: string) => Promise<void>;
@@ -66,6 +67,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newAccName, setNewAccName] = useState('');
+  const [initialBalanceStr, setInitialBalanceStr] = useState('');
   const [selectedColor, setSelectedColor] = useState(AVAILABLE_COLORS[0]);
   const [selectedIcon, setSelectedIcon] = useState(AVAILABLE_ICONS[0]);
   const [selectedType, setSelectedType] = useState<AccountType>('savings');
@@ -74,12 +76,14 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     if (!visible) return;
     if (accountToEdit) {
       setNewAccName(accountToEdit.name);
+      setInitialBalanceStr(accountToEdit.initialBalance !== undefined ? accountToEdit.initialBalance.toString() : '');
       setSelectedColor(accountToEdit.color);
       setSelectedIcon(accountToEdit.icon);
       setSelectedType(accountToEdit.type);
       setShowAddForm(true);
     } else {
       setNewAccName('');
+      setInitialBalanceStr('');
       setSelectedColor(AVAILABLE_COLORS[0]);
       setSelectedIcon(AVAILABLE_ICONS[0]);
       setSelectedType('savings');
@@ -89,6 +93,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
   const handleSave = async () => {
     if (!newAccName.trim()) return;
+    const initBal = parseFloat(initialBalanceStr) || 0;
 
     if (accountToEdit) {
       await onUpdateAccount?.({
@@ -97,17 +102,20 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         color: selectedColor,
         icon: selectedIcon,
         type: selectedType,
+        initialBalance: initBal,
       });
     } else {
       await onAddAccount(
         newAccName.trim(), 
         selectedColor, 
         selectedIcon, 
-        selectedType
+        selectedType,
+        initBal
       );
     }
     
     setNewAccName('');
+    setInitialBalanceStr('');
     onClose();
   };
 
@@ -189,6 +197,20 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 placeholderTextColor={colors.outline}
                 value={newAccName}
                 onChangeText={setNewAccName}
+                style={[styles.input, { 
+                  borderColor: colors.outline, 
+                  color: colors.onBackground,
+                  backgroundColor: colors.surfaceVariant
+                }]}
+              />
+
+              <Text style={[styles.label, { color: colors.onBackground }]}>Initial / Starting Balance (Optional)</Text>
+              <TextInput
+                placeholder="0.00"
+                placeholderTextColor={colors.outline}
+                value={initialBalanceStr}
+                onChangeText={setInitialBalanceStr}
+                keyboardType="numeric"
                 style={[styles.input, { 
                   borderColor: colors.outline, 
                   color: colors.onBackground,

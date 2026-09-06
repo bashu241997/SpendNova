@@ -339,24 +339,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </ScrollView>
           </View>
 
-          {/* SPENDING FLOW SECTION (Heatmap Only) */}
+          {/* MONEY FLOW COMPARISON SECTION (Money Left, Money Spent, Income) */}
           <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Spending Flow</Text>
+            <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>Money Flow Comparison</Text>
             <TouchableOpacity onPress={() => onNavigateTab('stats')}>
-              <Text style={[styles.seeAllText, { color: colors.onSurfaceVariant }]}>View Details</Text>
+              <Text style={[styles.seeAllText, { color: colors.onSurfaceVariant }]}>View Analytics</Text>
             </TouchableOpacity>
           </View>
 
           <ParallaxCard
             style={[styles.analyticsCard, { backgroundColor: colors.surface }]}
           >
-            <Text style={[styles.heatmapTitle, { color: colors.onSurfaceVariant, marginBottom: 16 }]}>Spending Flow</Text>
-
             <AnalyticsChart
               transactions={transactions}
               categories={categories}
               colors={colors}
-              type="expense"
+              mode="line_comparison"
+              currencySymbol={currencySymbol}
             />
           </ParallaxCard>
 
