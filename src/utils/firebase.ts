@@ -29,16 +29,22 @@ if (isConfigured) {
   firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    // Prevent Google Analytics from tracking on localhost
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isDev = typeof __DEV__ !== 'undefined' && __DEV__;
+    const hostname = window.location.hostname;
+    const isLocalhost = 
+      hostname === 'localhost' || 
+      hostname === '127.0.0.1' || 
+      hostname.startsWith('192.168.') || 
+      hostname.startsWith('10.') || 
+      hostname.endsWith('.local');
     
-    if (!isLocalhost) {
+    if (!isDev && !isLocalhost) {
       isSupported().then(supported => {
         if (supported) {
           firebaseAnalytics = getAnalytics(firebaseApp);
         }
       }).catch(() => {
-        // Bypasses analytics unsupported browser error gracefully
+        // Gracefully bypass unsupported browser error
       });
     }
   }
