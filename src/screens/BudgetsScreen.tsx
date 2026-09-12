@@ -109,22 +109,61 @@ export const BudgetsScreen: React.FC = () => {
             const remaining = b.amount - spent;
             const percent = b.amount > 0 ? (spent / b.amount) * 100 : 0;
             const clampedPercent = Math.min(Math.max(percent, 0), 100);
+            const isOverspent = spent > b.amount;
             const dailyAvailable = remaining > 0 ? remaining / daysInfo.daysRemaining : 0;
+            const budgetAccent = b.color || colors.primary;
             
             return (
               <ParallaxCard key={b.id} style={[styles.budgetCard, { width: cardWidth as any }]}>
                 {/* Top Half */}
-                <View style={[styles.cardTop, { backgroundColor: 'transparent', borderBottomWidth: 1, borderBottomColor: colors.outline }]}>
+                <View style={[
+                  styles.cardTop, 
+                  { 
+                    backgroundColor: `${budgetAccent}15`, 
+                    borderBottomWidth: 1, 
+                    borderBottomColor: colors.outline,
+                    borderTopWidth: 4,
+                    borderTopColor: budgetAccent
+                  }
+                ]}>
                   <View style={styles.cardHeaderRow}>
-                    <Text style={[styles.budgetName, { color: colors.onSurface }]}>{b.name}</Text>
-                    <TouchableOpacity onPress={() => openEdit(b)}>
-                      <MaterialIcons name="edit" size={20} color={colors.onSurfaceVariant} />
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: budgetAccent, marginRight: 8 }} />
+                      <Text style={[styles.budgetName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      {isOverspent && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: `${colors.error}25`, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, gap: 4 }}>
+                          <MaterialIcons name="warning" size={14} color={colors.error} />
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.error }}>Overspent!</Text>
+                        </View>
+                      )}
+                      <TouchableOpacity onPress={() => openEdit(b)} style={{ padding: 2 }}>
+                        <MaterialIcons name="edit" size={18} color={colors.onSurfaceVariant} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <Text style={styles.budgetAmounts}>
-                    <Text style={[styles.spentAmount, { color: colors.onSurface }]}>{currencySymbol}{spent.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</Text>
-                    <Text style={[styles.totalAmount, { color: colors.onSurfaceVariant }]}> left of {currencySymbol}{b.amount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</Text>
-                  </Text>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                    <Text style={[styles.spentAmount, { color: isOverspent ? colors.error : colors.onSurface }]}>
+                      {currencySymbol}{spent.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}
+                    </Text>
+                    <Text style={[styles.totalAmount, { color: colors.onSurfaceVariant }]}>
+                      used of {currencySymbol}{b.amount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}
+                    </Text>
+                  </View>
+
+                  <View style={{ marginTop: 4 }}>
+                    {isOverspent ? (
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.error }}>
+                        ⚠️ Exceeded budget by {currencySymbol}{(spent - b.amount).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}
+                      </Text>
+                    ) : (
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.success }}>
+                        {currencySymbol}{remaining.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})} available to spend
+                      </Text>
+                    )}
+                  </View>
                 </View>
                 
                 {/* Bottom Half */}
@@ -132,9 +171,9 @@ export const BudgetsScreen: React.FC = () => {
                   <View style={styles.progressContainer}>
                     <Text style={[styles.dateLabel, { color: colors.onSurfaceVariant }]}>{daysInfo.monthName} 1</Text>
                     <View style={[styles.progressBarBg, { backgroundColor: colors.surfaceVariant }]}>
-                      <View style={[styles.progressBarFill, { width: `${clampedPercent}%`, backgroundColor: b.color }]}>
+                      <View style={[styles.progressBarFill, { width: `${clampedPercent}%`, backgroundColor: isOverspent ? colors.error : budgetAccent }]}>
                         {clampedPercent > 15 && (
-                          <Text style={styles.progressPercentText}>{Math.round(clampedPercent)}%</Text>
+                          <Text style={styles.progressPercentText}>{Math.round(percent)}%</Text>
                         )}
                       </View>
                       
@@ -149,9 +188,15 @@ export const BudgetsScreen: React.FC = () => {
                     <Text style={[styles.dateLabel, { color: colors.onSurfaceVariant }]}>{daysInfo.monthName} {daysInfo.daysInMonth}</Text>
                   </View>
                   
-                  <Text style={[styles.dailyLimitText, { color: colors.onSurfaceVariant }]}>
-                    You can spend {currencySymbol}{dailyAvailable.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}/day for {daysInfo.daysRemaining} more days
-                  </Text>
+                  {isOverspent ? (
+                    <Text style={[styles.dailyLimitText, { color: colors.error, fontWeight: '700' }]}>
+                      Over budget for this month ({daysInfo.daysRemaining} days remaining)
+                    </Text>
+                  ) : (
+                    <Text style={[styles.dailyLimitText, { color: colors.onSurfaceVariant }]}>
+                      You can spend {currencySymbol}{dailyAvailable.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}/day for {daysInfo.daysRemaining} more days
+                    </Text>
+                  )}
                 </View>
               </ParallaxCard>
             );

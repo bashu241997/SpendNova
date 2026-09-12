@@ -43,6 +43,7 @@ function MainAppContent() {
   // from the active palette instead.
   const themeType = colors.background === '#0B0F19' ? 'dark' : 'light';
   const [activeTab, setActiveTab] = useState<MainTab>('home');
+  const [selectedAccountFilter, setSelectedAccountFilter] = useState<string | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
   const [isAddMode, setIsAddMode] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
@@ -144,6 +145,8 @@ function MainAppContent() {
           <TransactionsScreen
             onAddTransaction={() => setIsAddMode(true)}
             onEditTransaction={handleEditTransaction}
+            selectedAccountId={selectedAccountFilter}
+            onClearAccountFilter={() => setSelectedAccountFilter(null)}
           />
         );
       case 'budgets':
@@ -151,7 +154,15 @@ function MainAppContent() {
       case 'stats':
         return <StatsScreen onEditTransaction={handleEditTransaction} onBack={() => setActiveTab('more')} />;
       case 'accounts':
-        return <AccountsScreen onBack={() => setActiveTab('more')} />;
+        return (
+          <AccountsScreen 
+            onBack={() => setActiveTab('more')} 
+            onSelectAccount={(accId) => {
+              setSelectedAccountFilter(accId);
+              setActiveTab('transactions');
+            }}
+          />
+        );
       case 'settings':
         return <SettingsScreen onNavigate={(t) => setActiveTab(t as any)} onBack={() => setActiveTab('more')} />;
       case 'categories':

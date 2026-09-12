@@ -15,6 +15,8 @@ import { Transaction, Account, Category } from '../utils/storage';
 interface TransactionsScreenProps {
   onAddTransaction: () => void;
   onEditTransaction: (tx: Transaction) => void;
+  selectedAccountId?: string | null;
+  onClearAccountFilter?: () => void;
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -22,8 +24,17 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
   onAddTransaction,
   onEditTransaction,
+  selectedAccountId,
+  onClearAccountFilter,
 }) => {
   const { transactions, accounts, categories, goals, colors, currencySymbol } = useApp();
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(selectedAccountId || null);
+
+  useEffect(() => {
+    if (selectedAccountId !== undefined) {
+      setSelectedAccount(selectedAccountId);
+    }
+  }, [selectedAccountId]);
 
   const [currentFilterMonth, setCurrentFilterMonth] = useState(() => {
     const today = new Date();
@@ -44,13 +55,29 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
   const filterYear = currentFilterMonth.getFullYear();
   const filterMonth = currentFilterMonth.getMonth() + 1;
 
+  const activeAccountObj = useMemo(() => {
+    if (!selectedAccount) return null;
+    return accounts.find(a => a.id === selectedAccount || a.name === selectedAccount);
+  }, [selectedAccount, accounts]);
+
   const { sections, summary } = useMemo(() => {
     let inc = 0;
     let exp = 0;
 
     const filtered = transactions.filter(t => {
       const txDate = new Date(t.date);
-      return txDate.getFullYear() === filterYear && (txDate.getMonth() + 1) === filterMonth;
+      const isMonthMatch = txDate.getFullYear() === filterYear && (txDate.getMonth() + 1) === filterMonth;
+      if (!isMonthMatch) return false;
+
+      if (selectedAccount) {
+        const accObj = accounts.find(a => a.id === selectedAccount);
+        const accName = accObj ? accObj.name : null;
+        const matchesFrom = t.account === selectedAccount || (accName && t.account === accName);
+        const matchesTo = t.toAccount === selectedAccount || (accName && t.toAccount === accName);
+        if (!matchesFrom && !matchesTo) return false;
+      }
+
+      return true;
     });
 
     const groups: Record<string, Transaction[]> = {};
@@ -85,7 +112,7 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
       sections: sects,
       summary: { inc, exp, net: inc - exp }
     };
-  }, [transactions, filterYear, filterMonth]);
+  }, [transactions, filterYear, filterMonth, selectedAccount, accounts]);
 
   const getAccountInfo = (id: string): Account | undefined => {
     return accounts.find(a => a.id === id || a.name === id);
@@ -264,6 +291,54 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
           <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} />
         </TouchableOpacity>
       </View>
+
+      {/* ACCOUNT FILTER BAR */}
+      {accounts.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 16,
+              backgroundColor: !selectedAccount ? colors.primary : colors.surfaceVariant,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4
+            }}
+            onPress={() => {
+              setSelectedAccount(null);
+              onClearAccountFilter?.();
+            }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '700', color: !selectedAccount ? colors.onPrimary : colors.onSurfaceVariant }}>
+              All Accounts
+            </Text>
+          </TouchableOpacity>
+          {accounts.map(acc => {
+            const isSelected = selectedAccount === acc.id || selectedAccount === acc.name;
+            return (
+              <TouchableOpacity
+                key={acc.id}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 16,
+                  backgroundColor: isSelected ? (acc.color || colors.primary) : colors.surfaceVariant,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+                onPress={() => setSelectedAccount(acc.id)}
+              >
+                <MaterialIcons name={(acc.icon || 'account-balance') as any} size={14} color={isSelected ? '#FFF' : (acc.color || colors.onSurfaceVariant)} />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: isSelected ? '#FFF' : colors.onSurface }}>
+                  {acc.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
 
       <View style={[styles.summaryBar, { backgroundColor: colors.surfaceVariant }]}>
         <View style={styles.summaryBox}>

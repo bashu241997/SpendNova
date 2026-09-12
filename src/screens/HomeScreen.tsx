@@ -214,7 +214,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         }).reduce((sum, t) => sum + t.amount, 0);
 
         const left = b.amount - spent;
-        const pct = b.amount > 0 ? Math.min((spent / b.amount) * 100, 100) : 0;
+        const isOverspent = spent > b.amount;
+        const overspentAmount = spent - b.amount;
+        const pct = b.amount > 0 ? (spent / b.amount) * 100 : 0;
         const daily = Math.max(left / daysLeft, 0);
 
         let icon = 'pie-chart';
@@ -231,6 +233,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           budget: b.amount,
           spent,
           left,
+          isOverspent,
+          overspentAmount,
           pct,
           daily,
           hasBudget: true
@@ -246,7 +250,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       const hasBudget = Boolean(cat.budget && cat.budget > 0);
       const budgetVal = hasBudget ? cat.budget! : 0;
       const left = hasBudget ? budgetVal - spent : 0;
-      const pct = hasBudget ? Math.min((spent / budgetVal) * 100, 100) : (spent > 0 ? 100 : 0);
+      const isOverspent = hasBudget && spent > budgetVal;
+      const overspentAmount = isOverspent ? spent - budgetVal : 0;
+      const pct = hasBudget ? (spent / budgetVal) * 100 : (spent > 0 ? 100 : 0);
       const daily = hasBudget ? Math.max(left / daysLeft, 0) : 0;
 
       return {
@@ -257,6 +263,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         budget: budgetVal,
         spent,
         left,
+        isOverspent,
+        overspentAmount,
         pct,
         daily,
         hasBudget
@@ -408,21 +416,53 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       onPress={() => onNavigateTab('budgets')}
                     >
                       {/* SOFT TINTED TOP HEADER BAND */}
-                      <View style={[styles.bCardHeaderBand, { backgroundColor: 'transparent', borderBottomWidth: 1, borderBottomColor: colors.outline }]}>
+                      <View style={[
+                        styles.bCardHeaderBand, 
+                        { 
+                          backgroundColor: `${b.color || colors.primary}15`, 
+                          borderBottomWidth: 1, 
+                          borderBottomColor: colors.outline,
+                          borderTopWidth: 3,
+                          borderTopColor: b.color || colors.primary
+                        }
+                      ]}>
                         <View style={styles.bCardTop}>
-                          <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
-                          <View style={[styles.bIconWrap, { backgroundColor: 'transparent' }]}>
-                            <MaterialIcons name={(b.icon || 'pie-chart') as any} size={16} color={b.color || colors.primary} />
+                          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 6 }}>
+                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: b.color || colors.primary, marginRight: 6 }} />
+                            <Text style={[styles.bName, { color: colors.onSurface }]} numberOfLines={1}>{b.name}</Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            {b.isOverspent && (
+                              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: `${colors.error}25`, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, gap: 3 }}>
+                                <MaterialIcons name="warning" size={12} color={colors.error} />
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: colors.error }}>Overspent!</Text>
+                              </View>
+                            )}
+                            <View style={[styles.bIconWrap, { backgroundColor: 'transparent' }]}>
+                              <MaterialIcons name={(b.icon || 'pie-chart') as any} size={16} color={b.color || colors.primary} />
+                            </View>
                           </View>
                         </View>
 
                         <View style={styles.bAmountRow}>
-                          <Text style={[styles.bLeft, { color: colors.onSurface }]}>
-                            {currencySymbol}{Math.max(b.left, 0).toLocaleString('en-IN')}
+                          <Text style={[styles.bLeft, { color: b.isOverspent ? colors.error : colors.onSurface }]}>
+                            {currencySymbol}{b.spent.toLocaleString('en-IN')}
                           </Text>
                           <Text style={[styles.bTotal, { color: colors.onSurfaceVariant }]}>
-                            left of {currencySymbol}{b.budget.toLocaleString('en-IN')}
+                            used of {currencySymbol}{b.budget.toLocaleString('en-IN')}
                           </Text>
+                        </View>
+
+                        <View style={{ marginTop: 2, marginBottom: 4 }}>
+                          {b.isOverspent ? (
+                            <Text style={{ fontSize: 11, fontWeight: '700', color: colors.error }}>
+                              ⚠️ Exceeded by {currencySymbol}{b.overspentAmount.toLocaleString('en-IN')}
+                            </Text>
+                          ) : (
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: colors.success }}>
+                              {currencySymbol}{b.left.toLocaleString('en-IN')} available
+                            </Text>
+                          )}
                         </View>
                       </View>
 
@@ -437,7 +477,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                               </View>
 
                               <View style={[styles.bProgressBar, { backgroundColor: colors.surfaceVariant, borderWidth: 1, borderColor: colors.outline }]}>
-                                <View style={[styles.bProgressFill, { backgroundColor: colors.onBackground, width: `${Math.min(b.pct, 100)}%` }]} />
+                                <View style={[styles.bProgressFill, { backgroundColor: b.isOverspent ? colors.error : (b.color || colors.primary), width: `${Math.min(b.pct, 100)}%` }]} />
                               </View>
 
                               <View style={styles.dateRangeRow}>
@@ -446,9 +486,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                               </View>
                             </View>
 
-                            <Text style={[styles.bDailyText, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
-                              You can spend {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 2 })}/day for {daysLeft} more days
-                            </Text>
+                            {b.isOverspent ? (
+                              <Text style={[styles.bDailyText, { color: colors.error, fontWeight: '700' }]} numberOfLines={1}>
+                                Over budget for this month ({daysLeft} days remaining)
+                              </Text>
+                            ) : (
+                              <Text style={[styles.bDailyText, { color: colors.onSurfaceVariant }]} numberOfLines={1}>
+                                You can spend {currencySymbol}{b.daily.toLocaleString('en-IN', { maximumFractionDigits: 2 })}/day for {daysLeft} more days
+                              </Text>
+                            )}
                           </>
                         ) : (
                           <View style={{ marginTop: 4 }}>

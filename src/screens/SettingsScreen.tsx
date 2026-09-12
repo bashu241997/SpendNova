@@ -123,15 +123,51 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
   };
 
   const handleCloudBackup = async () => {
-    await backupToCloud();
+    const res = await backupToCloud();
+    if (res === 'UNAUTHORIZED') {
+      showAlert('Google session expired. Re-authenticating your account...');
+      try {
+        await promptAsync();
+      } catch (e) {
+        console.error(e);
+      }
+    } else if (res === true) {
+      showAlert('Data synced to Google Drive successfully!');
+    } else {
+      showAlert('Failed to sync to Google Drive.');
+    }
   };
 
   const handleCloudRestore = async (backup: any) => {
-    await restoreBackupFromCloud(backup.id);
+    const res = await restoreBackupFromCloud(backup.id);
+    if (res === 'UNAUTHORIZED') {
+      showAlert('Google session expired. Re-authenticating your account...');
+      try {
+        await promptAsync();
+      } catch (e) {
+        console.error(e);
+      }
+    } else if (res === true) {
+      showAlert('Data restored from Google Drive successfully!');
+    } else {
+      showAlert('Failed to restore backup from Google Drive.');
+    }
   };
 
   const handleCloudDelete = async (backupId: string) => {
-    await removeCloudBackup(backupId);
+    const res = await removeCloudBackup(backupId);
+    if (res === 'UNAUTHORIZED') {
+      showAlert('Google session expired. Re-authenticating your account...');
+      try {
+        await promptAsync();
+      } catch (e) {
+        console.error(e);
+      }
+    } else if (res === true) {
+      showAlert('Cloud backup deleted successfully.');
+    } else {
+      showAlert('Failed to delete backup from Google Drive.');
+    }
   };
 
   const [alertMessage, setAlertMessage] = useState('');
@@ -352,7 +388,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
             <View style={styles.backupInputRow}>
               <TouchableOpacity
                 style={[styles.backupActionBtn, { backgroundColor: colors.primary, flex: 1 }]}
-                onPress={() => backupToCloud()}
+                onPress={handleCloudBackup}
               >
                 <MaterialIcons name="cloud-upload" size={18} color={colors.onPrimary} />
                 <Text style={[styles.backupActionText, { color: colors.onPrimary }]}>Sync</Text>
@@ -371,10 +407,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
                       </Text>
                     </View>
                     <View style={{ flexDirection: 'row', gap: 12 }}>
-                      <TouchableOpacity onPress={() => restoreBackupFromCloud(backup.id)} style={styles.actionIconBtn}>
+                      <TouchableOpacity onPress={() => handleCloudRestore(backup)} style={styles.actionIconBtn}>
                         <MaterialIcons name="cloud-download" size={18} color={colors.success} />
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => removeCloudBackup(backup.id)} style={[styles.actionIconBtn, { marginLeft: 8 }]}>
+                      <TouchableOpacity onPress={() => handleCloudDelete(backup.id)} style={[styles.actionIconBtn, { marginLeft: 8 }]}>
                         <MaterialIcons name="delete" size={18} color={colors.error} />
                       </TouchableOpacity>
                     </View>

@@ -16,9 +16,10 @@ import { ParallaxCard } from '../components/ParallaxCard';
 
 interface AccountsScreenProps {
   onBack?: () => void;
+  onSelectAccount?: (accountId: string) => void;
 }
 
-export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
+export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack, onSelectAccount }) => {
   const { 
     accounts, 
     transactions, 
@@ -135,8 +136,7 @@ export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
                   }
                 ]}
                 onPress={() => {
-                  setEditingAccount(acc);
-                  setAddModalVisible(true);
+                  onSelectAccount?.(acc.id);
                 }}
               >
                 <View style={styles.cardTopRow}>
@@ -146,9 +146,21 @@ export const AccountsScreen: React.FC<AccountsScreenProps> = ({ onBack }) => {
                       {acc.name}
                     </Text>
                   </View>
-                  <Text style={[styles.currencyText, { backgroundColor: colors.surfaceVariant, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, textTransform: 'uppercase' }]}>
-                    {acc.type}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={[styles.currencyText, { backgroundColor: colors.surfaceVariant, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, textTransform: 'uppercase' }]}>
+                      {acc.type}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={(e: any) => {
+                        if (e && e.stopPropagation) e.stopPropagation();
+                        setEditingAccount(acc);
+                        setAddModalVisible(true);
+                      }}
+                      style={{ padding: 4 }}
+                    >
+                      <MaterialIcons name="edit" size={18} color={colors.onSurfaceVariant} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <View style={{ marginVertical: 10 }}>

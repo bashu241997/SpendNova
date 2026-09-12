@@ -145,9 +145,9 @@ interface AppContextProps {
   
   cloudBackups: DriveFile[];
   refreshCloudBackups: () => Promise<void>;
-  backupToCloud: () => Promise<void>;
-  restoreBackupFromCloud: (fileId: string) => Promise<void>;
-  removeCloudBackup: (fileId: string) => Promise<void>;
+  backupToCloud: () => Promise<boolean | 'UNAUTHORIZED'>;
+  restoreBackupFromCloud: (fileId: string) => Promise<boolean | 'UNAUTHORIZED'>;
+  removeCloudBackup: (fileId: string) => Promise<boolean | 'UNAUTHORIZED'>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -200,8 +200,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (storedToken && storedUser) {
         setGoogleToken(storedToken);
         setGoogleUser(JSON.parse(storedUser));
-        const backups = await listDriveBackups(storedToken);
-        setCloudBackups(backups);
+        try {
+          const backups = await listDriveBackups(storedToken);
+          setCloudBackups(backups);
+        } catch (e: any) {
+          if (e?.message === 'UNAUTHORIZED') {
+            setGoogleToken(null);
+            setGoogleUser(null);
+            await removeGoogleToken();
+            await SecureStorage.removeItem(GOOGLE_USER_KEY);
+          }
+        }
       }
       
       setLoading(false);
@@ -435,39 +444,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const refreshCloudBackups = async () => {
     if (!googleToken) return;
-    const backups = await listDriveBackups(googleToken);
-    setCloudBackups(backups);
+    try {
+      const backups = await listDriveBackups(googleToken);
+      setCloudBackups(backups);
+    } catch (e: any) {
+      if (e?.message === 'UNAUTHORIZED') {
+        await setGoogleAuth(null, null);
+      }
+    }
   };
 
-  const backupToCloud = async () => {
-    if (!googleToken) return;
+  const backupToCloud = async (): Promise<boolean | 'UNAUTHORIZED'> => {
+    if (!googleToken) return false;
     const currentData: AppData = { transactions, accounts, categories, budgets, recurring: recurringTxs, goals };
     const targetFileId = cloudBackups.length > 0 ? cloudBackups[0].id : undefined;
-    const success = await uploadDriveBackup(JSON.stringify(currentData), googleToken, targetFileId);
-    if (success) {
-      await refreshCloudBackups();
-    } else {
-      alert('Failed to upload backup to Google Drive.');
+    try {
+      const success = await uploadDriveBackup(JSON.stringify(currentData), googleToken, targetFileId);
+      if (success) {
+        await refreshCloudBackups();
+        return true;
+      }
+      return false;
+    } catch (e: any) {
+      if (e?.message === 'UNAUTHORIZED') {
+        await setGoogleAuth(null, null);
+        return 'UNAUTHORIZED';
+      }
+      return false;
     }
   };
 
-  const restoreBackupFromCloud = async (fileId: string) => {
-    if (!googleToken) return;
-    const backupData = await downloadDriveBackup(fileId, googleToken);
-    if (backupData) {
-      await importBackupData(backupData);
-    } else {
-      alert('Failed to restore backup from Google Drive.');
+  const restoreBackupFromCloud = async (fileId: string): Promise<boolean | 'UNAUTHORIZED'> => {
+    if (!googleToken) return false;
+    try {
+      const backupData = await downloadDriveBackup(fileId, googleToken);
+      if (backupData) {
+        await importBackupData(backupData);
+        return true;
+      }
+      return false;
+    } catch (e: any) {
+      if (e?.message === 'UNAUTHORIZED') {
+        await setGoogleAuth(null, null);
+        return 'UNAUTHORIZED';
+      }
+      return false;
     }
   };
 
-  const removeCloudBackup = async (fileId: string) => {
-    if (!googleToken) return;
-    const success = await deleteDriveBackup(fileId, googleToken);
-    if (success) {
-      await refreshCloudBackups();
-    } else {
-      alert('Failed to delete backup from Google Drive.');
+  const removeCloudBackup = async (fileId: string): Promise<boolean | 'UNAUTHORIZED'> => {
+    if (!googleToken) return false;
+    try {
+      const success = await deleteDriveBackup(fileId, googleToken);
+      if (success) {
+        await refreshCloudBackups();
+        return true;
+      }
+      return false;
+    } catch (e: any) {
+      if (e?.message === 'UNAUTHORIZED') {
+        await setGoogleAuth(null, null);
+        return 'UNAUTHORIZED';
+      }
+      return false;
     }
   };
 

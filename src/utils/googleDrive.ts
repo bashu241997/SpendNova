@@ -19,14 +19,21 @@ export const listDriveBackups = async (accessToken: string): Promise<DriveFile[]
       }
     );
 
+    if (response.status === 401) {
+      throw new Error('UNAUTHORIZED');
+    }
+
     if (!response.ok) {
       throw new Error('Failed to list backups');
     }
 
     const data = await response.json();
     return data.files || [];
-  } catch (error) {
+  } catch (error: any) {
     console.error('Drive list error:', error);
+    if (error?.message === 'UNAUTHORIZED') {
+      throw error;
+    }
     return [];
   }
 };
@@ -39,13 +46,20 @@ export const downloadDriveBackup = async (fileId: string, accessToken: string): 
       },
     });
 
+    if (response.status === 401) {
+      throw new Error('UNAUTHORIZED');
+    }
+
     if (!response.ok) {
       throw new Error('Failed to download backup');
     }
 
     return await response.json();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Drive download error:', error);
+    if (error?.message === 'UNAUTHORIZED') {
+      throw error;
+    }
     return null;
   }
 };
@@ -90,6 +104,10 @@ export const uploadDriveBackup = async (fileContent: string, accessToken: string
       body: form,
     });
 
+    if (response.status === 401) {
+      throw new Error('UNAUTHORIZED');
+    }
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Drive upload error response:', errorText);
@@ -97,8 +115,11 @@ export const uploadDriveBackup = async (fileContent: string, accessToken: string
     }
 
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Drive upload error:', error);
+    if (error?.message === 'UNAUTHORIZED') {
+      throw error;
+    }
     return false;
   }
 };
@@ -112,9 +133,16 @@ export const deleteDriveBackup = async (fileId: string, accessToken: string): Pr
       },
     });
 
+    if (response.status === 401) {
+      throw new Error('UNAUTHORIZED');
+    }
+
     return response.ok;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Drive delete error:', error);
+    if (error?.message === 'UNAUTHORIZED') {
+      throw error;
+    }
     return false;
   }
 };
