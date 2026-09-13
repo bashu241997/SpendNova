@@ -21,6 +21,8 @@ interface TransactionsScreenProps {
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+import { CalendarView } from '../components/CalendarView';
+
 export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
   onAddTransaction,
   onEditTransaction,
@@ -29,6 +31,11 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
 }) => {
   const { transactions, accounts, categories, goals, colors, currencySymbol } = useApp();
   const [selectedAccount, setSelectedAccount] = useState<string | null>(selectedAccountId || null);
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string>(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  });
 
   useEffect(() => {
     if (selectedAccountId !== undefined) {
@@ -40,6 +47,19 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
+
+  useEffect(() => {
+    const year = currentFilterMonth.getFullYear();
+    const month = currentFilterMonth.getMonth() + 1;
+    const parts = selectedCalendarDate.split('-');
+    if (parts.length === 3) {
+      const selYear = parseInt(parts[0], 10);
+      const selMonth = parseInt(parts[1], 10);
+      if (selYear !== year || selMonth !== month) {
+        setSelectedCalendarDate(`${year}-${String(month).padStart(2, '0')}-01`);
+      }
+    }
+  }, [currentFilterMonth]);
 
   const monthScrollRef = useRef<ScrollView>(null);
 
@@ -86,7 +106,7 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
       if (t.type === 'income') inc += t.amount;
       else if (t.type === 'expense') exp += t.amount;
 
-      const dateKey = t.date.split('T')[0] || t.date.split(' ')[0];
+      const dateKey = (t.date || '').split('T')[0].split(' ')[0];
       if (!groups[dateKey]) groups[dateKey] = [];
       groups[dateKey].push(t);
     });
@@ -113,6 +133,24 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
       summary: { inc, exp, net: inc - exp }
     };
   }, [transactions, filterYear, filterMonth, selectedAccount, accounts]);
+
+  // Selected Date Transactions for Calendar View
+  const calendarDateTransactions = useMemo(() => {
+    return transactions.filter(t => {
+      const txDateKey = (t.date || '').split('T')[0].split(' ')[0];
+      if (txDateKey !== selectedCalendarDate) return false;
+
+      if (selectedAccount) {
+        const accObj = accounts.find(a => a.id === selectedAccount);
+        const accName = accObj ? accObj.name : null;
+        const matchesFrom = t.account === selectedAccount || (accName && t.account === accName);
+        const matchesTo = t.toAccount === selectedAccount || (accName && t.toAccount === accName);
+        if (!matchesFrom && !matchesTo) return false;
+      }
+
+      return true;
+    });
+  }, [transactions, selectedCalendarDate, selectedAccount, accounts]);
 
   const getAccountInfo = (id: string): Account | undefined => {
     return accounts.find(a => a.id === id || a.name === id);
@@ -255,122 +293,205 @@ export const TransactionsScreen: React.FC<TransactionsScreenProps> = ({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.innerContainer}>
-        <Text style={[styles.pageTitle, { color: colors.onBackground }]}>Transactions</Text>
+        {/* HEADER WITH TITLE AND LIST/CALENDAR TOGGLE */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginTop: 24, marginBottom: 16 }}>
+          <Text style={[styles.pageTitle, { color: colors.onBackground, marginTop: 0, marginBottom: 0 }]}>Transactions</Text>
 
-      <View style={styles.monthSelectorWrapper}>
-        <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.surfaceVariant }]} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth - 2, 1))}>
-          <MaterialIcons name="chevron-left" size={24} color={colors.onSurfaceVariant} />
-        </TouchableOpacity>
-        
-        <ScrollView 
-          ref={monthScrollRef}
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.monthScroll}
-        >
-          {[...Array(12)].map((_, i) => {
-            const isSelected = filterMonth === i + 1;
-            return (
-              <TouchableOpacity 
-                key={i} 
-                style={[styles.monthItem, isSelected && { borderBottomColor: colors.onSurface }]}
-                onPress={() => setCurrentFilterMonth(new Date(filterYear, i, 1))}
-              >
-                <Text style={[
-                  styles.monthText, 
-                  isSelected ? { color: colors.onSurface, fontWeight: '700' as const } : { color: colors.onSurfaceVariant }
-                ]}>
-                  {MONTHS[i]}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+          <View style={{ flexDirection: 'row', backgroundColor: colors.surfaceVariant, borderRadius: 20, padding: 3, gap: 2 }}>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 16,
+                backgroundColor: viewMode === 'list' ? colors.primary : 'transparent'
+              }}
+              onPress={() => setViewMode('list')}
+            >
+              <MaterialIcons name="format-list-bulleted" size={18} color={viewMode === 'list' ? colors.onPrimary : colors.onSurfaceVariant} />
+              <Text style={{ fontSize: 13, fontWeight: '600', color: viewMode === 'list' ? colors.onPrimary : colors.onSurfaceVariant }}>List</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.surfaceVariant }]} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth, 1))}>
-          <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} />
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 16,
+                backgroundColor: viewMode === 'calendar' ? colors.primary : 'transparent'
+              }}
+              onPress={() => setViewMode('calendar')}
+            >
+              <MaterialIcons name="calendar-month" size={18} color={viewMode === 'calendar' ? colors.onPrimary : colors.onSurfaceVariant} />
+              <Text style={{ fontSize: 13, fontWeight: '600', color: viewMode === 'calendar' ? colors.onPrimary : colors.onSurfaceVariant }}>Calendar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      {/* ACCOUNT FILTER BAR */}
-      {accounts.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 10, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity
-            style={{
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              borderRadius: 16,
-              backgroundColor: !selectedAccount ? colors.primary : colors.surfaceVariant,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4
-            }}
-            onPress={() => {
-              setSelectedAccount(null);
-              onClearAccountFilter?.();
-            }}
-          >
-            <Text style={{ fontSize: 12, fontWeight: '700', color: !selectedAccount ? colors.onPrimary : colors.onSurfaceVariant }}>
-              All Accounts
-            </Text>
+        {/* MONTH SELECTOR */}
+        <View style={styles.monthSelectorWrapper}>
+          <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.surfaceVariant }]} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth - 2, 1))}>
+            <MaterialIcons name="chevron-left" size={24} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
-          {accounts.map(acc => {
-            const isSelected = selectedAccount === acc.id || selectedAccount === acc.name;
-            return (
+          
+          <ScrollView 
+            ref={monthScrollRef}
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.monthScroll}
+          >
+            {[...Array(12)].map((_, i) => {
+              const isSelected = filterMonth === i + 1;
+              return (
+                <TouchableOpacity 
+                  key={i} 
+                  style={[styles.monthItem, isSelected && { borderBottomColor: colors.onSurface }]}
+                  onPress={() => setCurrentFilterMonth(new Date(filterYear, i, 1))}
+                >
+                  <Text style={[
+                    styles.monthText, 
+                    isSelected ? { color: colors.onSurface, fontWeight: '700' as const } : { color: colors.onSurfaceVariant }
+                  ]}>
+                    {MONTHS[i]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          <TouchableOpacity style={[styles.monthArrow, { backgroundColor: colors.surfaceVariant }]} onPress={() => setCurrentFilterMonth(new Date(filterYear, filterMonth, 1))}>
+            <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
+        </View>
+
+        {/* ACCOUNT FILTER BAR */}
+        {accounts.length > 0 && (
+          <View style={{ marginVertical: 10, minHeight: 38 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity
-                key={acc.id}
                 style={{
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: 16,
-                  backgroundColor: isSelected ? (acc.color || colors.primary) : colors.surfaceVariant,
+                  backgroundColor: !selectedAccount ? colors.primary : colors.surfaceVariant,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 6
+                  gap: 4
                 }}
-                onPress={() => setSelectedAccount(acc.id)}
+                onPress={() => {
+                  setSelectedAccount(null);
+                  onClearAccountFilter?.();
+                }}
               >
-                <MaterialIcons name={(acc.icon || 'account-balance') as any} size={14} color={isSelected ? '#FFF' : (acc.color || colors.onSurfaceVariant)} />
-                <Text style={{ fontSize: 12, fontWeight: '700', color: isSelected ? '#FFF' : colors.onSurface }}>
-                  {acc.name}
+                <Text style={{ fontSize: 12, fontWeight: '700', color: !selectedAccount ? colors.onPrimary : colors.onSurfaceVariant }}>
+                  All Accounts
                 </Text>
               </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      )}
-
-      <View style={[styles.summaryBar, { backgroundColor: colors.surfaceVariant }]}>
-        <View style={styles.summaryBox}>
-          <Text style={[styles.summaryText, { color: colors.error }]}>
-            - {currencySymbol}{summary.exp.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
-          </Text>
-        </View>
-        <View style={styles.summaryBox}>
-          <Text style={[styles.summaryText, { color: colors.success }]}>
-            ^ {currencySymbol}{summary.inc.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
-          </Text>
-        </View>
-        <View style={styles.summaryBox}>
-          <Text style={[styles.summaryText, { color: colors.onSurface }]}>
-            = {currencySymbol}{summary.net.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
-          </Text>
-        </View>
-      </View>
-
-      <SectionList
-        sections={sections}
-        keyExtractor={item => item.id}
-        renderItem={renderTransactionItem}
-        renderSectionHeader={renderSectionHeader}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyView}>
-            <Text style={{ color: colors.onSurfaceVariant }}>No transactions in {MONTHS[filterMonth - 1]}</Text>
+              {accounts.map(acc => {
+                const isSelected = selectedAccount === acc.id || selectedAccount === acc.name;
+                return (
+                  <TouchableOpacity
+                    key={acc.id}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 16,
+                      backgroundColor: isSelected ? (acc.color || colors.primary) : colors.surfaceVariant,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6
+                    }}
+                    onPress={() => setSelectedAccount(acc.id)}
+                  >
+                    <MaterialIcons name={(acc.icon || 'account-balance') as any} size={14} color={isSelected ? '#FFF' : (acc.color || colors.onSurfaceVariant)} />
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: isSelected ? '#FFF' : colors.onSurface }}>
+                      {acc.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
-        }
-      />
+        )}
+
+        {/* SUMMARY BAR */}
+        <View style={[styles.summaryBar, { backgroundColor: colors.surfaceVariant }]}>
+          <View style={styles.summaryBox}>
+            <Text style={[styles.summaryText, { color: colors.error }]}>
+              - {currencySymbol}{summary.exp.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
+            </Text>
+          </View>
+          <View style={styles.summaryBox}>
+            <Text style={[styles.summaryText, { color: colors.success }]}>
+              ^ {currencySymbol}{summary.inc.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
+            </Text>
+          </View>
+          <View style={styles.summaryBox}>
+            <Text style={[styles.summaryText, { color: colors.onSurface }]}>
+              = {currencySymbol}{summary.net.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}
+            </Text>
+          </View>
+        </View>
+
+        {/* LIST VIEW VS CALENDAR VIEW */}
+        {viewMode === 'list' ? (
+          <SectionList
+            sections={sections}
+            keyExtractor={item => item.id}
+            renderItem={renderTransactionItem}
+            renderSectionHeader={renderSectionHeader}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyView}>
+                <Text style={{ color: colors.onSurfaceVariant }}>No transactions in {MONTHS[filterMonth - 1]}</Text>
+              </View>
+            }
+          />
+        ) : (
+          <ScrollView contentContainerStyle={{ paddingBottom: 115, paddingTop: 8 }} showsVerticalScrollIndicator={false}>
+            <CalendarView
+              transactions={transactions}
+              colors={colors}
+              selectedDate={selectedCalendarDate}
+              onSelectDate={(date) => setSelectedCalendarDate(date)}
+              currentMonth={currentFilterMonth}
+              onMonthChange={(newM) => setCurrentFilterMonth(newM)}
+              showMonthHeader={false}
+            />
+
+            {/* TRANSACTIONS FOR SELECTED CALENDAR DATE */}
+            <View style={{ paddingHorizontal: 16, marginTop: 12 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: colors.onSurface, marginBottom: 8 }}>
+                {(() => {
+                  const parts = selectedCalendarDate.split('-');
+                  if (parts.length === 3) {
+                    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                    if (!isNaN(d.getTime())) {
+                      return `Transactions on ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+                    }
+                  }
+                  return `Transactions on ${selectedCalendarDate}`;
+                })()}
+              </Text>
+              {calendarDateTransactions.length === 0 ? (
+                <View style={{ paddingVertical: 20, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 13, color: colors.onSurfaceVariant }}>No transactions on this date</Text>
+                </View>
+              ) : (
+                calendarDateTransactions.map(tx => (
+                  <View key={tx.id}>
+                    {renderTransactionItem({ item: tx })}
+                  </View>
+                ))
+              )}
+            </View>
+          </ScrollView>
+        )}
       </View>
 
       <TouchableOpacity 

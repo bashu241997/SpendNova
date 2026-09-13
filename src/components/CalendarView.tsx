@@ -9,6 +9,9 @@ interface CalendarViewProps {
   colors: ColorTheme;
   selectedDate: string;
   onSelectDate: (date: string) => void;
+  currentMonth?: Date;
+  onMonthChange?: (newMonth: Date) => void;
+  showMonthHeader?: boolean;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -16,21 +19,30 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   colors,
   selectedDate,
   onSelectDate,
+  currentMonth: controlledMonth,
+  onMonthChange,
+  showMonthHeader = true,
 }) => {
-  const [currentMonth, setCurrentMonth] = useState(() => {
+  const [internalMonth, setInternalMonth] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
-  const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
+  const activeMonth = controlledMonth || internalMonth;
+
+  const year = activeMonth.getFullYear();
+  const month = activeMonth.getMonth();
 
   const handlePrevMonth = () => {
-    setCurrentMonth(new Date(year, month - 1, 1));
+    const newM = new Date(year, month - 1, 1);
+    if (onMonthChange) onMonthChange(newM);
+    else setInternalMonth(newM);
   };
 
   const handleNextMonth = () => {
-    setCurrentMonth(new Date(year, month + 1, 1));
+    const newM = new Date(year, month + 1, 1);
+    if (onMonthChange) onMonthChange(newM);
+    else setInternalMonth(newM);
   };
 
   const firstDayIndex = new Date(year, month, 1).getDay();
@@ -46,7 +58,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const getDayFinances = (day: number) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const dayTxs = transactions.filter(t => t.date === dateStr);
+    const dayTxs = transactions.filter(t => {
+      const txDateKey = (t.date || '').split('T')[0].split(' ')[0];
+      return txDateKey === dateStr;
+    });
     
     const income = dayTxs.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const expense = dayTxs.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
@@ -60,18 +75,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handlePrevMonth}>
-          <MaterialIcons name="chevron-left" size={28} color={colors.onSurface} />
-        </TouchableOpacity>
-        <Text style={[styles.monthLabel, { color: colors.onSurface }]}>
-          {monthNames[month]} {year}
-        </Text>
-        <TouchableOpacity onPress={handleNextMonth}>
-          <MaterialIcons name="chevron-right" size={28} color={colors.onSurface} />
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.container, { backgroundColor: colors.surfaceVariant }]}>
+      {showMonthHeader && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handlePrevMonth} style={{ padding: 4 }}>
+            <MaterialIcons name="chevron-left" size={26} color={colors.onSurface} />
+          </TouchableOpacity>
+          <Text style={[styles.monthLabel, { color: colors.onSurface }]}>
+            {monthNames[month]} {year}
+          </Text>
+          <TouchableOpacity onPress={handleNextMonth} style={{ padding: 4 }}>
+            <MaterialIcons name="chevron-right" size={26} color={colors.onSurface} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.weekLabels}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, index) => (
@@ -79,7 +96,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             key={d} 
             style={[
               styles.weekLabel, 
-              { color: colors.outline },
+              { color: colors.onSurfaceVariant },
               index === 0 && { color: colors.error },
               index === 6 && { color: colors.info }
             ]}
@@ -103,8 +120,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               key={`day-${day}`}
               style={[
                 styles.cell,
-                { borderColor: colors.outline },
-                isSelected && { backgroundColor: colors.primaryContainer, borderRadius: 8 }
+                isSelected && { backgroundColor: colors.primaryContainer, borderRadius: 12 }
               ]}
               onPress={() => onSelectDate(dateStr)}
             >
@@ -120,13 +136,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               
               <View style={styles.indicatorContainer}>
                 {income > 0 && (
-                  <Text style={[styles.amountText, { color: colors.success }]} numberOfLines={1}>
-                    {income.toFixed(0)}
+                  <Text style={[styles.amountText, { color: '#22C55E' }]} numberOfLines={1}>
+                    +{income >= 1000 ? `${(income/1000).toFixed(1)}k` : income.toFixed(0)}
                   </Text>
                 )}
                 {expense > 0 && (
-                  <Text style={[styles.amountText, { color: colors.error }]} numberOfLines={1}>
-                    {expense.toFixed(0)}
+                  <Text style={[styles.amountText, { color: '#EF4444' }]} numberOfLines={1}>
+                    -{expense >= 1000 ? `${(expense/1000).toFixed(1)}k` : expense.toFixed(0)}
                   </Text>
                 )}
               </View>
@@ -181,8 +197,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingTop: 4,
-    borderWidth: 0.5,
-    borderColor: 'rgba(0, 0, 0, 0.03)',
   },
   dayNumber: {
     fontSize: 13,

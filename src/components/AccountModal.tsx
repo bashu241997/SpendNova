@@ -165,8 +165,8 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       >
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         
-        <View style={[styles.content, { backgroundColor: colors.background }]}>
-          <View style={[styles.dragHandle, { backgroundColor: colors.outline }]} />
+        <View style={[styles.content, { backgroundColor: colors.surface }]}>
+          <View style={[styles.dragHandle, { backgroundColor: colors.surfaceVariant }]} />
           
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.onBackground }]}>
@@ -198,7 +198,6 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 value={newAccName}
                 onChangeText={setNewAccName}
                 style={[styles.input, { 
-                  borderColor: colors.outline, 
                   color: colors.onBackground,
                   backgroundColor: colors.surfaceVariant
                 }]}
@@ -212,7 +211,6 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 onChangeText={setInitialBalanceStr}
                 keyboardType="numeric"
                 style={[styles.input, { 
-                  borderColor: colors.outline, 
                   color: colors.onBackground,
                   backgroundColor: colors.surfaceVariant
                 }]}
@@ -247,11 +245,10 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                     onPress={() => setSelectedIcon(ico)}
                     style={[
                       styles.iconCircle,
-                      { backgroundColor: colors.surfaceVariant },
-                      selectedIcon === ico && { borderColor: colors.primary, borderWidth: 2 }
+                      { backgroundColor: selectedIcon === ico ? colors.primaryContainer : colors.surfaceVariant }
                     ]}
                   >
-                    <MaterialIcons name={ico as any} size={24} color={colors.onSurfaceVariant} />
+                    <MaterialIcons name={ico as any} size={24} color={selectedIcon === ico ? colors.primary : colors.onSurfaceVariant} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -264,8 +261,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                     onPress={() => setSelectedColor(col)}
                     style={[
                       styles.colorCircle,
-                      { backgroundColor: col },
-                      selectedColor === col && { borderColor: colors.onBackground, borderWidth: 3 }
+                      { backgroundColor: col, opacity: selectedColor === col ? 1 : 0.5 }
                     ]}
                   />
                 ))}
@@ -312,7 +308,13 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 <TouchableOpacity
                   style={[
                     styles.accountItem,
-                    { borderBottomColor: colors.surfaceVariant }
+                    {
+                      backgroundColor: colors.surfaceVariant,
+                      borderRadius: 16,
+                      marginBottom: 10,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                    }
                   ]}
                   onPress={() => {
                     onSelect(item);
@@ -320,17 +322,17 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   }}
                 >
                   <View style={[styles.iconWrapper, { backgroundColor: item.color }]}>
-                    <MaterialIcons name={item.icon as any} size={24} color="#FFF" />
+                    <MaterialIcons name={item.icon as any} size={22} color="#FFF" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.accountName, { color: colors.onBackground }]}>
+                    <Text style={[styles.accountName, { color: colors.onBackground, fontWeight: '700' }]}>
                       {item.name}
                     </Text>
-                    <Text style={{ fontSize: 11, color: colors.outline, textTransform: 'uppercase' }}>
+                    <Text style={{ fontSize: 11, color: colors.onSurfaceVariant, fontWeight: '700', textTransform: 'uppercase' }}>
                       {item.type}
                     </Text>
                   </View>
-                  <MaterialIcons name="chevron-right" size={24} color={colors.outline} />
+                  <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} />
                 </TouchableOpacity>
               )}
             />
@@ -410,7 +412,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
-    borderBottomWidth: 1,
   },
   iconWrapper: {
     width: 40,
@@ -436,11 +437,12 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 48,
-    borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-  },
+    borderWidth: 0,
+    outlineStyle: 'none',
+  } as any,
   badgeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

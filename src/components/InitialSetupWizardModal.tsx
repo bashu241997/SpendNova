@@ -897,7 +897,6 @@ const styles = StyleSheet.create({
     maxWidth: 640,
     maxHeight: '90%',
     borderRadius: 24,
-    borderWidth: 1,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
@@ -983,7 +982,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 12,
-    borderWidth: 1,
     alignItems: 'center',
     minWidth: 80,
   },
@@ -1001,16 +999,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 42,
     borderRadius: 12,
-    borderWidth: 1,
     marginBottom: 12,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-  },
+    borderWidth: 0,
+    outlineStyle: 'none',
+  } as any,
   countryListContainer: {
     maxHeight: 220,
-    borderWidth: 1,
     borderRadius: 14,
     overflow: 'hidden',
   },
@@ -1018,7 +1016,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderBottomWidth: 1,
   },
   countryName: {
     fontSize: 14,
@@ -1042,7 +1039,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 1,
   },
   presetChipText: {
     fontSize: 13,
@@ -1053,7 +1049,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 14,
-    borderWidth: 1,
     marginBottom: 8,
   },
   accIconBox: {
@@ -1084,15 +1079,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     textAlign: 'right',
-  },
+    borderWidth: 0,
+    outlineStyle: 'none',
+  } as any,
   addCustomBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
     borderRadius: 12,
-    borderWidth: 1,
-    borderStyle: 'dashed',
     marginTop: 4,
   },
   addCustomBtnText: {
@@ -1102,7 +1097,6 @@ const styles = StyleSheet.create({
   customFormBox: {
     padding: 14,
     borderRadius: 14,
-    borderWidth: 1,
     marginTop: 8,
   },
   customFormTitle: {
@@ -1113,11 +1107,12 @@ const styles = StyleSheet.create({
   formInput: {
     height: 40,
     borderRadius: 10,
-    borderWidth: 1,
     paddingHorizontal: 12,
     fontSize: 13,
     marginBottom: 8,
-  },
+    borderWidth: 0,
+    outlineStyle: 'none',
+  } as any,
   typeRow: {
     flexDirection: 'row',
     gap: 6,
@@ -1127,7 +1122,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 6,
     borderRadius: 8,
-    borderWidth: 1,
     alignItems: 'center',
   },
   typeChipText: {
@@ -1154,7 +1148,6 @@ const styles = StyleSheet.create({
   // Category Step
   catAccordionCard: {
     borderRadius: 14,
-    borderWidth: 1,
     marginBottom: 8,
     overflow: 'hidden',
   },
@@ -1179,7 +1172,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   subTreeContainer: {
-    borderTopWidth: 1,
     padding: 12,
     backgroundColor: 'rgba(0,0,0,0.06)',
   },
@@ -1226,10 +1218,11 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 34,
     borderRadius: 8,
-    borderWidth: 1,
     paddingHorizontal: 10,
     fontSize: 12,
-  },
+    borderWidth: 0,
+    outlineStyle: 'none',
+  } as any,
   btnSubAdd: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -1263,7 +1256,6 @@ const styles = StyleSheet.create({
     width: '47%',
     padding: 14,
     borderRadius: 16,
-    borderWidth: 1,
     alignItems: 'center',
   },
   summaryVal: {
@@ -1297,7 +1289,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingVertical: 14,
-    borderTopWidth: 1,
   },
   btnSecondary: {
     flexDirection: 'row',
@@ -1305,7 +1296,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
-    borderWidth: 1,
   },
   btnSecondaryText: {
     fontSize: 13,

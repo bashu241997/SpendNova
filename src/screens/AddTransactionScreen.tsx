@@ -266,10 +266,10 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         </View>
 
         {/* 1. AMOUNT (MONEY TOP) */}
-        <View style={[styles.amountContainer, { backgroundColor: 'transparent' }]}>
+        <View style={[styles.amountContainer, { backgroundColor: colors.surfaceVariant, borderRadius: 20, paddingVertical: 14, marginVertical: 8 }]}>
           <Text style={[styles.amountLabel, { color: colors.onSurfaceVariant }]}>AMOUNT</Text>
           <View style={styles.amountValueWrapper}>
-            <Text style={[styles.currencySign, { color: dynamicColor }]}>{currencySymbol}</Text>
+            <Text style={[styles.currencySign, { color: dynamicColor, fontSize: 28 }]}>{currencySymbol}</Text>
             <TextInput
               value={amountStr}
               onChangeText={setAmountStr}
@@ -287,7 +287,9 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                 styles.amountValueText,
                 {
                   color: dynamicColor,
-                  minWidth: 160,
+                  fontSize: 38,
+                  height: 48,
+                  minWidth: 140,
                   borderWidth: 0,
                   textAlign: 'center',
                   outlineStyle: 'none'
@@ -298,7 +300,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
         </View>
 
         {/* 2. ACCOUNT PICKER */}
-        <View style={{ marginBottom: 18 }}>
+        <View style={{ marginBottom: 18, marginTop: 4 }}>
           <Text style={[styles.fieldLabel, { color: colors.onSurfaceVariant }]}>ACCOUNT</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity
@@ -307,15 +309,15 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                 flex: 1,
                 flexDirection: 'row',
                 alignItems: 'center',
-                height: 52,
+                height: 54,
                 borderRadius: 16,
                 backgroundColor: colors.surfaceVariant,
                 paddingHorizontal: 16,
               }}
             >
-              <MaterialIcons name="account-balance-wallet" size={20} color={colors.onSurfaceVariant} style={{ marginRight: 10 }} />
+              <MaterialIcons name="account-balance-wallet" size={22} color={colors.onSurfaceVariant} style={{ marginRight: 10 }} />
               <View style={[styles.selectedIndicator, { backgroundColor: activeAccount.color }]} />
-              <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.onBackground }}>
+              <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: colors.onBackground }}>
                 {activeAccount.name}
               </Text>
               <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
@@ -328,7 +330,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
                   flex: 1,
                   flexDirection: 'row',
                   alignItems: 'center',
-                  height: 52,
+                  height: 54,
                   borderRadius: 16,
                   backgroundColor: colors.surfaceVariant,
                   paddingHorizontal: 16,
@@ -336,7 +338,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
               >
                 <MaterialIcons name="trending-flat" size={20} color={colors.primary} style={{ marginRight: 8 }} />
                 <View style={[styles.selectedIndicator, { backgroundColor: activeToAccount.color }]} />
-                <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.onBackground }}>
+                <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: colors.onBackground }}>
                   {activeToAccount.name}
                 </Text>
                 <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />

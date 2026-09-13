@@ -81,11 +81,11 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ visible, onClo
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
+        <View style={[styles.card, { backgroundColor: colors.surface }]}>
           
           {/* Header Bar */}
           <View style={styles.header}>
-            <View style={[styles.stepCounterPill, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline }]}>
+            <View style={[styles.stepCounterPill, { backgroundColor: colors.surfaceVariant }]}>
               <Text style={[styles.stepCounterText, { color: colors.onSurfaceVariant }]}>
                 Step {currentStep + 1} of {TOUR_STEPS.length}
               </Text>
@@ -98,7 +98,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ visible, onClo
 
           {/* Main Icon & Content */}
           <View style={styles.body}>
-            <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer, borderColor: colors.outline }]}>
+            <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer }]}>
               <MaterialIcons name={step.icon as any} size={36} color={colors.onPrimaryContainer} />
             </View>
 
@@ -110,7 +110,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ visible, onClo
             <Text style={[styles.title, { color: colors.onSurface }]}>{step.title}</Text>
             <Text style={[styles.description, { color: colors.onSurfaceVariant }]}>{step.description}</Text>
 
-            <View style={[styles.tipBox, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline }]}>
+            <View style={[styles.tipBox, { backgroundColor: colors.surfaceVariant }]}>
               <MaterialIcons name="lightbulb" size={18} color={colors.onSurfaceVariant} style={{ marginRight: 8 }} />
               <Text style={[styles.tipText, { color: colors.onSurfaceVariant }]}>{step.tip}</Text>
             </View>
@@ -135,7 +135,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ visible, onClo
           <View style={styles.footer}>
             {!isFirst ? (
               <TouchableOpacity
-                style={[styles.btnSecondary, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline }]}
+                style={[styles.btnSecondary, { backgroundColor: colors.surfaceVariant }]}
                 onPress={handlePrev}
                 activeOpacity={0.8}
               >
@@ -152,7 +152,7 @@ export const GuidedTourModal: React.FC<GuidedTourModalProps> = ({ visible, onClo
             )}
 
             <TouchableOpacity
-              style={[styles.btnPrimary, { backgroundColor: colors.primaryContainer, borderColor: colors.outline }]}
+              style={[styles.btnPrimary, { backgroundColor: colors.primaryContainer }]}
               onPress={handleNext}
               activeOpacity={0.85}
             >
@@ -176,12 +176,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
+  } as any,
   card: {
     width: '100%',
     maxWidth: 480,
     borderRadius: 24,
-    borderWidth: 1,
     padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -199,7 +198,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 12,
-    borderWidth: 1,
   },
   stepCounterText: {
     fontSize: 12,
@@ -222,15 +220,14 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
     marginBottom: 16,
   },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
     marginBottom: 12,
   },
   badgeDot: {
@@ -240,57 +237,58 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   title: {
     fontSize: 20,
     fontWeight: '800',
+    marginBottom: 8,
     textAlign: 'center',
-    marginBottom: 10,
   },
   description: {
     fontSize: 14,
-    lineHeight: 22,
+    lineHeight: 20,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   tipBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 24,
+    padding: 12,
+    borderRadius: 16,
+    marginBottom: 16,
     width: '100%',
   },
   tipText: {
-    fontSize: 12,
     flex: 1,
-    lineHeight: 18,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
   },
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
+    opacity: 0.3,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
   },
   btnSkip: {
-    paddingVertical: 10,
     paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   btnSkipText: {
     fontSize: 14,
@@ -300,9 +298,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 16,
-    borderWidth: 1,
+    paddingVertical: 10,
+    borderRadius: 14,
   },
   btnSecondaryText: {
     fontSize: 14,
@@ -313,11 +310,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 14,
   },
   btnPrimaryText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
   },
 });
