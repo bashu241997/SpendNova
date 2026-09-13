@@ -107,85 +107,11 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
   const activeToAccount = toAccount || accounts[1] || accounts[0] || { id: 'acc_def2', name: 'Bank', color: colors.secondary, icon: 'account-balance', type: 'savings' };
   const activeCategory = category || categories[0] || { id: 'cat_def', name: 'General', color: colors.primary, icon: 'label', type: 'expense' };
 
-  const handleDescriptionChange = (text: string) => {
-    setDescription(text);
-    if (!text.trim()) {
-      setAutoMatchBadge(null);
-      return;
-    }
-
-    const query = text.trim().toLowerCase();
-
-    // 1. Search subcategory names across all categories
-    for (const cat of categories) {
-      if (cat.subcategories && cat.subcategories.length > 0) {
-        const matchedSub = cat.subcategories.find(sub => {
-          const subName = sub.name.toLowerCase();
-          return query.includes(subName) || subName.includes(query);
-        });
-        if (matchedSub) {
-          setCategory(cat);
-          setSubcategory(matchedSub.name);
-          if (cat.type === 'expense' || cat.type === 'income') {
-            setType(cat.type);
-          }
-          setAutoMatchBadge(`${cat.name} → ${matchedSub.name}`);
-          return;
-        }
-      }
-    }
-
-    // 2. Search main category names
-    for (const cat of categories) {
-      const catName = cat.name.toLowerCase();
-      if (query.includes(catName) || catName.includes(query)) {
-        setCategory(cat);
-        if (cat.type === 'expense' || cat.type === 'income') {
-          setType(cat.type);
-        }
-        setAutoMatchBadge(cat.name);
-        return;
-      }
-    }
-
-    setAutoMatchBadge(null);
-  };
-
-  const ensureCategoryAndSubcategoryAutoSaved = async (
-    finalCategory: Category,
-    subNameStr?: string,
-    descStr?: string
-  ) => {
-    const targetSubName = (subNameStr || descStr || '').trim();
-    if (!targetSubName || type === 'transfer') return;
-
-    // Check if subcategory already exists under finalCategory
-    const existingSubs = finalCategory.subcategories || [];
-    const exists = existingSubs.some(s => s.name.toLowerCase() === targetSubName.toLowerCase());
-
-    if (!exists) {
-      const newSubItem = {
-        id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        name: targetSubName,
-        color: finalCategory.color,
-        icon: 'label'
-      };
-      const updatedCategory = {
-        ...finalCategory,
-        subcategories: [...existingSubs, newSubItem]
-      };
-      await updateCategory(updatedCategory);
-    }
-  };
-
   const handleNumpadDone = async (finalAmount: number) => {
     if (finalAmount <= 0) {
       alert('Please enter an amount greater than 0');
       return;
     }
-
-    // Auto-create subcategory under activeCategory if user introduced a new title
-    await ensureCategoryAndSubcategoryAutoSaved(activeCategory, subcategory, description);
 
     const txData = {
       date,
@@ -194,7 +120,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
       account: activeAccount.id,
       toAccount: type === 'transfer' ? activeToAccount.id : undefined,
       category: type === 'transfer' ? 'cat_transfer' : activeCategory.id,
-      subcategory: subcategory.trim() || description.trim() || undefined,
+      subcategory: subcategory.trim() || undefined,
       description: description.trim() || (type === 'transfer' ? `Transfer to ${activeToAccount.name}` : activeCategory.name),
       goalId: selectedGoalId || undefined,
     };
@@ -246,6 +172,50 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
 
   const dynamicColor = type === 'expense' ? colors.error : type === 'income' ? colors.success : colors.onBackground;
 
+  const handleTitleChange = (text: string) => {
+    setDescription(text);
+    if (!text.trim()) {
+      setAutoMatchBadge(null);
+      return;
+    }
+
+    const query = text.trim().toLowerCase();
+
+    // 1. Search subcategories across user's created categories
+    for (const cat of categories) {
+      if (cat.subcategories && cat.subcategories.length > 0) {
+        const matchedSub = cat.subcategories.find(sub => {
+          const subName = sub.name.toLowerCase();
+          return query.includes(subName) || subName.includes(query);
+        });
+        if (matchedSub) {
+          setCategory(cat);
+          setSubcategory(matchedSub.name);
+          if (cat.type === 'expense' || cat.type === 'income') {
+            setType(cat.type);
+          }
+          setAutoMatchBadge(`${cat.name} → ${matchedSub.name}`);
+          return;
+        }
+      }
+    }
+
+    // 2. Search main category names
+    for (const cat of categories) {
+      const catName = cat.name.toLowerCase();
+      if (query.includes(catName) || catName.includes(query)) {
+        setCategory(cat);
+        if (cat.type === 'expense' || cat.type === 'income') {
+          setType(cat.type);
+        }
+        setAutoMatchBadge(cat.name);
+        return;
+      }
+    }
+
+    setAutoMatchBadge(null);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
@@ -295,6 +265,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           })}
         </View>
 
+        {/* 1. AMOUNT (MONEY TOP) */}
         <View style={[styles.amountContainer, { backgroundColor: 'transparent' }]}>
           <Text style={[styles.amountLabel, { color: colors.onSurfaceVariant }]}>AMOUNT</Text>
           <View style={styles.amountValueWrapper}>
@@ -326,65 +297,146 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           </View>
         </View>
 
-        <View style={styles.formRow}>
-          <MaterialIcons name="event" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
-          <View style={styles.dateSelector}>
-            <TouchableOpacity onPress={() => handleDateChange(-1)} style={styles.dateArrow}>
-              <MaterialIcons name="chevron-left" size={24} color={colors.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setShowCalendarModal(true)}
-              style={{ flex: 1, alignItems: 'center', justifyContent: 'center', height: '100%' }}
-            >
-              <Text style={[styles.dateText, { color: colors.onBackground, textDecorationLine: 'underline' }]}>{date}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDateChange(1)} style={styles.dateArrow}>
-              <MaterialIcons name="chevron-right" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.formRow}>
-          <MaterialIcons name="account-balance-wallet" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
-          <View style={styles.pickerWrapper}>
+        {/* 2. ACCOUNT PICKER */}
+        <View style={{ marginBottom: 18 }}>
+          <Text style={[styles.fieldLabel, { color: colors.onSurfaceVariant }]}>ACCOUNT</Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity
               onPress={() => setAccountModalVisible(true)}
-              style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
+              style={{
+                flex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                height: 52,
+                borderRadius: 16,
+                backgroundColor: colors.surfaceVariant,
+                paddingHorizontal: 16,
+              }}
             >
+              <MaterialIcons name="account-balance-wallet" size={20} color={colors.onSurfaceVariant} style={{ marginRight: 10 }} />
               <View style={[styles.selectedIndicator, { backgroundColor: activeAccount.color }]} />
-              <Text style={[styles.pickerText, { color: colors.onSurfaceVariant }]}>
+              <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.onBackground }}>
                 {activeAccount.name}
               </Text>
               <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
             </TouchableOpacity>
 
             {type === 'transfer' && (
-              <>
-                <MaterialIcons name="trending-flat" size={24} color={colors.primary} style={{ marginHorizontal: 8 }} />
-                <TouchableOpacity
-                  onPress={() => setToAccountModalVisible(true)}
-                  style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant, flex: 1 }]}
-                >
-                  <View style={[styles.selectedIndicator, { backgroundColor: activeToAccount.color }]} />
-                  <Text style={[styles.pickerText, { color: colors.onSurfaceVariant }]}>
-                    {activeToAccount.name}
-                  </Text>
-                  <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
-                </TouchableOpacity>
-              </>
+              <TouchableOpacity
+                onPress={() => setToAccountModalVisible(true)}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  height: 52,
+                  borderRadius: 16,
+                  backgroundColor: colors.surfaceVariant,
+                  paddingHorizontal: 16,
+                }}
+              >
+                <MaterialIcons name="trending-flat" size={20} color={colors.primary} style={{ marginRight: 8 }} />
+                <View style={[styles.selectedIndicator, { backgroundColor: activeToAccount.color }]} />
+                <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.onBackground }}>
+                  {activeToAccount.name}
+                </Text>
+                <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
+              </TouchableOpacity>
             )}
           </View>
         </View>
 
+        {/* 3. DATE SELECTOR */}
+        <View style={{ marginBottom: 18 }}>
+          <Text style={[styles.fieldLabel, { color: colors.onSurfaceVariant }]}>TRANSACTION DATE</Text>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            height: 52,
+            borderRadius: 16,
+            backgroundColor: colors.surfaceVariant,
+            paddingHorizontal: 8,
+          }}>
+            <MaterialIcons name="event" size={20} color={colors.onSurfaceVariant} style={{ marginLeft: 8, marginRight: 4 }} />
+            <TouchableOpacity onPress={() => handleDateChange(-1)} style={{ padding: 8 }}>
+              <MaterialIcons name="chevron-left" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowCalendarModal(true)}
+              style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.onBackground }}>{date}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleDateChange(1)} style={{ padding: 8 }}>
+              <MaterialIcons name="chevron-right" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 4. TITLE / DESCRIPTION INPUT */}
+        <View style={{ marginBottom: 18 }}>
+          <Text style={[styles.fieldLabel, { color: colors.onSurfaceVariant }]}>TRANSACTION TITLE</Text>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            height: 52,
+            borderRadius: 16,
+            backgroundColor: colors.surfaceVariant,
+            paddingHorizontal: 16,
+          }}>
+            <MaterialIcons name="edit" size={20} color={colors.primary} style={{ marginRight: 12 }} />
+            <TextInput
+              placeholder="What is this transaction for? (e.g. Vegetables, Rent)"
+              placeholderTextColor={colors.outline}
+              value={description}
+              onChangeText={handleTitleChange}
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                const numericVal = parseFloat(amountStr) || 0;
+                handleNumpadDone(numericVal);
+              }}
+              style={{
+                flex: 1,
+                color: colors.onBackground,
+                fontSize: 15,
+                fontWeight: '600',
+                height: '100%',
+                borderWidth: 0,
+                outlineStyle: 'none',
+              } as any}
+            />
+          </View>
+          {autoMatchBadge && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, backgroundColor: `${colors.primary}18`, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, alignSelf: 'flex-start' }}>
+              <MaterialIcons name="auto-awesome" size={14} color={colors.primary} style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.primary }}>
+                Auto Matched: {autoMatchBadge}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* 5. CATEGORY SELECTOR */}
         {type !== 'transfer' && (
-          <View style={styles.formRow}>
-            <MaterialIcons name="category" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
+          <View style={{ marginBottom: 18 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <Text style={[styles.fieldLabel, { color: colors.onSurfaceVariant, marginBottom: 0 }]}>CATEGORY</Text>
+              <TouchableOpacity onPress={() => setCategoryModalVisible(true)}>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: colors.primary }}>+ Add Category</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               onPress={() => setCategoryModalVisible(true)}
-              style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                height: 52,
+                borderRadius: 16,
+                backgroundColor: colors.surfaceVariant,
+                paddingHorizontal: 16,
+              }}
             >
-              <View style={[styles.selectedIndicator, { backgroundColor: activeCategory.color }]} />
-              <Text style={[styles.pickerText, { color: colors.onSurfaceVariant }]}>
+              <MaterialIcons name={activeCategory.icon as any || 'category'} size={20} color={activeCategory.color} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.onBackground }}>
                 {activeCategory.name}
               </Text>
               <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
@@ -392,119 +444,27 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           </View>
         )}
 
-        {/* Savings Goal Picker Row */}
-        {goals && goals.length > 0 && (
-          <View style={styles.formRow}>
-            <MaterialIcons name="emoji-events" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
-            <TouchableOpacity
-              onPress={() => setGoalModalVisible(true)}
-              style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant }]}
-            >
-              <View style={[styles.selectedIndicator, { backgroundColor: selectedGoalId ? (goals.find(g => g.id === selectedGoalId)?.color || colors.primary) : colors.outline }]} />
-              <Text style={[styles.pickerText, { color: colors.onSurfaceVariant }]}>
-                {selectedGoalId ? `Goal: ${goals.find(g => g.id === selectedGoalId)?.name}` : 'Link Savings Goal (Optional)'}
-              </Text>
-              <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Quick Title Suggestion Chips */}
-        <View style={{ marginBottom: 12, paddingHorizontal: 4 }}>
-          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.onSurfaceVariant, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-            Quick Suggestions (Auto-matches Category)
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
-            {[
-              { label: '⛽ Petrol & Fuel', title: 'Petrol & Fuel' },
-              { label: '🛵 Bike Repair', title: 'Bike Repair & Service' },
-              { label: '🚗 Car Service', title: 'Car Repair & Service' },
-              { label: '🥦 Sabzi & Vegetables', title: 'Vegetables & Sabzi' },
-              { label: '🛒 Kirana & Groceries', title: 'Kirana & Groceries' },
-              { label: '🛵 Swiggy & Zomato', title: 'Swiggy & Zomato' },
-              { label: '⚡ Electricity Bill', title: 'Electricity Bill' },
-              { label: '📱 Mobile Recharge', title: 'Mobile Recharge (Jio/Airtel)' },
-              { label: '🏠 Rent / PG Fee', title: 'Rent / PG Fee' },
-              { label: '💼 Monthly Salary', title: 'Monthly Salary' },
-              { label: '💳 Fastag & Toll', title: 'Fastag & Tolls' },
-              { label: '🧹 Maid & Cook', title: 'Maid & Housekeeping' },
-            ].map((chip, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 16,
-                  backgroundColor: colors.surfaceVariant,
-                  borderWidth: 1,
-                  borderColor: colors.outline,
-                }}
-                onPress={() => handleDescriptionChange(chip.title)}
-              >
-                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.onSurface }}>
-                  {chip.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.formRow}>
-          <MaterialIcons name="description" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
-          <View style={{ flex: 1 }}>
-            <TextInput
-              placeholder="Title / Description (e.g. Vegetables, Rent, Fuel)"
-              placeholderTextColor={colors.outline}
-              value={description}
-              onChangeText={handleDescriptionChange}
-              returnKeyType="done"
-              onSubmitEditing={() => {
-                const numericVal = parseFloat(amountStr) || 0;
-                handleNumpadDone(numericVal);
-              }}
-              style={[styles.descriptionInput, {
-                color: colors.onBackground,
-                borderColor: colors.surfaceVariant,
-                backgroundColor: colors.surfaceVariant,
-                outlineStyle: 'none',
-                width: '100%'
-              } as any]}
-            />
-            {autoMatchBadge && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, backgroundColor: `${colors.primary}18`, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start' }}>
-                <MaterialIcons name="auto-awesome" size={14} color={colors.primary} style={{ marginRight: 6 }} />
-                <Text style={{ fontSize: 11, fontWeight: '800', color: colors.primary }}>
-                  Auto-matched: {autoMatchBadge}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Subcategory Selector Row */}
+        {/* 6. SUBCATEGORY SELECTOR */}
         {activeCategory.subcategories && activeCategory.subcategories.length > 0 && (
-          <View style={styles.formRow}>
-            <MaterialIcons name="subdirectory-arrow-right" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }}>
-              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.onSurfaceVariant, marginRight: 4 }}>
-                Subcategory:
-              </Text>
+          <View style={{ marginBottom: 18 }}>
+            <Text style={[styles.fieldLabel, { color: colors.onSurfaceVariant }]}>SUBCATEGORY</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, alignItems: 'center' }}>
               {activeCategory.subcategories.map(sub => {
                 const isSelected = subcategory.toLowerCase() === sub.name.toLowerCase();
                 return (
                   <TouchableOpacity
                     key={sub.id}
                     style={{
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
-                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 10,
+                      borderRadius: 14,
                       backgroundColor: isSelected ? colors.primaryContainer : colors.surfaceVariant,
-                      borderWidth: 1,
+                      borderWidth: 1.5,
                       borderColor: isSelected ? colors.primary : colors.outline,
                     }}
                     onPress={() => setSubcategory(sub.name)}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? colors.onPrimaryContainer : colors.onSurfaceVariant }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: isSelected ? colors.onPrimaryContainer : colors.onSurfaceVariant }}>
                       {sub.name}
                     </Text>
                   </TouchableOpacity>
@@ -514,20 +474,39 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           </View>
         )}
 
+        {/* 7. SAVINGS GOAL PICKER (OPTIONAL) */}
+        {goals && goals.length > 0 && (
+          <View style={styles.fieldSection}>
+            <Text style={[styles.fieldLabel, { color: colors.onSurfaceVariant }]}>LINK SAVINGS GOAL (OPTIONAL)</Text>
+            <View style={styles.formRow}>
+              <MaterialIcons name="emoji-events" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
+              <TouchableOpacity
+                onPress={() => setGoalModalVisible(true)}
+                style={[styles.pickerButton, { backgroundColor: colors.surfaceVariant, borderColor: colors.outline, borderWidth: 1 }]}
+              >
+                <View style={[styles.selectedIndicator, { backgroundColor: selectedGoalId ? (goals.find(g => g.id === selectedGoalId)?.color || colors.primary) : colors.outline }]} />
+                <Text style={[styles.pickerText, { color: colors.onSurfaceVariant }]}>
+                  {selectedGoalId ? `Goal: ${goals.find(g => g.id === selectedGoalId)?.name}` : 'Link Savings Goal (Optional)'}
+                </Text>
+                <MaterialIcons name="arrow-drop-down" size={24} color={colors.onSurfaceVariant} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         <TouchableOpacity
           style={[styles.saveButtonWeb, {
-            backgroundColor: 'rgba(24, 24, 27, 0.85)',
-            borderWidth: 1,
-            borderColor: 'rgba(255,255,255,0.1)',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            backgroundColor: colors.primary,
+            borderRadius: 18,
+            height: 52,
+            marginTop: 10,
           } as any]}
           onPress={() => {
             const numericVal = parseFloat(amountStr) || 0;
             handleNumpadDone(numericVal);
           }}
         >
-          <Text style={[styles.saveButtonTextWeb, { color: '#FFFFFF' }]}>
+          <Text style={[styles.saveButtonTextWeb, { color: '#FFFFFF', fontWeight: '800', fontSize: 16 }]}>
             Save Transaction
           </Text>
         </TouchableOpacity>
@@ -569,6 +548,26 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
             setSubcategory(sub);
           } else {
             setSubcategory('');
+          }
+        }}
+        onAddCategory={async (newCat) => {
+          await addCategory(newCat);
+          const freshCat = categories.find(c => c.name === newCat.name && c.type === newCat.type);
+          return freshCat;
+        }}
+        onAddSubcategory={async (catId, subName) => {
+          const targetCat = categories.find(c => c.id === catId);
+          if (targetCat) {
+            const newSub = {
+              id: `sub_${Date.now()}`,
+              name: subName,
+              color: targetCat.color,
+              icon: targetCat.icon,
+            };
+            await updateCategory({
+              ...targetCat,
+              subcategories: [...(targetCat.subcategories || []), newSub]
+            });
           }
         }}
       />
@@ -712,10 +711,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
   },
+  fieldSection: {
+    marginBottom: 20,
+  },
+  fieldLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
   formRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
   },
   fieldIcon: {
     marginRight: 16,
