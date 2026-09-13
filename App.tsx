@@ -29,8 +29,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { OnboardingSlideshow } from './src/components/OnboardingSlideshow';
 import { GuidedTourModal } from './src/components/GuidedTourModal';
+import { InitialSetupWizardModal } from './src/components/InitialSetupWizardModal';
 import { SecureStorage } from './src/utils/secureStorage';
-import { Transaction } from './src/utils/storage';
+import { Transaction, Account, Category } from './src/utils/storage';
 import { CurrencyPickerModal } from './src/components/CurrencyPickerModal';
 import { getCountryDetails } from './src/utils/currencies';
 import { PWAInstallBanner } from './src/components/PWAInstallBanner';
@@ -38,7 +39,18 @@ import { PWAInstallBanner } from './src/components/PWAInstallBanner';
 type MainTab = 'home' | 'transactions' | 'budgets' | 'stats' | 'accounts' | 'settings' | 'categories' | 'more' | 'recurring' | 'goals';
 
 function MainAppContent() {
-  const { colors, loading, hasAcceptedTerms, acceptTerms, country, setCountry } = useApp();
+  const {
+    colors,
+    loading,
+    hasAcceptedTerms,
+    acceptTerms,
+    country,
+    setCountry,
+    isInitialSetupCompleted,
+    completeInitialSetup,
+    accounts,
+    categories
+  } = useApp();
   // AppContext no longer exposes `themeType`; derive the status-bar treatment
   // from the active palette instead.
   const themeType = colors.background === '#0B0F19' ? 'dark' : 'light';
@@ -47,18 +59,37 @@ function MainAppContent() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
   const [isAddMode, setIsAddMode] = useState(false);
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isSetupWizardOpen, setIsSetupWizardOpen] = useState(false);
   const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false);
   const { width } = useWindowDimensions();
 
   useEffect(() => {
     if (!loading && hasAcceptedTerms) {
-      SecureStorage.getItem('spendnova_tour_completed').then(completed => {
-        if (!completed) {
-          setIsTourOpen(true);
-        }
-      });
+      if (!isInitialSetupCompleted || accounts.length === 0 || categories.length === 0) {
+        setIsSetupWizardOpen(true);
+      } else {
+        SecureStorage.getItem('spendnova_tour_completed').then(completed => {
+          if (!completed) {
+            setIsTourOpen(true);
+          }
+        });
+      }
     }
-  }, [loading, hasAcceptedTerms]);
+  }, [loading, hasAcceptedTerms, isInitialSetupCompleted, accounts.length, categories.length]);
+
+  const handleCompleteSetup = async (
+    countryCode: string,
+    newAccounts: Account[],
+    newCategories: Category[]
+  ) => {
+    await completeInitialSetup(countryCode, newAccounts, newCategories);
+    setIsSetupWizardOpen(false);
+    SecureStorage.getItem('spendnova_tour_completed').then(completed => {
+      if (!completed) {
+        setIsTourOpen(true);
+      }
+    });
+  };
 
   const handleCloseTour = () => {
     setIsTourOpen(false);
@@ -348,6 +379,17 @@ function MainAppContent() {
             </View>
           )}
 
+          <InitialSetupWizardModal
+            visible={isSetupWizardOpen}
+            onClose={() => {
+              if (isInitialSetupCompleted && accounts.length > 0 && categories.length > 0) {
+                setIsSetupWizardOpen(false);
+              }
+            }}
+            isMandatory={!isInitialSetupCompleted || accounts.length === 0 || categories.length === 0}
+            onCompleteSetup={handleCompleteSetup}
+          />
+
           <GuidedTourModal
             visible={isTourOpen}
             onClose={handleCloseTour}
@@ -495,6 +537,17 @@ function MainAppContent() {
             </View>
           </View>
         </Modal>
+
+        <InitialSetupWizardModal
+          visible={isSetupWizardOpen}
+          onClose={() => {
+            if (isInitialSetupCompleted && accounts.length > 0 && categories.length > 0) {
+              setIsSetupWizardOpen(false);
+            }
+          }}
+          isMandatory={!isInitialSetupCompleted || accounts.length === 0 || categories.length === 0}
+          onCompleteSetup={handleCompleteSetup}
+        />
 
         <GuidedTourModal
           visible={isTourOpen}

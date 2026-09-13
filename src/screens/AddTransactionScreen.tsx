@@ -40,6 +40,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
     deleteTransaction,
     addAccount,
     addCategory,
+    updateCategory,
     currencySymbol,
     goals
   } = useApp();
@@ -94,6 +95,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
 
   const [subcategory, setSubcategory] = useState<string>(transactionToEdit?.subcategory || '');
   const [description, setDescription] = useState(transactionToEdit?.description || '');
+  const [autoMatchBadge, setAutoMatchBadge] = useState<string | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | undefined>(transactionToEdit?.goalId);
   const [accountModalVisible, setAccountModalVisible] = useState(false);
   const [toAccountModalVisible, setToAccountModalVisible] = useState(false);
@@ -105,11 +107,85 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
   const activeToAccount = toAccount || accounts[1] || accounts[0] || { id: 'acc_def2', name: 'Bank', color: colors.secondary, icon: 'account-balance', type: 'savings' };
   const activeCategory = category || categories[0] || { id: 'cat_def', name: 'General', color: colors.primary, icon: 'label', type: 'expense' };
 
+  const handleDescriptionChange = (text: string) => {
+    setDescription(text);
+    if (!text.trim()) {
+      setAutoMatchBadge(null);
+      return;
+    }
+
+    const query = text.trim().toLowerCase();
+
+    // 1. Search subcategory names across all categories
+    for (const cat of categories) {
+      if (cat.subcategories && cat.subcategories.length > 0) {
+        const matchedSub = cat.subcategories.find(sub => {
+          const subName = sub.name.toLowerCase();
+          return query.includes(subName) || subName.includes(query);
+        });
+        if (matchedSub) {
+          setCategory(cat);
+          setSubcategory(matchedSub.name);
+          if (cat.type === 'expense' || cat.type === 'income') {
+            setType(cat.type);
+          }
+          setAutoMatchBadge(`${cat.name} → ${matchedSub.name}`);
+          return;
+        }
+      }
+    }
+
+    // 2. Search main category names
+    for (const cat of categories) {
+      const catName = cat.name.toLowerCase();
+      if (query.includes(catName) || catName.includes(query)) {
+        setCategory(cat);
+        if (cat.type === 'expense' || cat.type === 'income') {
+          setType(cat.type);
+        }
+        setAutoMatchBadge(cat.name);
+        return;
+      }
+    }
+
+    setAutoMatchBadge(null);
+  };
+
+  const ensureCategoryAndSubcategoryAutoSaved = async (
+    finalCategory: Category,
+    subNameStr?: string,
+    descStr?: string
+  ) => {
+    const targetSubName = (subNameStr || descStr || '').trim();
+    if (!targetSubName || type === 'transfer') return;
+
+    // Check if subcategory already exists under finalCategory
+    const existingSubs = finalCategory.subcategories || [];
+    const exists = existingSubs.some(s => s.name.toLowerCase() === targetSubName.toLowerCase());
+
+    if (!exists) {
+      const newSubItem = {
+        id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        name: targetSubName,
+        color: finalCategory.color,
+        icon: 'label'
+      };
+      const updatedCategory = {
+        ...finalCategory,
+        subcategories: [...existingSubs, newSubItem]
+      };
+      await updateCategory(updatedCategory);
+    }
+  };
+
   const handleNumpadDone = async (finalAmount: number) => {
     if (finalAmount <= 0) {
       alert('Please enter an amount greater than 0');
       return;
     }
+
+    // Auto-create subcategory under activeCategory if user introduced a new title
+    await ensureCategoryAndSubcategoryAutoSaved(activeCategory, subcategory, description);
 
     const txData = {
       date,
@@ -118,7 +194,7 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
       account: activeAccount.id,
       toAccount: type === 'transfer' ? activeToAccount.id : undefined,
       category: type === 'transfer' ? 'cat_transfer' : activeCategory.id,
-      subcategory: subcategory.trim() || undefined,
+      subcategory: subcategory.trim() || description.trim() || undefined,
       description: description.trim() || (type === 'transfer' ? `Transfer to ${activeToAccount.name}` : activeCategory.name),
       goalId: selectedGoalId || undefined,
     };
@@ -333,26 +409,110 @@ export const AddTransactionScreen: React.FC<AddTransactionScreenProps> = ({
           </View>
         )}
 
+        {/* Quick Title Suggestion Chips */}
+        <View style={{ marginBottom: 12, paddingHorizontal: 4 }}>
+          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.onSurfaceVariant, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Quick Suggestions (Auto-matches Category)
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+            {[
+              { label: '⛽ Petrol & Fuel', title: 'Petrol & Fuel' },
+              { label: '🛵 Bike Repair', title: 'Bike Repair & Service' },
+              { label: '🚗 Car Service', title: 'Car Repair & Service' },
+              { label: '🥦 Sabzi & Vegetables', title: 'Vegetables & Sabzi' },
+              { label: '🛒 Kirana & Groceries', title: 'Kirana & Groceries' },
+              { label: '🛵 Swiggy & Zomato', title: 'Swiggy & Zomato' },
+              { label: '⚡ Electricity Bill', title: 'Electricity Bill' },
+              { label: '📱 Mobile Recharge', title: 'Mobile Recharge (Jio/Airtel)' },
+              { label: '🏠 Rent / PG Fee', title: 'Rent / PG Fee' },
+              { label: '💼 Monthly Salary', title: 'Monthly Salary' },
+              { label: '💳 Fastag & Toll', title: 'Fastag & Tolls' },
+              { label: '🧹 Maid & Cook', title: 'Maid & Housekeeping' },
+            ].map((chip, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 16,
+                  backgroundColor: colors.surfaceVariant,
+                  borderWidth: 1,
+                  borderColor: colors.outline,
+                }}
+                onPress={() => handleDescriptionChange(chip.title)}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '700', color: colors.onSurface }}>
+                  {chip.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
         <View style={styles.formRow}>
           <MaterialIcons name="description" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
-          <TextInput
-            placeholder="Description / Note"
-            placeholderTextColor={colors.outline}
-            value={description}
-            onChangeText={setDescription}
-            returnKeyType="done"
-            onSubmitEditing={() => {
-              const numericVal = parseFloat(amountStr) || 0;
-              handleNumpadDone(numericVal);
-            }}
-            style={[styles.descriptionInput, {
-              color: colors.onBackground,
-              borderColor: colors.surfaceVariant,
-              backgroundColor: colors.surfaceVariant,
-              outlineStyle: 'none'
-            } as any]}
-          />
+          <View style={{ flex: 1 }}>
+            <TextInput
+              placeholder="Title / Description (e.g. Vegetables, Rent, Fuel)"
+              placeholderTextColor={colors.outline}
+              value={description}
+              onChangeText={handleDescriptionChange}
+              returnKeyType="done"
+              onSubmitEditing={() => {
+                const numericVal = parseFloat(amountStr) || 0;
+                handleNumpadDone(numericVal);
+              }}
+              style={[styles.descriptionInput, {
+                color: colors.onBackground,
+                borderColor: colors.surfaceVariant,
+                backgroundColor: colors.surfaceVariant,
+                outlineStyle: 'none',
+                width: '100%'
+              } as any]}
+            />
+            {autoMatchBadge && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, backgroundColor: `${colors.primary}18`, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start' }}>
+                <MaterialIcons name="auto-awesome" size={14} color={colors.primary} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 11, fontWeight: '800', color: colors.primary }}>
+                  Auto-matched: {autoMatchBadge}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
+
+        {/* Subcategory Selector Row */}
+        {activeCategory.subcategories && activeCategory.subcategories.length > 0 && (
+          <View style={styles.formRow}>
+            <MaterialIcons name="subdirectory-arrow-right" size={24} color={colors.onSurfaceVariant} style={styles.fieldIcon} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }}>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.onSurfaceVariant, marginRight: 4 }}>
+                Subcategory:
+              </Text>
+              {activeCategory.subcategories.map(sub => {
+                const isSelected = subcategory.toLowerCase() === sub.name.toLowerCase();
+                return (
+                  <TouchableOpacity
+                    key={sub.id}
+                    style={{
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 12,
+                      backgroundColor: isSelected ? colors.primaryContainer : colors.surfaceVariant,
+                      borderWidth: 1,
+                      borderColor: isSelected ? colors.primary : colors.outline,
+                    }}
+                    onPress={() => setSubcategory(sub.name)}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: isSelected ? colors.onPrimaryContainer : colors.onSurfaceVariant }}>
+                      {sub.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
 
         <TouchableOpacity
           style={[styles.saveButtonWeb, {

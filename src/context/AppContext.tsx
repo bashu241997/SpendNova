@@ -109,6 +109,8 @@ interface AppContextProps {
   currencySymbol: string;
   hasAcceptedTerms: boolean;
   acceptTerms: () => Promise<void>;
+  isInitialSetupCompleted: boolean;
+  completeInitialSetup: (countryCode: string, newAccounts: Account[], newCategories: Category[]) => Promise<void>;
 
   addTransaction: (tx: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (tx: Transaction) => Promise<void>;
@@ -164,12 +166,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loading, setLoading] = useState(true);
   const [country, setCountryState] = useState<string>('US');
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  const [isInitialSetupCompleted, setIsInitialSetupCompleted] = useState(false);
   const [googleToken, setGoogleToken] = useState<string | null>(null);
   const [googleUser, setGoogleUser] = useState<GoogleUser | null>(null);
 
   useEffect(() => {
     const init = async () => {
-      const [txs, accs, cats, bgs, recs, gls, termsAccepted, preferences] = await Promise.all([
+      const [txs, accs, cats, bgs, recs, gls, termsAccepted, preferences, setupDone] = await Promise.all([
         loadTransactions(),
         loadAccounts(),
         loadCategories(),
@@ -178,6 +181,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loadGoals(),
         loadTermsAcceptance(),
         loadAppPreferences(),
+        SecureStorage.getItem('spendnova_initial_setup_completed')
       ]);
       setTransactions(txs);
       setAccounts(accs);
@@ -187,6 +191,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setGoals(gls);
 
       setHasAcceptedTerms(termsAccepted);
+      setIsInitialSetupCompleted(setupDone === 'true');
       if (preferences) {
         setAccentTheme(preferences.accentTheme || 'tonal');
         setCountryState(preferences.country || detectUserCountry());
@@ -233,6 +238,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const acceptTerms = async () => {
     setHasAcceptedTerms(true);
     await saveTermsAcceptance(true);
+  };
+
+  const completeInitialSetup = async (
+    countryCode: string,
+    newAccounts: Account[],
+    newCategories: Category[]
+  ) => {
+    setCountryState(countryCode);
+    await saveAppPreferences({ accentTheme, country: countryCode });
+
+    setAccounts(newAccounts);
+    await saveAccounts(newAccounts);
+
+    setCategories(newCategories);
+    await saveCategories(newCategories);
+
+    setIsInitialSetupCompleted(true);
+    await SecureStorage.setItem('spendnova_initial_setup_completed', 'true');
   };
 
 
@@ -605,6 +628,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currencySymbol,
         hasAcceptedTerms,
         acceptTerms,
+        isInitialSetupCompleted,
+        completeInitialSetup,
 
         addTransaction,
         updateTransaction,

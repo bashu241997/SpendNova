@@ -20,6 +20,7 @@ import { ColorTheme, ACCENT_OPTIONS, AccentTheme } from '../theme/colors';
 import { useApp } from '../context/AppContext';
 import { exportDataToFile, importDataFromFile, exportSampleTemplate, CloudBackup } from '../utils/storage';
 import { CurrencyPickerModal } from '../components/CurrencyPickerModal';
+import { InitialSetupWizardModal } from '../components/InitialSetupWizardModal';
 import { getCountryDetails } from '../utils/currencies';
 
 import * as WebBrowser from 'expo-web-browser';
@@ -60,7 +61,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
     googleUser,
     setGoogleAuth,
     refreshCloudBackups,
-    currencySymbol
+    currencySymbol,
+    completeInitialSetup
   } = useApp();
 
   const [legalModalType, setLegalModalType] = useState<'terms' | 'privacy' | 'about' | 'contact' | null>(null);
@@ -68,6 +70,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
   const [activeView, setActiveView] = useState<'main' | 'data_sync' | 'legal' | 'danger'>('main');
   const [showWipeConfirm, setShowWipeConfirm] = useState(false);
   const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false);
+  const [isSetupWizardOpen, setIsSetupWizardOpen] = useState(false);
 
   const googleClientIds = {
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
@@ -454,10 +457,30 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
       <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer, marginRight: 16, marginBottom: 0 }]}>
+            <MaterialIcons name="auto-awesome" size={24} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>Guided Setup Wizard</Text>
+            <Text style={[styles.googleDesc, { color: colors.onSurfaceVariant, fontSize: 12 }]}>
+              Re-run the initial wizard to configure accounts, initial balances, and category tree.
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.smallPill, { backgroundColor: colors.primaryContainer }]}
+            onPress={() => setIsSetupWizardOpen(true)}
+          >
+            <Text style={[styles.smallPillText, { color: colors.primary }]}>Run Wizard</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={[styles.bentoWideCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.primaryContainer, marginRight: 16, marginBottom: 0 }]}>
             <MaterialIcons name="category" size={24} color={colors.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>Categories</Text>
+            <Text style={[styles.bentoLabel, { color: colors.onSurface }]}>Categories & Subcategories</Text>
           </View>
           <TouchableOpacity
             style={[styles.smallPill, { backgroundColor: colors.primaryContainer }]}
@@ -624,6 +647,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onNavigate, onBa
         colors={colors}
         selectedCountryCode={country}
         onSelect={(c) => setCountry(c.code)}
+      />
+
+      <InitialSetupWizardModal
+        visible={isSetupWizardOpen}
+        onClose={() => setIsSetupWizardOpen(false)}
+        onCompleteSetup={async (cCode, accs, cats) => {
+          await completeInitialSetup(cCode, accs, cats);
+          setIsSetupWizardOpen(false);
+          showAlert('Ledger setup updated successfully!');
+        }}
       />
     </ScrollView>
   );
